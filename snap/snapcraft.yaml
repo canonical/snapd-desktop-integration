@@ -1,0 +1,34 @@
+name: desktop-support
+base: core18
+adopt-info: desktop-support
+summary: Single-line elevator pitch for your amazing snap # 79 char long summary
+description: |
+  This is my-snap's description. You have a paragraph or two to tell the
+  most important story about your snap. Keep it under 100 words though,
+  we live in tweetspace and your description wants to look good in the snap
+  store.
+
+grade: devel
+confinement: strict
+
+apps:
+  desktop-support:
+    extensions: [gnome-3-34]
+    command: bin/desktop-support
+    plugs:
+      - snapd-control
+
+parts:
+  desktop-support:
+    source: .
+    source-type: git
+    plugin: meson
+    meson-parameters:
+      - --prefix=/
+    build-packages:
+      - jq
+      - libsnapd-glib-dev
+    override-build: |
+      snapcraftctl build
+      snapcraftctl set-version "$(meson introspect ./snapbuild --projectinfo |
+          jq -r .version)"
