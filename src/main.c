@@ -40,9 +40,10 @@ static void
 theme_changed(DsThemeWatcher *watcher,
               const char *gtk_theme_name,
               const char *icon_theme_name,
+              const char *cursor_theme_name,
               const char *sound_theme_name)
 {
-    g_message("New theme: gtk=%s icon=%s sound=%s", gtk_theme_name, icon_theme_name, sound_theme_name);
+    g_message("New theme: gtk=%s icon=%s cursor=%s, sound=%s", gtk_theme_name, icon_theme_name, cursor_theme_name, sound_theme_name);
 }
 
 int
