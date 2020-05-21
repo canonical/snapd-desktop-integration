@@ -2,6 +2,7 @@
 #include <snapd-glib/snapd-glib.h>
 
 #include "ds-theme-watcher.h"
+#include "ds-theme-set.h"
 #include "ds-snapd-helper.h"
 
 void
@@ -37,13 +38,13 @@ installed_themes_ready(GObject *object, GAsyncResult *result, gpointer user_data
 }
 
 static void
-theme_changed(DsThemeWatcher *watcher,
-              const char *gtk_theme_name,
-              const char *icon_theme_name,
-              const char *cursor_theme_name,
-              const char *sound_theme_name)
+theme_changed(DsThemeWatcher *watcher, const DsThemeSet *themes)
 {
-    g_message("New theme: gtk=%s icon=%s cursor=%s, sound=%s", gtk_theme_name, icon_theme_name, cursor_theme_name, sound_theme_name);
+    g_message("New theme: gtk=%s icon=%s cursor=%s, sound=%s",
+              themes->gtk_theme_name,
+              themes->icon_theme_name,
+              themes->cursor_theme_name,
+              themes->sound_theme_name);
 }
 
 int
