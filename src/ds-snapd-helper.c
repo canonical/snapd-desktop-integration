@@ -79,6 +79,21 @@ ds_snapd_helper_new(SnapdClient *client)
     return g_object_new(DS_TYPE_SNAPD_HELPER, "client", client, NULL);
 }
 
+static int
+string_compare(gconstpointer a, gconstpointer b)
+{
+    const char *name1 = *((const char **)a);
+    const char *name2 = *((const char **)b);
+
+    return strcmp(name1, name2);
+}
+
+static gboolean
+array_contains(const char *key, const GPtrArray *array)
+{
+    return bsearch(&key, array->pdata, array->len, sizeof(char *), string_compare) != NULL;
+}
+
 static void
 extract_themes(SnapdSlot *slot, GPtrArray *themes)
 {
@@ -106,15 +121,6 @@ extract_themes(SnapdSlot *slot, GPtrArray *themes)
     }
 }
 
-static int
-string_compare(gconstpointer a, gconstpointer b)
-{
-    const char *name1 = *((const char **)a);
-    const char *name2 = *((const char **)b);
-
-    return strcmp(name1, name2);
-}
-
 static void
 get_interfaces_cb(GObject *object, GAsyncResult *result, gpointer user_data)
 {
@@ -128,7 +134,7 @@ get_interfaces_cb(GObject *object, GAsyncResult *result, gpointer user_data)
 
     interfaces = snapd_client_get_interfaces2_finish(client, result, &error);
     if (!interfaces) {
-        g_task_return_error(task, error);
+        g_task_return_error(task, g_steal_pointer(&error));
         return;
     }
 
@@ -207,4 +213,188 @@ ds_snapd_helper_get_installed_themes_finish(DsSnapdHelper *self, GAsyncResult *r
         *sound_themes = g_ptr_array_ref(g_object_get_data(G_OBJECT(task), "sound-themes"));
     }
     return TRUE;
+}
+
+typedef struct  {
+    DsThemeSet *themes;
+
+    int pending_lookups;
+    GPtrArray *missing_snaps;
+    GError *error;
+} find_missing_data_t;
+
+void
+find_missing_data_free(find_missing_data_t *data)
+{
+    g_clear_pointer(&data->themes, ds_theme_set_free);
+    g_clear_pointer(&data->missing_snaps, g_ptr_array_unref);
+    g_clear_pointer(&data->error, g_error_free);
+    g_free(data);
+}
+
+void
+maybe_complete_find_missing_task(GTask *task)
+{
+    find_missing_data_t *data = g_task_get_task_data(task);
+
+    /* If there are pending lookups, don't do anything */
+    if (data->pending_lookups > 0) {
+        return;
+    }
+    if (data->error == NULL) {
+        g_task_return_pointer(task, g_steal_pointer(&data->missing_snaps),
+                              (GDestroyNotify)g_ptr_array_unref);
+    } else {
+        g_task_return_error(task, g_steal_pointer(&data->error));
+    }
+}
+
+char *
+make_package_name(const char *prefix, const char *theme_name)
+{
+    g_autofree char *name = g_ascii_strdown(theme_name, -1);
+    char *a, *b;
+
+    /* strip out non alphanumeric characters from name */
+    for (a = b = name; *a != '\0'; a++) {
+        if (g_ascii_isalnum(*a)) {
+            *b = *a;
+            b++;
+        }
+    }
+    *b = '\0';
+    return g_strconcat(prefix, name, NULL);
+}
+
+typedef struct {
+    GTask *task;
+    char *snap_name;
+} find_package_data_t;
+
+void find_package_data_free(find_package_data_t *data)
+{
+    g_clear_object(&data->task);
+    g_free(data->snap_name);
+    g_free(data);
+}
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(find_package_data_t, find_package_data_free);
+
+static void
+find_package_cb(GObject *object, GAsyncResult *result, gpointer user_data)
+{
+    SnapdClient *client = SNAPD_CLIENT(object);
+    g_autoptr(find_package_data_t) find_data = user_data;
+    find_missing_data_t *data = g_task_get_task_data(find_data->task);
+    g_autoptr(GPtrArray) snaps = NULL;
+    g_autoptr(GError) error = NULL;
+    SnapdSnap *snap;
+
+    data->pending_lookups--;
+
+    snaps = snapd_client_find_finish(client, result, NULL, &error);
+    if (snaps == NULL) {
+        if (g_error_matches(error, SNAPD_ERROR, SNAPD_ERROR_NOT_FOUND)) {
+            g_message("Snap %s not found", find_data->snap_name);
+        } else if (data->error != NULL) {
+                data->error = g_steal_pointer(&error);
+        }
+        goto end;
+    }
+
+    if (snaps->len == 0) {
+        goto end;
+    }
+    snap = snaps->pdata[0];
+    if (!strcmp(snapd_snap_get_channel(snap), "stable")) {
+        g_ptr_array_add(data->missing_snaps, g_strdup(snapd_snap_get_name(snap)));
+    }
+
+end:
+    maybe_complete_find_missing_task(find_data->task);
+}
+
+static void
+find_package(GTask *task, const char *snap_name) {
+    DsSnapdHelper *self = g_task_get_source_object(task);
+    find_missing_data_t *data = g_task_get_task_data(task);
+    g_autoptr(find_package_data_t) find_data = g_new0(find_package_data_t, 1);
+
+    find_data->task = g_object_ref(task);
+    find_data->snap_name = g_strdup(snap_name);
+
+    data->pending_lookups++;
+    snapd_client_find_async(
+        self->client, SNAPD_FIND_FLAGS_MATCH_NAME, snap_name,
+        g_task_get_cancellable(task), find_package_cb, g_steal_pointer(&find_data));
+}
+
+static void
+get_installed_themes_cb(GObject *object, GAsyncResult *result, gpointer user_data)
+{
+    g_autoptr(GTask) task = user_data;
+    DsSnapdHelper *self = g_task_get_source_object(task);
+    find_missing_data_t *data = g_task_get_task_data(task);
+    g_autoptr(GPtrArray) gtk_themes = NULL;
+    g_autoptr(GPtrArray) icon_themes = NULL;
+    g_autoptr(GPtrArray) sound_themes = NULL;
+    g_autoptr(GError) error = NULL;
+
+    if (!ds_snapd_helper_get_installed_themes_finish(self, result, &gtk_themes, &icon_themes, &sound_themes, &error)) {
+        g_task_return_error(task, g_steal_pointer(&error));
+        return;
+    }
+
+    if (array_contains(data->themes->gtk_theme_name, gtk_themes)) {
+        g_message("GTK theme %s already available to snaps", data->themes->gtk_theme_name);
+    } else {
+        g_autofree char *pkg = make_package_name("gtk-theme-", data->themes->gtk_theme_name);
+        find_package(task, pkg);
+    }
+
+    if (array_contains(data->themes->icon_theme_name, icon_themes)) {
+        g_message("Icon theme %s already available to snaps", data->themes->icon_theme_name);
+    } else {
+        g_autofree char *pkg = make_package_name("icon-theme-", data->themes->icon_theme_name);
+        find_package(task, pkg);
+    }
+
+    if (array_contains(data->themes->cursor_theme_name, icon_themes)) {
+        g_message("Cursor theme %s already available to snaps", data->themes->cursor_theme_name);
+    } else if (strcmp(data->themes->icon_theme_name,
+                      data->themes->cursor_theme_name) != 0) {
+        g_autofree char *pkg = make_package_name("icon-theme-", data->themes->cursor_theme_name);
+        find_package(task, pkg);
+    }
+
+    if (array_contains(data->themes->sound_theme_name, sound_themes)) {
+        g_message("Sound theme %s already available to snaps", data->themes->sound_theme_name);
+    } else {
+        g_autofree char *pkg = make_package_name("sound-theme-", data->themes->sound_theme_name);
+        find_package(task, pkg);
+    }
+
+    /* If we haven't queued any package lookups, complete the task */
+    maybe_complete_find_missing_task(task);
+}
+
+void
+ds_snapd_helper_find_missing_snaps(DsSnapdHelper *self, const DsThemeSet *themes, GCancellable *cancellable, GAsyncReadyCallback callback, gpointer user_data)
+{
+    g_autoptr(GTask) task = g_task_new(self, cancellable, callback, user_data);
+    find_missing_data_t *data = g_new0(find_missing_data_t, 1);
+
+    data->themes = ds_theme_set_copy(themes);
+    data->missing_snaps = g_ptr_array_new_with_free_func(g_free);
+    g_task_set_task_data(task, data, (GDestroyNotify)find_missing_data_free);
+
+    ds_snapd_helper_get_installed_themes(self, cancellable, get_installed_themes_cb, g_steal_pointer(&task));
+}
+
+GPtrArray *
+ds_snapd_helper_find_missing_snaps_finish(DsSnapdHelper *helper, GAsyncResult *result, GError **error)
+{
+    GTask *task = G_TASK(result);
+
+    return g_task_propagate_pointer(task, error);
 }
