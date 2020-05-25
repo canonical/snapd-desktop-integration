@@ -1,6 +1,6 @@
-name: desktop-support
+name: snapd-desktop-helper
 base: core18
-adopt-info: desktop-support
+adopt-info: desktop-helper
 summary: Single-line elevator pitch for your amazing snap # 79 char long summary
 description: |
   This is my-snap's description. You have a paragraph or two to tell the
@@ -12,14 +12,14 @@ grade: devel
 confinement: strict
 
 apps:
-  desktop-support:
+  snapd-desktop-helper:
     extensions: [gnome-3-34]
-    command: bin/desktop-support
+    command: bin/snapd-desktop-helper
     plugs:
       - snapd-control
 
 parts:
-  desktop-support:
+  desktop-helper:
     source: .
     source-type: git
     plugin: meson

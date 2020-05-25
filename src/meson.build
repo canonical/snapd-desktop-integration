@@ -1,6 +1,6 @@
 
-desktop_support = executable(
-  'desktop-support',
+snapd_desktop_helper = executable(
+  'snapd-desktop-helper',
   'main.c',
   'ds-theme-set.c',
   'ds-theme-watcher.c',
@@ -8,4 +8,3 @@ desktop_support = executable(
   dependencies: [gtk_dep, snapd_glib_dep],
   install: true,
 )
-
