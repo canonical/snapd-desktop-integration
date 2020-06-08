@@ -260,10 +260,42 @@ make_package_name(const char *prefix, const char *theme_name)
         if (g_ascii_isalnum(*a)) {
             *b = *a;
             b++;
+        } else if (*a == '-' && b != name && *(b-1) != '-') {
+            /* Allow dashes, provided they aren't at the beginning or
+             * preceded by another dash */
+            *b = '-';
+            b++;
         }
     }
     *b = '\0';
+    /* trim trailing dashes */
+    while (b != name && *(b-1) == '-') {
+        b--;
+        *b = '\0';
+    }
     return g_strconcat(prefix, name, NULL);
+}
+
+/* trim off last dash separated segment of the snap name, provided the
+ * result has three or more portions. */
+char *
+shorten_package_name(const char *snap_name)
+{
+    const char *pos = snap_name, *last_dash = NULL;
+    int dash_count = 0;
+
+    while (pos != NULL) {
+        pos = strchr(pos, '-');
+        if (pos != NULL) {
+            last_dash = pos;
+            dash_count++;
+            pos++;
+        }
+    }
+    if (dash_count < 3) {
+        return NULL;
+    }
+    return g_strndup(snap_name, last_dash - snap_name);
 }
 
 typedef struct {
@@ -280,6 +312,8 @@ void find_package_data_free(find_package_data_t *data)
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(find_package_data_t, find_package_data_free);
 
+static void find_package(GTask *task, const char *snap_name);
+
 static void
 find_package_cb(GObject *object, GAsyncResult *result, gpointer user_data)
 {
@@ -295,9 +329,13 @@ find_package_cb(GObject *object, GAsyncResult *result, gpointer user_data)
     snaps = snapd_client_find_finish(client, result, NULL, &error);
     if (snaps == NULL) {
         if (g_error_matches(error, SNAPD_ERROR, SNAPD_ERROR_NOT_FOUND)) {
-            g_message("Snap %s not found", find_data->snap_name);
+            g_autofree char *shorter_snap_name = shorten_package_name(find_data->snap_name);
+            if (shorter_snap_name != NULL) {
+                g_message("Snap %s not found, trying for %s", find_data->snap_name, shorter_snap_name);
+                find_package(find_data->task, shorter_snap_name);
+            }
         } else if (data->error != NULL) {
-                data->error = g_steal_pointer(&error);
+            data->error = g_steal_pointer(&error);
         }
         goto end;
     }
