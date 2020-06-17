@@ -1,6 +1,6 @@
 
-snapd_desktop_helper = executable(
-  'snapd-desktop-helper',
+snapd_desktop_integration = executable(
+  'snapd-desktop-integration',
   'main.c',
   'ds-theme-set.c',
   'ds-theme-watcher.c',
