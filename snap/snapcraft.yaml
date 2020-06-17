@@ -21,7 +21,6 @@ apps:
 parts:
   desktop-integration:
     source: .
-    source-type: git
     plugin: meson
     meson-parameters:
       - --prefix=/
