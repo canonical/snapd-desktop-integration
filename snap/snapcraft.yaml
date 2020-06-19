@@ -31,3 +31,9 @@ parts:
       snapcraftctl build
       snapcraftctl set-version "$(meson introspect ./snapbuild --projectinfo |
           jq -r .version)"
+  libraries:
+    plugin: nil
+    stage-packages:
+      - libsnapd-glib1
+    prime:
+      - usr/lib/*/libsnapd-glib.so.*
