@@ -1,12 +1,11 @@
 name: snapd-desktop-integration
 base: core18
 adopt-info: desktop-integration
-summary: Single-line elevator pitch for your amazing snap # 79 char long summary
+summary: Desktop Integration for snapd
 description: |
-  This is my-snap's description. You have a paragraph or two to tell the
-  most important story about your snap. Keep it under 100 words though,
-  we live in tweetspace and your description wants to look good in the snap
-  store.
+  Provides a user session daemon used to provide a bridge between
+  the user's session and snapd.  Used for things like automatic
+  theme installation.
 
 grade: devel
 confinement: strict
