@@ -345,7 +345,7 @@ find_package_cb(GObject *object, GAsyncResult *result, gpointer user_data)
     }
     snap = snaps->pdata[0];
     if (!strcmp(snapd_snap_get_channel(snap), "stable")) {
-        g_ptr_array_add(data->missing_snaps, g_strdup(snapd_snap_get_name(snap)));
+        g_ptr_array_add(data->missing_snaps, g_object_ref(snap));
     }
 
 end:
@@ -423,7 +423,7 @@ ds_snapd_helper_find_missing_snaps(DsSnapdHelper *self, const DsThemeSet *themes
     find_missing_data_t *data = g_new0(find_missing_data_t, 1);
 
     data->themes = ds_theme_set_copy(themes);
-    data->missing_snaps = g_ptr_array_new_with_free_func(g_free);
+    data->missing_snaps = g_ptr_array_new_with_free_func(g_object_unref);
     g_task_set_task_data(task, data, (GDestroyNotify)find_missing_data_free);
 
     ds_snapd_helper_get_installed_themes(self, cancellable, get_installed_themes_cb, g_steal_pointer(&task));

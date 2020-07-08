@@ -26,7 +26,9 @@ missing_snaps_ready(GObject *object, GAsyncResult *result, gpointer user_data)
     }
     g_print("Missing theme snaps:\n");
     for (i = 0; i < missing_snaps->len; i++) {
-        g_print(" - %s\n", (const char *)missing_snaps->pdata[i]);
+        SnapdSnap *snap = missing_snaps->pdata[i];
+
+        g_print(" - %s\n", snapd_snap_get_name(snap));
     }
 }
 
