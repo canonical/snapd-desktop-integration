@@ -18,4 +18,7 @@ gboolean ds_snapd_helper_get_installed_themes_finish(DsSnapdHelper *self, GAsync
 void ds_snapd_helper_find_missing_snaps(DsSnapdHelper *self, const DsThemeSet *themes, GCancellable *cancellable, GAsyncReadyCallback callback, gpointer user_data);
 GPtrArray *ds_snapd_helper_find_missing_snaps_finish(DsSnapdHelper *self, GAsyncResult *result, GError **error);
 
+void ds_snapd_helper_install_snaps(DsSnapdHelper *self, GPtrArray *snaps, GCancellable *cancellable, GAsyncReadyCallback callback, gpointer user_data);
+gboolean ds_snapd_helper_install_snaps_finish(DsSnapdHelper *self, GAsyncResult *result, GError **error);
+
 G_END_DECLS

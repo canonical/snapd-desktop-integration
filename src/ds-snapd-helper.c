@@ -436,3 +436,58 @@ ds_snapd_helper_find_missing_snaps_finish(DsSnapdHelper *helper, GAsyncResult *r
 
     return g_task_propagate_pointer(task, error);
 }
+
+static void install_next_snap(GTask *task);
+
+static void
+install_next_snap_cb(GObject *object, GAsyncResult *result, gpointer user_data)
+{
+    g_autoptr(GTask) task = user_data;
+    DsSnapdHelper *self = g_task_get_source_object(task);
+    g_autoptr(GError) error = NULL;
+
+    if (!snapd_client_install2_finish(self->client, result,  &error)) {
+        g_task_return_error(task, g_steal_pointer(&error));
+        return;
+    }
+
+    install_next_snap(task);
+}
+
+static void
+install_next_snap(GTask *task)
+{
+    DsSnapdHelper *self = g_task_get_source_object(task);
+    GPtrArray *snaps = g_task_get_task_data(task);
+    g_autoptr(SnapdSnap) snap = NULL;
+
+    /* Nothing left? we're done. */
+    if (snaps->len == 0) {
+        g_task_return_boolean(task, TRUE);
+        return;
+    }
+
+    snap = g_ptr_array_steal_index(snaps, snaps->len-1);
+    snapd_client_install2_async(
+        self->client, SNAPD_INSTALL_FLAGS_NONE,
+        snapd_snap_get_name(snap), NULL, NULL,
+        NULL, NULL, g_task_get_cancellable(task),
+        install_next_snap_cb, g_object_ref(task));
+}
+
+void
+ds_snapd_helper_install_snaps(DsSnapdHelper *self, GPtrArray *snaps, GCancellable *cancellable, GAsyncReadyCallback callback, gpointer user_data)
+{
+    g_autoptr(GTask) task = g_task_new(self, cancellable, callback, user_data);
+
+    g_task_set_task_data(task, g_ptr_array_copy(snaps, (GCopyFunc)g_object_ref, NULL), (GDestroyNotify)g_ptr_array_unref);
+    install_next_snap(task);
+}
+
+gboolean
+ds_snapd_helper_install_snaps_finish(DsSnapdHelper *self, GAsyncResult *result, GError **error)
+{
+    GTask *task = G_TASK(result);
+
+    return g_task_propagate_boolean(task, error);
+}
