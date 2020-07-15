@@ -21,7 +21,7 @@ missing_snaps_ready(GObject *object, GAsyncResult *result, gpointer user_data)
     }
 
     if (missing_snaps->len == 0) {
-        g_print("All available theme snaps installed");
+        g_print("All available theme snaps installed\n");
         return;
     }
     g_print("Missing theme snaps:\n");
