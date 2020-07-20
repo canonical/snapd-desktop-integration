@@ -1,5 +1,6 @@
 #include <gtk/gtk.h>
 #include <snapd-glib/snapd-glib.h>
+#include <libnotify/notify.h>
 
 #include "ds-theme-watcher.h"
 #include "ds-theme-set.h"
@@ -28,7 +29,12 @@ missing_snaps_ready(GObject *object, GAsyncResult *result, gpointer user_data)
     for (i = 0; i < missing_snaps->len; i++) {
         SnapdSnap *snap = missing_snaps->pdata[i];
 
-        g_print(" - %s\n", snapd_snap_get_name(snap));
+        const char* snap_name = snapd_snap_get_name(snap);
+        g_print(" - %s\n", snap_name);
+
+        NotifyNotification *notification = notify_notification_new ("Theme snap missing:", snap_name, "dialog-information");
+        notify_notification_show (notification, NULL);
+        g_object_unref(notification);
     }
 }
 
@@ -54,6 +60,8 @@ main(int argc, char **argv)
     g_autoptr(DsThemeWatcher) watcher = NULL;
 
     gtk_init(&argc, &argv);
+    notify_init("snapd-desktop-integration");
+
     main_loop = g_main_loop_new(NULL, FALSE);
 
     client = snapd_client_new();
@@ -65,5 +73,6 @@ main(int argc, char **argv)
 
     g_main_loop_run(main_loop);
 
+    notify_uninit();
     return 0;
 }

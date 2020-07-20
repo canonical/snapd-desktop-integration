@@ -344,9 +344,9 @@ find_package_cb(GObject *object, GAsyncResult *result, gpointer user_data)
         goto end;
     }
     snap = snaps->pdata[0];
-    if (!strcmp(snapd_snap_get_channel(snap), "stable")) {
+    ///!if (!strcmp(snapd_snap_get_channel(snap), "stable")) {
         g_ptr_array_add(data->missing_snaps, g_object_ref(snap));
-    }
+    ///!}
 
 end:
     maybe_complete_find_missing_task(find_data->task);
