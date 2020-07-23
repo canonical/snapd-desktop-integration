@@ -476,7 +476,7 @@ install_next_snap(GTask *task)
     snap = g_ptr_array_steal_index(snaps, snaps->len-1);
     snapd_client_install2_async(
         self->client, SNAPD_INSTALL_FLAGS_NONE,
-        snapd_snap_get_name(snap), NULL, NULL,
+        snapd_snap_get_name(snap), "edge", NULL, ///!
         NULL, NULL, g_task_get_cancellable(task),
         install_next_snap_cb, g_object_ref(task));
 }
