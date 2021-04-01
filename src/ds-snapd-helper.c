@@ -344,9 +344,9 @@ find_package_cb(GObject *object, GAsyncResult *result, gpointer user_data)
         goto end;
     }
     snap = snaps->pdata[0];
-    ///!if (!strcmp(snapd_snap_get_channel(snap), "stable")) {
+    if (!strcmp(snapd_snap_get_channel(snap), "stable")) {
         g_ptr_array_add(data->missing_snaps, g_object_ref(snap));
-    ///!}
+    }
 
 end:
     maybe_complete_find_missing_task(find_data->task);
@@ -476,7 +476,7 @@ install_next_snap(GTask *task)
     snap = g_ptr_array_steal_index(snaps, snaps->len-1);
     snapd_client_install2_async(
         self->client, SNAPD_INSTALL_FLAGS_NONE,
-        snapd_snap_get_name(snap), "edge", NULL, ///!
+        snapd_snap_get_name(snap), NULL, NULL,
         NULL, NULL, g_task_get_cancellable(task),
         install_next_snap_cb, g_object_ref(task));
 }
