@@ -329,9 +329,9 @@ find_package_cb(GObject *object, GAsyncResult *result, gpointer user_data)
     snaps = snapd_client_find_finish(client, result, NULL, &error);
     if (snaps == NULL) {
         if (g_error_matches(error, SNAPD_ERROR, SNAPD_ERROR_NOT_FOUND)) {
+            g_print("Snap: %s not found\n", find_data->snap_name);
             g_autofree char *shorter_snap_name = shorten_package_name(find_data->snap_name);
             if (shorter_snap_name != NULL) {
-                g_message("Snap %s not found, trying for %s", find_data->snap_name, shorter_snap_name);
                 find_package(find_data->task, shorter_snap_name);
             }
         } else if (data->error != NULL) {
@@ -362,6 +362,8 @@ find_package(GTask *task, const char *snap_name) {
     find_data->snap_name = g_strdup(snap_name);
 
     data->pending_lookups++;
+
+    g_print("Searching for snap: %s\n", snap_name);
     snapd_client_find_async(
         self->client, SNAPD_FIND_FLAGS_MATCH_NAME, snap_name,
         g_task_get_cancellable(task), find_package_cb, g_steal_pointer(&find_data));
@@ -386,6 +388,7 @@ get_installed_themes_cb(GObject *object, GAsyncResult *result, gpointer user_dat
     if (array_contains(data->themes->gtk_theme_name, gtk_themes)) {
         g_message("GTK theme %s already available to snaps", data->themes->gtk_theme_name);
     } else {
+        g_message("GTK theme %s not available to snaps", data->themes->gtk_theme_name);
         g_autofree char *pkg = make_package_name("gtk-theme-", data->themes->gtk_theme_name);
         find_package(task, pkg);
     }
@@ -393,6 +396,7 @@ get_installed_themes_cb(GObject *object, GAsyncResult *result, gpointer user_dat
     if (array_contains(data->themes->icon_theme_name, icon_themes)) {
         g_message("Icon theme %s already available to snaps", data->themes->icon_theme_name);
     } else {
+        g_message("Icon theme %s not available to snaps", data->themes->icon_theme_name);
         g_autofree char *pkg = make_package_name("icon-theme-", data->themes->icon_theme_name);
         find_package(task, pkg);
     }
@@ -401,6 +405,7 @@ get_installed_themes_cb(GObject *object, GAsyncResult *result, gpointer user_dat
         g_message("Cursor theme %s already available to snaps", data->themes->cursor_theme_name);
     } else if (strcmp(data->themes->icon_theme_name,
                       data->themes->cursor_theme_name) != 0) {
+        g_message("Cursor theme %s not available to snaps", data->themes->cursor_theme_name);
         g_autofree char *pkg = make_package_name("icon-theme-", data->themes->cursor_theme_name);
         find_package(task, pkg);
     }
@@ -408,6 +413,7 @@ get_installed_themes_cb(GObject *object, GAsyncResult *result, gpointer user_dat
     if (array_contains(data->themes->sound_theme_name, sound_themes)) {
         g_message("Sound theme %s already available to snaps", data->themes->sound_theme_name);
     } else {
+        g_message("Sound theme %s not available to snaps", data->themes->sound_theme_name);
         g_autofree char *pkg = make_package_name("sound-theme-", data->themes->sound_theme_name);
         find_package(task, pkg);
     }
