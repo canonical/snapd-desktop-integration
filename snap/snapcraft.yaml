@@ -22,21 +22,33 @@ apps:
       - snapd-control
 
 parts:
+  snapd-glib:
+    source: https://github.com/snapcore/snapd-glib
+    source-type: git
+    plugin: meson
+    meson-parameters:
+      - --prefix=/usr
+      - -Ddocs=false
+      - -Dintrospection=false
+      - -Dvala-bindings=false
+      - -Dqt-bindings=false
+      - -Dqml-bindings=false
+    organize:
+      snap/snapd-desktop-integration/current/usr: usr
+    build-packages:
+      - libpolkit-gobject-1-dev
+    prime:
+      - usr/lib/*/libsnapd-glib.so.*
+
   desktop-integration:
+    after: [ snapd-glib ]
     source: .
     plugin: meson
     meson-parameters:
       - --prefix=/
     build-packages:
       - jq
-      - libsnapd-glib-dev
     override-build: |
       snapcraftctl build
       snapcraftctl set-version "$(meson introspect . --projectinfo |
           jq -r .version)"
-  libraries:
-    plugin: nil
-    stage-packages:
-      - libsnapd-glib1
-    prime:
-      - usr/lib/*/libsnapd-glib.so.*
