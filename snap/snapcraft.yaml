@@ -1,6 +1,6 @@
 name: snapd-desktop-integration
 base: core20
-adopt-info: desktop-integration
+adopt-info: snapd-desktop-integration
 summary: Desktop Integration for snapd
 description: |
   Provides a user session daemon used to provide a bridge between
@@ -40,7 +40,7 @@ parts:
     prime:
       - usr/lib/*/libsnapd-glib.so.*
 
-  desktop-integration:
+  snapd-desktop-integration:
     after: [ snapd-glib ]
     source: .
     plugin: meson
