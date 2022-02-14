@@ -97,7 +97,8 @@ array_contains(const char *key, const GPtrArray *array)
 static void
 extract_themes(SnapdSlot *slot, GPtrArray *themes)
 {
-    GVariant *source, *read, *entry;
+    GVariant *source, *entry;
+    g_autoptr(GVariant) read = NULL;
     GVariantIter iter;
 
     source = snapd_slot_get_attribute(slot, "source");
