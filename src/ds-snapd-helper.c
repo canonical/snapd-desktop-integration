@@ -111,13 +111,11 @@ extract_themes(SnapdSlot *slot, GPtrArray *themes)
     }
 
     g_variant_iter_init(&iter, read);
-    while ((entry = g_variant_iter_next_value(&iter))) {
-        GVariant *inner = g_variant_get_variant(entry);
-        if (g_variant_is_of_type(inner, G_VARIANT_TYPE_STRING)) {
-            const char *path = g_variant_get_string(inner, NULL);
+    while (g_variant_iter_loop(&iter, "v", &entry)) {
+        if (g_variant_is_of_type(entry, G_VARIANT_TYPE_STRING)) {
+            const char *path = g_variant_get_string(entry, NULL);
             g_ptr_array_add(themes, g_path_get_basename(path));
         }
-        g_variant_unref(entry);
     }
 }
 
