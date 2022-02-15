@@ -19,7 +19,7 @@ apps:
       daemon-scope: user
     restart-condition: always
     plugs:
-      - snapd-control
+      - snap-themes-control
 
 parts:
   snapd-glib:
