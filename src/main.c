@@ -11,6 +11,8 @@ typedef struct {
     SnapdThemeStatus gtk_theme_status;
     gchar *icon_theme_name;
     SnapdThemeStatus icon_theme_status;
+    gchar *cursor_theme_name;
+    SnapdThemeStatus cursor_theme_status;
     gchar *sound_theme_name;
     SnapdThemeStatus sound_theme_status;
 } DsState;
@@ -21,6 +23,7 @@ ds_state_free(DsState *state)
     g_clear_object(&state->client);
     g_clear_pointer(&state->gtk_theme_name, g_free);
     g_clear_pointer(&state->icon_theme_name, g_free);
+    g_clear_pointer(&state->cursor_theme_name, g_free);
     g_clear_pointer(&state->sound_theme_name, g_free);
     g_free(state);
 }
@@ -54,10 +57,29 @@ notify_cb(NotifyNotification *notification, char *action, gpointer user_data) {
         notify_notification_show(notification, NULL);
         g_object_unref(notification);
 
-        gchar *gtk_theme_names[2] = { state->gtk_theme_status == SNAPD_THEME_STATUS_AVAILABLE ? state->gtk_theme_name : NULL, NULL };
-        gchar *icon_theme_names[2] = { state->icon_theme_status == SNAPD_THEME_STATUS_AVAILABLE ? state->icon_theme_name : NULL, NULL };
-        gchar *sound_theme_names[2] = { state->sound_theme_status == SNAPD_THEME_STATUS_AVAILABLE ? state->sound_theme_name : NULL, NULL };
-        snapd_client_install_themes_async(state->client, gtk_theme_names, icon_theme_names, sound_theme_names, NULL, NULL, NULL, install_themes_cb, NULL);
+        g_autoptr(GPtrArray) gtk_theme_names = g_ptr_array_new();
+        if (state->gtk_theme_status == SNAPD_THEME_STATUS_AVAILABLE) {
+            g_ptr_array_add(gtk_theme_names, state->gtk_theme_name);
+        }
+        g_ptr_array_add(gtk_theme_names, NULL);
+        g_autoptr(GPtrArray) icon_theme_names = g_ptr_array_new();
+        if (state->icon_theme_status == SNAPD_THEME_STATUS_AVAILABLE) {
+            g_ptr_array_add(icon_theme_names, state->icon_theme_name);
+        }
+        if (state->cursor_theme_status == SNAPD_THEME_STATUS_AVAILABLE) {
+            g_ptr_array_add(icon_theme_names, state->cursor_theme_name);
+        }
+        g_ptr_array_add(icon_theme_names, NULL);
+        g_autoptr(GPtrArray) sound_theme_names = g_ptr_array_new();
+        if (state->sound_theme_status == SNAPD_THEME_STATUS_AVAILABLE) {
+            g_ptr_array_add(sound_theme_names, state->sound_theme_name);
+        }
+        g_ptr_array_add(sound_theme_names, NULL);
+        snapd_client_install_themes_async(state->client,
+                                          (gchar**)gtk_theme_names->pdata,
+                                          (gchar**)icon_theme_names->pdata,
+                                          (gchar**)sound_theme_names->pdata,
+                                          NULL, NULL, NULL, install_themes_cb, NULL);
     }
     g_object_unref(notification);
 }
@@ -116,14 +138,32 @@ theme_changed_cb(DsState *state, const DsThemeSet *themes)
     state->icon_theme_name = g_strdup(themes->icon_theme_name);
     state->icon_theme_status = 0;
 
+    g_free (state->cursor_theme_name);
+    state->cursor_theme_name = g_strdup(themes->cursor_theme_name);
+    state->cursor_theme_status = 0;
+
     g_free (state->sound_theme_name);
     state->sound_theme_name = g_strdup(themes->sound_theme_name);
     state->sound_theme_status = 0;
 
-    gchar *gtk_theme_names[2] = { themes->gtk_theme_name, NULL };
-    gchar *icon_theme_names[2] = { themes->icon_theme_name, NULL };
-    gchar *sound_theme_names[2] = { themes->sound_theme_name, NULL };
-    snapd_client_check_themes_async(state->client, gtk_theme_names, icon_theme_names, sound_theme_names, NULL, check_themes_cb, state);
+    g_autoptr(GPtrArray) gtk_theme_names = g_ptr_array_new();
+    g_ptr_array_add(gtk_theme_names, state->gtk_theme_name);
+    g_ptr_array_add(gtk_theme_names, NULL);
+
+    g_autoptr(GPtrArray) icon_theme_names = g_ptr_array_new();
+    g_ptr_array_add(icon_theme_names, state->icon_theme_name);
+    g_ptr_array_add(icon_theme_names, state->cursor_theme_name);
+    g_ptr_array_add(icon_theme_names, NULL);
+
+    g_autoptr(GPtrArray) sound_theme_names = g_ptr_array_new();
+    g_ptr_array_add(sound_theme_names, state->sound_theme_name);
+    g_ptr_array_add(sound_theme_names, NULL);
+
+    snapd_client_check_themes_async(state->client,
+                                    (gchar**)gtk_theme_names->pdata,
+                                    (gchar**)icon_theme_names->pdata,
+                                    (gchar**)sound_theme_names->pdata,
+                                    NULL, check_themes_cb, state);
 }
 
 int
