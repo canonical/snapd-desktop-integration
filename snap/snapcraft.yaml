@@ -7,7 +7,7 @@ description: |
   the user's session and snapd.  Used for things like automatic
   theme installation.
 
-grade: devel
+grade: stable
 confinement: strict
 
 apps:
