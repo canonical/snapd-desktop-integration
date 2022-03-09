@@ -235,7 +235,7 @@ main(int argc, char **argv)
                      G_CALLBACK(queue_check_theme), state);
     g_signal_connect_swapped(state->settings, "notify::gtk-sound-theme-name",
                      G_CALLBACK(queue_check_theme), state);
-    queue_check_theme(state);
+    get_themes_cb(state);
 
     g_main_loop_run(main_loop);
 
