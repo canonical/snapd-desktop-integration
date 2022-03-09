@@ -132,13 +132,12 @@ check_themes_cb(GObject *object, GAsyncResult *result, gpointer user_data)
 static gboolean
 get_themes_cb(DsState *state)
 {
+    state->check_delay_timer_id = 0;
+
     g_autofree gchar *gtk_theme_name = NULL;
     g_autofree gchar *icon_theme_name = NULL;
     g_autofree gchar *cursor_theme_name = NULL;
     g_autofree gchar *sound_theme_name = NULL;
-
-    state->check_delay_timer_id = 0;
-
     g_object_get(state->settings,
                  "gtk-theme-name", &gtk_theme_name,
                  "gtk-icon-theme-name", &icon_theme_name,
@@ -210,15 +209,12 @@ queue_check_theme(DsState *state)
 int
 main(int argc, char **argv)
 {
-    g_autoptr(GMainLoop) main_loop = NULL;
-    g_autoptr(DsState) state = NULL;
-
     gtk_init(&argc, &argv);
     notify_init("snapd-desktop-integration");
 
-    main_loop = g_main_loop_new(NULL, FALSE);
+    g_autoptr(GMainLoop) main_loop = g_main_loop_new(NULL, FALSE);
 
-    state = g_new0(DsState, 1);
+    g_autoptr(DsState) state = g_new0(DsState, 1);
     state->settings = gtk_settings_get_default();
     state->client = snapd_client_new();
 
