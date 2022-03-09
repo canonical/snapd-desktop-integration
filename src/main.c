@@ -2,11 +2,14 @@
 #include <snapd-glib/snapd-glib.h>
 #include <libnotify/notify.h>
 
-#include "ds-theme-watcher.h"
-#include "ds-theme-set.h"
+#define CHECK_THEME_TIMEOUT_SECONDS 1
 
 typedef struct {
+    GtkSettings *settings;
     SnapdClient *client;
+
+    guint timer_id;
+
     gchar *gtk_theme_name;
     SnapdThemeStatus gtk_theme_status;
     gchar *icon_theme_name;
@@ -20,7 +23,9 @@ typedef struct {
 static void
 ds_state_free(DsState *state)
 {
+    g_clear_object(&state->settings);
     g_clear_object(&state->client);
+    g_clear_handle_id(&state->timer_id, g_source_remove);
     g_clear_pointer(&state->gtk_theme_name, g_free);
     g_clear_pointer(&state->icon_theme_name, g_free);
     g_clear_pointer(&state->cursor_theme_name, g_free);
@@ -121,29 +126,51 @@ check_themes_cb(GObject *object, GAsyncResult *result, gpointer user_data)
     g_object_unref(notification);
 }
 
-static void
-theme_changed_cb(DsState *state, const DsThemeSet *themes)
+static gboolean
+get_themes_cb(DsState *state)
 {
+    g_autofree gchar *gtk_theme_name = NULL;
+    g_autofree gchar *icon_theme_name = NULL;
+    g_autofree gchar *cursor_theme_name = NULL;
+    g_autofree gchar *sound_theme_name = NULL;
+
+    state->timer_id = 0;
+
+    g_object_get(state->settings,
+                 "gtk-theme-name", &gtk_theme_name,
+                 "gtk-icon-theme-name", &icon_theme_name,
+                 "gtk-cursor-theme-name", &cursor_theme_name,
+                 "gtk-sound-theme-name", &sound_theme_name,
+                 NULL);
+
+    /* If nothing has changed, we're done */
+    if (g_strcmp0(state->gtk_theme_name, gtk_theme_name) == 0 &&
+        g_strcmp0(state->icon_theme_name, icon_theme_name) == 0 &&
+        g_strcmp0(state->cursor_theme_name, cursor_theme_name) == 0 &&
+        g_strcmp0(state->sound_theme_name, sound_theme_name) == 0) {
+        return G_SOURCE_REMOVE;
+    }
+
     g_message("New theme: gtk=%s icon=%s cursor=%s, sound=%s",
-              themes->gtk_theme_name,
-              themes->icon_theme_name,
-              themes->cursor_theme_name,
-              themes->sound_theme_name);
+              gtk_theme_name,
+              icon_theme_name,
+              cursor_theme_name,
+              sound_theme_name);
 
     g_free (state->gtk_theme_name);
-    state->gtk_theme_name = g_strdup(themes->gtk_theme_name);
+    state->gtk_theme_name = g_steal_pointer(&gtk_theme_name);
     state->gtk_theme_status = 0;
 
     g_free (state->icon_theme_name);
-    state->icon_theme_name = g_strdup(themes->icon_theme_name);
+    state->icon_theme_name = g_steal_pointer(&icon_theme_name);
     state->icon_theme_status = 0;
 
     g_free (state->cursor_theme_name);
-    state->cursor_theme_name = g_strdup(themes->cursor_theme_name);
+    state->cursor_theme_name = g_steal_pointer(&cursor_theme_name);
     state->cursor_theme_status = 0;
 
     g_free (state->sound_theme_name);
-    state->sound_theme_name = g_strdup(themes->sound_theme_name);
+    state->sound_theme_name = g_steal_pointer(&sound_theme_name);
     state->sound_theme_status = 0;
 
     g_autoptr(GPtrArray) gtk_theme_names = g_ptr_array_new();
@@ -164,6 +191,16 @@ theme_changed_cb(DsState *state, const DsThemeSet *themes)
                                     (gchar**)icon_theme_names->pdata,
                                     (gchar**)sound_theme_names->pdata,
                                     NULL, check_themes_cb, state);
+
+    return G_SOURCE_REMOVE;
+}
+
+static void
+queue_check_theme(DsState *state)
+{
+    g_clear_handle_id(&state->timer_id, g_source_remove);
+    state->timer_id = g_timeout_add_seconds(
+        CHECK_THEME_TIMEOUT_SECONDS, G_SOURCE_FUNC(get_themes_cb), state);
 }
 
 int
@@ -171,8 +208,6 @@ main(int argc, char **argv)
 {
     g_autoptr(GMainLoop) main_loop = NULL;
     g_autoptr(DsState) state = NULL;
-    g_autoptr(GtkSettings) settings = NULL;
-    g_autoptr(DsThemeWatcher) watcher = NULL;
 
     gtk_init(&argc, &argv);
     notify_init("snapd-desktop-integration");
@@ -180,15 +215,22 @@ main(int argc, char **argv)
     main_loop = g_main_loop_new(NULL, FALSE);
 
     state = g_new0(DsState, 1);
+    state->settings = gtk_settings_get_default();
     state->client = snapd_client_new();
 
     if (g_getenv ("SNAP") != NULL) {
         snapd_client_set_socket_path(state->client, "/run/snapd-snap.socket");
     }
 
-    settings = gtk_settings_get_default();
-    watcher = ds_theme_watcher_new(settings);
-    g_signal_connect_swapped(watcher, "theme-changed", G_CALLBACK(theme_changed_cb), state);
+    g_signal_connect_swapped(state->settings, "notify::gtk-theme-name",
+                     G_CALLBACK(queue_check_theme), state);
+    g_signal_connect_swapped(state->settings, "notify::gtk-icon-theme-name",
+                     G_CALLBACK(queue_check_theme), state);
+    g_signal_connect_swapped(state->settings, "notify::gtk-cursor-theme-name",
+                     G_CALLBACK(queue_check_theme), state);
+    g_signal_connect_swapped(state->settings, "notify::gtk-sound-theme-name",
+                     G_CALLBACK(queue_check_theme), state);
+    queue_check_theme(state);
 
     g_main_loop_run(main_loop);
 
