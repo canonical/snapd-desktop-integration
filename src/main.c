@@ -2,14 +2,17 @@
 #include <snapd-glib/snapd-glib.h>
 #include <libnotify/notify.h>
 
+/* Number of second to wait after a theme change before checking for installed snaps. */
 #define CHECK_THEME_TIMEOUT_SECONDS 1
 
 typedef struct {
     GtkSettings *settings;
     SnapdClient *client;
 
-    guint timer_id;
+    /* Timer to delay checking after theme changes */
+    guint check_delay_timer_id;
 
+    /* Name of current themes and their status in snapd. */
     gchar *gtk_theme_name;
     SnapdThemeStatus gtk_theme_status;
     gchar *icon_theme_name;
@@ -25,7 +28,7 @@ ds_state_free(DsState *state)
 {
     g_clear_object(&state->settings);
     g_clear_object(&state->client);
-    g_clear_handle_id(&state->timer_id, g_source_remove);
+    g_clear_handle_id(&state->check_delay_timer_id, g_source_remove);
     g_clear_pointer(&state->gtk_theme_name, g_free);
     g_clear_pointer(&state->icon_theme_name, g_free);
     g_clear_pointer(&state->cursor_theme_name, g_free);
@@ -134,7 +137,7 @@ get_themes_cb(DsState *state)
     g_autofree gchar *cursor_theme_name = NULL;
     g_autofree gchar *sound_theme_name = NULL;
 
-    state->timer_id = 0;
+    state->check_delay_timer_id = 0;
 
     g_object_get(state->settings,
                  "gtk-theme-name", &gtk_theme_name,
@@ -198,8 +201,9 @@ get_themes_cb(DsState *state)
 static void
 queue_check_theme(DsState *state)
 {
-    g_clear_handle_id(&state->timer_id, g_source_remove);
-    state->timer_id = g_timeout_add_seconds(
+    /* Delay processing the theme, in case multiple themes are being changed at the same time. */
+    g_clear_handle_id(&state->check_delay_timer_id, g_source_remove);
+    state->check_delay_timer_id = g_timeout_add_seconds(
         CHECK_THEME_TIMEOUT_SECONDS, G_SOURCE_FUNC(get_themes_cb), state);
 }
 
@@ -222,6 +226,7 @@ main(int argc, char **argv)
         snapd_client_set_socket_path(state->client, "/run/snapd-snap.socket");
     }
 
+    /* Listen for theme changes. */
     g_signal_connect_swapped(state->settings, "notify::gtk-theme-name",
                      G_CALLBACK(queue_check_theme), state);
     g_signal_connect_swapped(state->settings, "notify::gtk-icon-theme-name",
