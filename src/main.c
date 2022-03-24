@@ -206,11 +206,28 @@ queue_check_theme(DsState *state)
         CHECK_THEME_TIMEOUT_SECONDS, G_SOURCE_FUNC(get_themes_cb), state);
 }
 
+static gchar *snapd_socket_path = NULL;
+
+static GOptionEntry entries[] =
+{
+   { "snapd-socket-path", 0, 0, G_OPTION_ARG_FILENAME, &snapd_socket_path, "Snapd socket path", "PATH" },
+   { NULL }
+};
+
 int
 main(int argc, char **argv)
 {
     gtk_init(&argc, &argv);
     notify_init("snapd-desktop-integration");
+
+    g_autoptr(GOptionContext) context = g_option_context_new ("- snapd desktop integration daemon");
+    g_option_context_add_main_entries (context, entries, NULL);
+    g_option_context_add_group (context, gtk_get_option_group (TRUE));
+    g_autoptr(GError) error = NULL;
+    if (!g_option_context_parse (context, &argc, &argv, &error)) {
+       g_print ("option parsing failed: %s\n", error->message);
+       return 1;
+    }
 
     g_autoptr(GMainLoop) main_loop = g_main_loop_new(NULL, FALSE);
 
@@ -218,7 +235,9 @@ main(int argc, char **argv)
     state->settings = gtk_settings_get_default();
     state->client = snapd_client_new();
 
-    if (g_getenv ("SNAP") != NULL) {
+    if (snapd_socket_path != NULL) {
+        snapd_client_set_socket_path(state->client, snapd_socket_path);
+    } else if (g_getenv ("SNAP") != NULL) {
         snapd_client_set_socket_path(state->client, "/run/snapd-snap.socket");
     }
 
