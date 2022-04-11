@@ -139,10 +139,12 @@ check_themes_cb(GObject *object, GAsyncResult *result, gpointer user_data)
 
     state->gtk_theme_status = GPOINTER_TO_INT (g_hash_table_lookup (gtk_theme_status, state->gtk_theme_name));
     state->icon_theme_status = GPOINTER_TO_INT (g_hash_table_lookup (icon_theme_status, state->icon_theme_name));
+    state->cursor_theme_status = GPOINTER_TO_INT (g_hash_table_lookup (icon_theme_status, state->cursor_theme_name));
     state->sound_theme_status = GPOINTER_TO_INT (g_hash_table_lookup (sound_theme_status, state->sound_theme_name));
 
     gboolean themes_available = state->gtk_theme_status == SNAPD_THEME_STATUS_AVAILABLE ||
                                 state->icon_theme_status == SNAPD_THEME_STATUS_AVAILABLE ||
+                                state->cursor_theme_status == SNAPD_THEME_STATUS_AVAILABLE ||
                                 state->sound_theme_status == SNAPD_THEME_STATUS_AVAILABLE;
 
     if (!themes_available) {
