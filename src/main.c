@@ -37,8 +37,8 @@ ds_state_free(DsState *state)
     g_clear_pointer(&state->icon_theme_name, g_free);
     g_clear_pointer(&state->cursor_theme_name, g_free);
     g_clear_pointer(&state->sound_theme_name, g_free);
-    g_clear_pointer(&state->install_notification, g_object_unref);
-    g_clear_pointer(&state->progress_notification, g_object_unref);
+    g_clear_object(&state->install_notification);
+    g_clear_object(&state->progress_notification);
     g_free(state);
 }
 
@@ -59,13 +59,13 @@ install_themes_cb(GObject *object, GAsyncResult *result, gpointer user_data)
     }
 
     notify_notification_show(state->progress_notification, NULL);
-    g_clear_pointer(&state->progress_notification, g_object_unref);
+    g_clear_object(&state->progress_notification);
 }
 
 static void
 notification_closed_cb(NotifyNotification *notification, DsState *state) {
     /* Notification has been closed: */
-    g_clear_pointer(&state->install_notification, g_object_unref);
+    g_clear_object(&state->install_notification);
 }
 
 static void
@@ -104,7 +104,7 @@ notify_cb(NotifyNotification *notification, char *action, gpointer user_data) {
 }
 
 static void
-show_notification (DsState *state)
+show_install_notification (DsState *state)
 {
     /* If we've already displayed a notification, do nothing */
     if (state->install_notification != NULL)
@@ -154,7 +154,7 @@ check_themes_cb(GObject *object, GAsyncResult *result, gpointer user_data)
 
     g_print("Missing theme snaps\n");
 
-    show_notification(state);
+    show_install_notification(state);
 }
 
 static gboolean
