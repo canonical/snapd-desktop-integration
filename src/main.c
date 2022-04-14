@@ -21,6 +21,10 @@ typedef struct {
     SnapdThemeStatus cursor_theme_status;
     gchar *sound_theme_name;
     SnapdThemeStatus sound_theme_status;
+
+    /* The desktop notifications */
+    NotifyNotification *install_notification;
+    NotifyNotification *progress_notification;
 } DsState;
 
 static void
@@ -33,6 +37,8 @@ ds_state_free(DsState *state)
     g_clear_pointer(&state->icon_theme_name, g_free);
     g_clear_pointer(&state->cursor_theme_name, g_free);
     g_clear_pointer(&state->sound_theme_name, g_free);
+    g_clear_object(&state->install_notification);
+    g_clear_object(&state->progress_notification);
     g_free(state);
 }
 
@@ -41,18 +47,25 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(DsState, ds_state_free);
 static void
 install_themes_cb(GObject *object, GAsyncResult *result, gpointer user_data)
 {
+    DsState *state = user_data;
     g_autoptr(GError) error = NULL;
-    NotifyNotification *notification = NULL;
+
     if (snapd_client_install_themes_finish(SNAPD_CLIENT (object), result, &error)) {
         g_print("Installation complete.\n");
-        notification = notify_notification_new("Installing missing theme snaps:", "Complete.", "dialog-information");
+        notify_notification_update(state->progress_notification, "Installing missing theme snaps:", "Complete.", "dialog-information");
     } else {
         g_print("Installation failed: %s\n", error->message);
-        notification = notify_notification_new("Installing missing theme snaps:", "Failed.", "dialog-information");
+        notify_notification_update(state->progress_notification, "Installing missing theme snaps:", "Failed.", "dialog-information");
     }
 
-    notify_notification_show(notification, NULL);
-    g_object_unref(notification);
+    notify_notification_show(state->progress_notification, NULL);
+    g_clear_object(&state->progress_notification);
+}
+
+static void
+notification_closed_cb(NotifyNotification *notification, DsState *state) {
+    /* Notification has been closed: */
+    g_clear_object(&state->install_notification);
 }
 
 static void
@@ -61,9 +74,8 @@ notify_cb(NotifyNotification *notification, char *action, gpointer user_data) {
 
     if (strcmp(action, "yes") == 0) {
         g_print("Installing missing theme snaps...\n");
-        NotifyNotification *notification = notify_notification_new("Installing missing theme snaps:", "...", "dialog-information");
-        notify_notification_show(notification, NULL);
-        g_object_unref(notification);
+        state->progress_notification = notify_notification_new("Installing missing theme snaps:", "...", "dialog-information");
+        notify_notification_show(state->progress_notification, NULL);
 
         g_autoptr(GPtrArray) gtk_theme_names = g_ptr_array_new();
         if (state->gtk_theme_status == SNAPD_THEME_STATUS_AVAILABLE) {
@@ -87,9 +99,28 @@ notify_cb(NotifyNotification *notification, char *action, gpointer user_data) {
                                           (gchar**)gtk_theme_names->pdata,
                                           (gchar**)icon_theme_names->pdata,
                                           (gchar**)sound_theme_names->pdata,
-                                          NULL, NULL, NULL, install_themes_cb, NULL);
+                                          NULL, NULL, NULL, install_themes_cb, state);
     }
-    g_object_unref(notification);
+}
+
+static void
+show_install_notification (DsState *state)
+{
+    /* If we've already displayed a notification, do nothing */
+    if (state->install_notification != NULL)
+        return;
+
+    state->install_notification = notify_notification_new(
+        "Some required theme snaps are missing.",
+        "Would you like to install them now?",
+        "dialog-question");
+    g_signal_connect(state->install_notification, "closed",
+                     G_CALLBACK(notification_closed_cb), state);
+    notify_notification_set_timeout(state->install_notification, 0);
+    notify_notification_add_action(state->install_notification, "yes", "Yes", notify_cb, state, NULL);
+    notify_notification_add_action(state->install_notification, "no", "No", notify_cb, state, NULL);
+
+    notify_notification_show(state->install_notification, NULL);
 }
 
 static void
@@ -108,10 +139,12 @@ check_themes_cb(GObject *object, GAsyncResult *result, gpointer user_data)
 
     state->gtk_theme_status = GPOINTER_TO_INT (g_hash_table_lookup (gtk_theme_status, state->gtk_theme_name));
     state->icon_theme_status = GPOINTER_TO_INT (g_hash_table_lookup (icon_theme_status, state->icon_theme_name));
+    state->cursor_theme_status = GPOINTER_TO_INT (g_hash_table_lookup (icon_theme_status, state->cursor_theme_name));
     state->sound_theme_status = GPOINTER_TO_INT (g_hash_table_lookup (sound_theme_status, state->sound_theme_name));
 
     gboolean themes_available = state->gtk_theme_status == SNAPD_THEME_STATUS_AVAILABLE ||
                                 state->icon_theme_status == SNAPD_THEME_STATUS_AVAILABLE ||
+                                state->cursor_theme_status == SNAPD_THEME_STATUS_AVAILABLE ||
                                 state->sound_theme_status == SNAPD_THEME_STATUS_AVAILABLE;
 
     if (!themes_available) {
@@ -121,12 +154,7 @@ check_themes_cb(GObject *object, GAsyncResult *result, gpointer user_data)
 
     g_print("Missing theme snaps\n");
 
-    NotifyNotification *notification = notify_notification_new("Some required theme snaps are missing.", "Would you like to install them now?", "dialog-question");
-    notify_notification_add_action(g_object_ref(notification), "yes", "Yes", notify_cb, state, NULL);
-    notify_notification_add_action(g_object_ref(notification), "no", "No", notify_cb, state, NULL);
-
-    notify_notification_show(notification, NULL);
-    g_object_unref(notification);
+    show_install_notification(state);
 }
 
 static gboolean
