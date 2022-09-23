@@ -10,6 +10,13 @@ description: |
 grade: stable
 confinement: strict
 
+slots:
+  # for GtkApplication registration
+  snapd-desktop-integration:
+    interface: dbus
+    bus: session
+    name: io.snapcraft.desktop-integration
+
 apps:
   snapd-desktop-integration:
     extensions: [gnome]
