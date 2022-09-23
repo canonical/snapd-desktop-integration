@@ -33,6 +33,7 @@ parts:
       - -Dvala-bindings=false
       - -Dqt-bindings=false
       - -Dqml-bindings=false
+      - -Dsoup2=true
     organize:
       snap/snapd-desktop-integration/current/usr: usr
     build-packages:
