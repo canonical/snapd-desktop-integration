@@ -245,12 +245,12 @@ static GOptionEntry entries[] =
 int
 main(int argc, char **argv)
 {
-    gtk_init(&argc, &argv);
+    gtk_init();
     notify_init("snapd-desktop-integration");
 
     g_autoptr(GOptionContext) context = g_option_context_new ("- snapd desktop integration daemon");
     g_option_context_add_main_entries (context, entries, NULL);
-    g_option_context_add_group (context, gtk_get_option_group (TRUE));
+    //g_option_context_add_group (context, gtk_get_option_group (TRUE));
     g_autoptr(GError) error = NULL;
     if (!g_option_context_parse (context, &argc, &argv, &error)) {
        g_print ("option parsing failed: %s\n", error->message);
