@@ -10,6 +10,13 @@ description: |
 grade: stable
 confinement: strict
 
+slots:
+  # for GtkApplication registration
+  snapd-desktop-integration:
+    interface: dbus
+    bus: session
+    name: io.snapcraft.desktop-integration
+
 apps:
   snapd-desktop-integration:
     extensions: [gnome]
@@ -36,7 +43,7 @@ parts:
     build-packages:
       - libpolkit-gobject-1-dev
     prime:
-      - usr/lib/*/libsnapd-glib.so.*
+      - usr/lib/*/libsnapd-glib-2.so.*
 
   snapd-desktop-integration:
     after: [ snapd-glib ]

@@ -2,12 +2,21 @@
 #include <snapd-glib/snapd-glib.h>
 #include <libnotify/notify.h>
 
+static gchar *snapd_socket_path = NULL;
+
+static GOptionEntry entries[] =
+{
+   { "snapd-socket-path", 0, 0, G_OPTION_ARG_FILENAME, &snapd_socket_path, "Snapd socket path", "PATH" },
+   { NULL }
+};
+
 /* Number of second to wait after a theme change before checking for installed snaps. */
 #define CHECK_THEME_TIMEOUT_SECONDS 1
 
 typedef struct {
     GtkSettings *settings;
     SnapdClient *client;
+    GtkApplication *app;
 
     /* Timer to delay checking after theme changes */
     guint check_delay_timer_id;
@@ -234,34 +243,25 @@ queue_check_theme(DsState *state)
         CHECK_THEME_TIMEOUT_SECONDS, G_SOURCE_FUNC(get_themes_cb), state);
 }
 
-static gchar *snapd_socket_path = NULL;
-
-static GOptionEntry entries[] =
+static void
+do_startup (GObject  *object,
+            gpointer  data)
 {
-   { "snapd-socket-path", 0, 0, G_OPTION_ARG_FILENAME, &snapd_socket_path, "Snapd socket path", "PATH" },
-   { NULL }
-};
-
-int
-main(int argc, char **argv)
-{
-    gtk_init();
+    DsState *state = (DsState *)data;
     notify_init("snapd-desktop-integration");
 
-    g_autoptr(GOptionContext) context = g_option_context_new ("- snapd desktop integration daemon");
-    g_option_context_add_main_entries (context, entries, NULL);
-    //g_option_context_add_group (context, gtk_get_option_group (TRUE));
-    g_autoptr(GError) error = NULL;
-    if (!g_option_context_parse (context, &argc, &argv, &error)) {
-       g_print ("option parsing failed: %s\n", error->message);
-       return 1;
-    }
-
-    g_autoptr(GMainLoop) main_loop = g_main_loop_new(NULL, FALSE);
-
-    g_autoptr(DsState) state = g_new0(DsState, 1);
     state->settings = gtk_settings_get_default();
     state->client = snapd_client_new();
+    state->app = GTK_APPLICATION (object);
+}
+
+static void
+do_activate (GObject  *object,
+             gpointer  data)
+{
+    DsState *state = (DsState *)data;
+
+    g_application_hold (G_APPLICATION (state->app)); // because, by default, there are no windows, so the application would quit
 
     if (snapd_socket_path != NULL) {
         snapd_client_set_socket_path(state->client, snapd_socket_path);
@@ -279,9 +279,28 @@ main(int argc, char **argv)
     g_signal_connect_swapped(state->settings, "notify::gtk-sound-theme-name",
                      G_CALLBACK(queue_check_theme), state);
     get_themes_cb(state);
+}
 
-    g_main_loop_run(main_loop);
-
+static void
+do_shutdown (GObject  *object,
+             gpointer  data)
+{
     notify_uninit();
-    return 0;
+}
+
+int
+main(int argc, char **argv)
+{
+    g_autoptr (GtkApplication) app = NULL;
+    g_autoptr(DsState) state = g_new0(DsState, 1);
+
+    app = gtk_application_new ("io.snapcraft.desktop-integration",
+                               G_APPLICATION_FLAGS_NONE);
+    g_signal_connect (G_OBJECT (app), "startup", G_CALLBACK (do_startup), state);
+    g_signal_connect (G_OBJECT (app), "shutdown", G_CALLBACK (do_shutdown), state);
+    g_signal_connect (G_OBJECT (app), "activate", G_CALLBACK (do_activate), state);
+
+    g_application_add_main_option_entries (G_APPLICATION (app), entries);
+
+    return g_application_run (G_APPLICATION (app), argc, argv);
 }
