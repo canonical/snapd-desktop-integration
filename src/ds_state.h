@@ -8,6 +8,7 @@
 typedef struct {
     GtkSettings *settings;
     SnapdClient *client;
+    GtkApplication *app;
 
     /* Timer to delay checking after theme changes */
     guint check_delay_timer_id;
@@ -26,5 +27,9 @@ typedef struct {
     NotifyNotification *install_notification;
     NotifyNotification *progress_notification;
 } DsState;
+
+void ds_state_free(DsState *state);
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(DsState, ds_state_free);
 
 #endif // __DS_STATE_H__
