@@ -1,6 +1,6 @@
 snapd_desktop_integration = executable(
   'snapd-desktop-integration',
-  'main.c', 'ds_state.c', 'themes.c',
+  'main.c', 'ds_state.c', 'themes.c', 'dbus.c',
   dependencies: [gtk_dep, snapd_glib_dep, libnotify_dep],
   install: true,
 )
