@@ -74,6 +74,8 @@ main(int argc, char **argv)
     g_autoptr(GtkApplication) app = NULL;
     g_autoptr(DsState) state = g_new0(DsState, 1);
 
+    bindtextdomain ("snapd-desktop-integration", NULL);
+    textdomain ("snapd-desktop-integration");
     app = gtk_application_new("io.snapcraft.SnapDesktopIntegration",
                                G_APPLICATION_FLAGS_NONE);
     g_signal_connect (G_OBJECT(app), "startup", G_CALLBACK(do_startup), state);

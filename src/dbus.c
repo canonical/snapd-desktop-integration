@@ -1,11 +1,5 @@
 #include "dbus.h"
-
-static void
-handle_application_is_being_refreshed(GVariant *parameters,
-                                      DsState  *state)
-{
-
-}
+#include "refresh_status.h"
 
 static void
 handle_notifications_method_call(GDBusConnection       *connection,
@@ -17,7 +11,6 @@ handle_notifications_method_call(GDBusConnection       *connection,
                                  GDBusMethodInvocation *invocation,
                                  gpointer               user_data)
 {
-    g_print("Received call: %s; %s; %s\n", object_path, interface_name, method_name);
     if (g_strcmp0 (interface_name, "io.snapcraft.SnapDesktopIntegration") != 0) {
         g_dbus_method_invocation_return_error(invocation, G_DBUS_ERROR, G_DBUS_ERROR_UNKNOWN_INTERFACE, "Unknown interface");
         return;

@@ -4,6 +4,10 @@
 #include <gtk/gtk.h>
 #include <snapd-glib/snapd-glib.h>
 #include <libnotify/notify.h>
+#include <libintl.h>
+#include <locale.h>
+
+#define _(String) gettext(String)
 
 typedef struct {
     GtkSettings *settings;
