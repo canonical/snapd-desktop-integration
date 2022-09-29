@@ -15,7 +15,7 @@ slots:
   snapd-desktop-integration:
     interface: dbus
     bus: session
-    name: io.snapcraft.desktop-integration
+    name: io.snapcraft.SnapDesktopIntegration
 
 apps:
   snapd-desktop-integration:
@@ -53,8 +53,6 @@ parts:
       - --prefix=/
     build-packages:
       - jq
-    build-environment:
-      - PKG_CONFIG_PATH: ${PKG_CONFIG_PATH:+$PKG_CONFIG_PATH:}$CRAFT_STAGE/usr/lib/$CRAFT_ARCH_TRIPLET/pkgconfig:$CRAFT_STAGE/usr/lib/pkgconfig
     override-build: |
       craftctl default
       craftctl set version="$(meson introspect . --projectinfo |
