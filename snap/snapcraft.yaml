@@ -15,7 +15,7 @@ slots:
   snapd-desktop-integration:
     interface: dbus
     bus: session
-    name: io.snapcraft.desktop-integration
+    name: io.snapcraft.SnapDesktopIntegration
 
 apps:
   snapd-desktop-integration:
