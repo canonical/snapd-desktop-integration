@@ -2,30 +2,11 @@
 #include <snapd-glib/snapd-glib.h>
 #include <libnotify/notify.h>
 
+#include "ds_state.h"
+#include "dbus.h"
+
 /* Number of second to wait after a theme change before checking for installed snaps. */
 #define CHECK_THEME_TIMEOUT_SECONDS 1
-
-typedef struct {
-    GtkSettings *settings;
-    SnapdClient *client;
-
-    /* Timer to delay checking after theme changes */
-    guint check_delay_timer_id;
-
-    /* Name of current themes and their status in snapd. */
-    gchar *gtk_theme_name;
-    SnapdThemeStatus gtk_theme_status;
-    gchar *icon_theme_name;
-    SnapdThemeStatus icon_theme_status;
-    gchar *cursor_theme_name;
-    SnapdThemeStatus cursor_theme_status;
-    gchar *sound_theme_name;
-    SnapdThemeStatus sound_theme_status;
-
-    /* The desktop notifications */
-    NotifyNotification *install_notification;
-    NotifyNotification *progress_notification;
-} DsState;
 
 static void
 ds_state_free(DsState *state)
@@ -279,6 +260,15 @@ main(int argc, char **argv)
     g_signal_connect_swapped(state->settings, "notify::gtk-sound-theme-name",
                      G_CALLBACK(queue_check_theme), state);
     get_themes_cb(state);
+
+    g_bus_own_name(G_BUS_TYPE_SESSION,
+                   "io.snapcraft.SnapDesktopIntegration",
+                   G_BUS_NAME_OWNER_FLAGS_NONE,
+                   NULL,
+                   (GBusNameAcquiredCallback) register_dbus,
+                   NULL,
+                   state,
+                   NULL);
 
     g_main_loop_run(main_loop);
 
