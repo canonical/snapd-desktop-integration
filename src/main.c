@@ -1,6 +1,9 @@
 #include <gtk/gtk.h>
 #include <snapd-glib/snapd-glib.h>
 #include <libnotify/notify.h>
+#include <locale.h>
+#include <libintl.h>
+#include "config.h"
 
 #include "ds_state.h"
 #include "dbus.h"
@@ -226,6 +229,11 @@ static GOptionEntry entries[] =
 int
 main(int argc, char **argv)
 {
+    setlocale(LC_ALL, "");
+    bindtextdomain (GETTEXT_PACKAGE, LOCALEDIR);
+    g_print("Localedir: %s\n", LOCALEDIR);
+    textdomain (GETTEXT_PACKAGE);
+
     gtk_init(&argc, &argv);
     notify_init("snapd-desktop-integration");
 

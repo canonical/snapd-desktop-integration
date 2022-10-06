@@ -4,7 +4,8 @@
 #include <unistd.h>
 #include <errno.h>
 
-#define _(XXX) XXX
+#include <libintl.h>
+
 
 static gboolean
 destroy_state_at_idle(RefreshState *state) {

@@ -1,3 +1,8 @@
+conf = configuration_data()
+conf.set_quoted('LOCALEDIR', get_option('prefix') / get_option('localedir'))
+configure_file(output: 'config.h',
+               configuration: conf)
+
 snapd_desktop_integration = executable(
   'snapd-desktop-integration',
   'main.c', 'refresh_status.c', 'dbus.c',
