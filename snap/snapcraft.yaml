@@ -28,12 +28,6 @@ apps:
     plugs:
       - snap-themes-control
 
-slots:
-  snapd-desktop-integration:
-    interface: dbus
-    bus: session
-    name: io.snapcraft.SnapDesktopIntegration
-
 parts:
   snapd-glib:
     source: https://github.com/snapcore/snapd-glib
