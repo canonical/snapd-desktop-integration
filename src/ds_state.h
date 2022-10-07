@@ -25,6 +25,9 @@ typedef struct {
     /* The desktop notifications */
     NotifyNotification *install_notification;
     NotifyNotification *progress_notification;
+
+    /* The list of current refresh popups */
+    GList *refreshing_list;
 } DsState;
 
 #endif // __DS_STATE_H__
