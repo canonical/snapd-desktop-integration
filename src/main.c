@@ -7,6 +7,7 @@
 
 #include "ds_state.h"
 #include "dbus.h"
+#include "refresh_status.h"
 
 /* Number of second to wait after a theme change before checking for installed snaps. */
 #define CHECK_THEME_TIMEOUT_SECONDS 1
@@ -23,6 +24,7 @@ ds_state_free(DsState *state)
     g_clear_pointer(&state->sound_theme_name, g_free);
     g_clear_object(&state->install_notification);
     g_clear_object(&state->progress_notification);
+    g_list_free_full(state->refreshing_list, (GDestroyNotify)refresh_state_free);
     g_free(state);
 }
 

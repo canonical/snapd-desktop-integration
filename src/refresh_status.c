@@ -50,6 +50,13 @@ handle_application_is_being_refreshed(GVariant *parameters,
     GString *labelText;
 
     g_variant_get(parameters, "(&s&sa{sv})", &appName, &lockFilePath, &extraParams);
+
+    for (GList *list = ds_state->refreshing_list; list != NULL; list=list->next) {
+        state = (RefreshState *)list->data;
+        if (0 == g_strcmp0(state->appName->str, appName)) {
+            return;
+        }
+    }
     state = refresh_state_new(ds_state, appName);
     state->lockFile = g_strdup(lockFilePath);
     state->window = GTK_WINDOW(g_object_ref_sink(gtk_window_new(GTK_WINDOW_TOPLEVEL)));
@@ -74,6 +81,7 @@ handle_application_is_being_refreshed(GVariant *parameters,
     state->timeoutId = g_timeout_add(200, G_SOURCE_FUNC(refresh_progress_bar), state);
     state->closeId = g_signal_connect(G_OBJECT(state->window), "delete-event", G_CALLBACK(delete_window), state);
     gtk_widget_show_all(GTK_WIDGET(state->window));
+    ds_state->refreshing_list = g_list_append(ds_state->refreshing_list, state);
 }
 
 RefreshState *
@@ -87,6 +95,11 @@ refresh_state_new(DsState *state,
 }
 
 void refresh_state_free(RefreshState *state) {
+
+    DsState *dsstate = state->dsstate;
+
+    dsstate->refreshing_list = g_list_remove(dsstate->refreshing_list, state);
+
     if (state->timeoutId != 0) {
         g_source_remove(state->timeoutId);
     }
