@@ -10,10 +10,14 @@ description: |
 grade: stable
 confinement: strict
 
+layout:
+  /usr/share/locale:
+    bind: $SNAP/usr/share/locale
+
 apps:
   snapd-desktop-integration:
     extensions: [gnome-3-38]
-    command: bin/snapd-desktop-integration
+    command: usr/bin/snapd-desktop-integration
     daemon: simple
     passthrough: #///! TODO: Remove once daemon-scope lands in snapcraft
       daemon-scope: user
@@ -40,8 +44,6 @@ parts:
       - -Dqt-bindings=false
       - -Dqml-bindings=false
       - -Dsoup2=true
-    organize:
-      snap/snapd-desktop-integration/current/usr: usr
     build-packages:
       - libpolkit-gobject-1-dev
     prime:
@@ -52,7 +54,7 @@ parts:
     source: .
     plugin: meson
     meson-parameters:
-      - --prefix=/
+      - --prefix=/usr
     build-packages:
       - jq
     override-build: |
