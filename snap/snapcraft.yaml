@@ -21,7 +21,7 @@ apps:
     daemon: simple
     passthrough: #///! TODO: Remove once daemon-scope lands in snapcraft
       daemon-scope: user
-    restart-condition: always
+    restart-condition: on-failure
     plugs:
       - snap-themes-control
 

@@ -233,10 +233,11 @@ main(int argc, char **argv)
 {
     setlocale(LC_ALL, "");
     bindtextdomain (GETTEXT_PACKAGE, LOCALEDIR);
-    g_print("Localedir: %s\n", LOCALEDIR);
     textdomain (GETTEXT_PACKAGE);
 
-    gtk_init(&argc, &argv);
+    if (!gtk_init_check(&argc, &argv)) {
+        return 0;
+    }
     notify_init("snapd-desktop-integration");
 
     g_autoptr(GOptionContext) context = g_option_context_new ("- snapd desktop integration daemon");
