@@ -17,7 +17,8 @@ typedef struct {
 
 void handle_application_is_being_refreshed(GVariant *parameters,
                                            DsState  *state);
-
+void handle_close_application_window(GVariant *parameters,
+                                     DsState  *ds_state);
 RefreshState *refresh_state_new(DsState *state,
                                 gchar *appName);
 

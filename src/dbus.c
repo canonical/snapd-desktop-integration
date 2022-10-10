@@ -20,6 +20,11 @@ handle_notifications_method_call(GDBusConnection       *connection,
         g_dbus_method_invocation_return_value(invocation, NULL);
         return;
     }
+    if (g_strcmp0 (method_name, "ApplicationRefreshCompleted") == 0) {
+        handle_close_application_window(parameters, (DsState*) user_data);
+        g_dbus_method_invocation_return_value(invocation, NULL);
+        return;
+    }
     g_dbus_method_invocation_return_error(invocation, G_DBUS_ERROR, G_DBUS_ERROR_UNKNOWN_METHOD, "Unknown method");
 }
 
@@ -47,7 +52,8 @@ register_dbus (GDBusConnection  *connection,
     "            @application_name: the name of the application name"
     "            @lock_file: the full path to the lock file, to allow"
     "                        the daemon to detect when the window must"
-    "                        be closed."
+    "                        be closed, or an empty string to not monitor"
+    "                        any lock file."
     "           @extra_parameters: a dictionary with extra optional parameters."
     "                              Currently defined parameters are:"
     "                * icon: a string with the path to an icon."
@@ -59,7 +65,17 @@ register_dbus (GDBusConnection  *connection,
     "       <arg direction=\"in\" type=\"s\" name=\"application_name\"/>"
     "       <arg direction=\"in\" type=\"s\" name=\"lock_file\"/>"
     "       <arg direction=\"in\" type=\"a{sv}\" name=\"extra_parameters\"/>"
-
+    "        </method>"
+    "       <!--"
+    "            ApplicationRefreshCompleted:"
+    "            @application_name: the name of the application name"
+    "           @extra_parameters: a dictionary with extra optional parameters."
+    "           Method used to notify the daemon that the refresh is completed"
+    "           and the dialog can be closed."
+    "       -->"
+    "       <method name=\"ApplicationRefreshCompleted\">"
+    "       <arg direction=\"in\" type=\"s\" name=\"application_name\"/>"
+    "       <arg direction=\"in\" type=\"a{sv}\" name=\"extra_parameters\"/>"
     "        </method>"
     "    </interface>"
     "</node>";
