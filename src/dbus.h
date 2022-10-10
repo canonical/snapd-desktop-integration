@@ -20,10 +20,9 @@
 
 #include "ds_state.h"
 
-
-void
+gboolean
 register_dbus (GDBusConnection  *connection,
-               const char       *name,
-               DsState          *state);
+               DsState          *state,
+               GError          **error);
 
 #endif //__DBUS_H__
