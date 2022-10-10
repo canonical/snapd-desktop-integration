@@ -25,7 +25,7 @@
 typedef struct {
     DsState              *dsstate;
     GString              *appName;
-    GtkWindow *window;
+    GtkApplicationWindow *window;
     GtkWidget            *progressBar;
     gchar                *lockFile;
     guint                 timeoutId;
@@ -39,6 +39,7 @@ void handle_close_application_window(GVariant *parameters,
 RefreshState *refresh_state_new(DsState *state,
                                 gchar *appName);
 
+void remove_from_list_and_destroy(RefreshState *state);
 void refresh_state_free(RefreshState *state);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(RefreshState, refresh_state_free);
