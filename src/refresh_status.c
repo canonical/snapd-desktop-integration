@@ -145,6 +145,7 @@ refresh_state_new(DsState *state,
 void refresh_state_free(RefreshState *state) {
 
     DsState *dsstate = state->dsstate;
+
     dsstate->refreshing_list = g_list_remove(dsstate->refreshing_list, state);
 
     if (state->timeoutId != 0) {
