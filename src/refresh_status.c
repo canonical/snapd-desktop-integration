@@ -18,6 +18,10 @@ delete_window(GtkWindow    *self,
               GdkEvent     *event,
               RefreshState *state)
 {
+    if (state->timeoutId != 0) {
+        g_source_remove(state->timeoutId);
+        state->timeoutId = 0;
+    }
     g_idle_add(G_SOURCE_FUNC(destroy_state_at_idle), state);
     return TRUE;
 }
