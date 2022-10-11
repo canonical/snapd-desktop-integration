@@ -6,23 +6,12 @@
 
 #include <libintl.h>
 
-
-static gboolean
-destroy_state_at_idle(RefreshState *state) {
-    refresh_state_free(state);
-    return G_SOURCE_REMOVE;
-}
-
 static gboolean
 delete_window(GtkWindow    *self,
               GdkEvent     *event,
               RefreshState *state)
 {
-    if (state->timeoutId != 0) {
-        g_source_remove(state->timeoutId);
-        state->timeoutId = 0;
-    }
-    g_idle_add(G_SOURCE_FUNC(destroy_state_at_idle), state);
+    refresh_state_free (state);
     return TRUE;
 }
 
@@ -32,14 +21,12 @@ refresh_progress_bar(RefreshState *state) {
     gtk_progress_bar_pulse(GTK_PROGRESS_BAR(state->progressBar));
     if (stat(state->lockFile, &statbuf) != 0) {
         if ((errno == ENOENT) || (errno == ENOTDIR)) {
-            state->timeoutId = 0;
-            g_idle_add(G_SOURCE_FUNC(destroy_state_at_idle), state);
+            refresh_state_free (state);
             return G_SOURCE_REMOVE;
         }
     } else {
         if (statbuf.st_size == 0) {
-            state->timeoutId = 0;
-            g_idle_add(G_SOURCE_FUNC(destroy_state_at_idle), state);
+            refresh_state_free (state);
             return G_SOURCE_REMOVE;
         }
     }
