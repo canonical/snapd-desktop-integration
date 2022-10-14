@@ -19,6 +19,9 @@ static gboolean
 refresh_progress_bar(RefreshState *state) {
     struct stat statbuf;
     gtk_progress_bar_pulse(GTK_PROGRESS_BAR(state->progressBar));
+    if (state->lockFile == NULL) {
+        return G_SOURCE_CONTINUE;
+    }
     if (stat(state->lockFile, &statbuf) != 0) {
         if ((errno == ENOENT) || (errno == ENOTDIR)) {
             refresh_state_free (state);
@@ -31,6 +34,19 @@ refresh_progress_bar(RefreshState *state) {
         }
     }
     return G_SOURCE_CONTINUE;
+}
+
+static RefreshState *
+find_application(GList      *list,
+                 const char *appName)
+{
+    for (; list != NULL; list=list->next) {
+        RefreshState *state = (RefreshState *)list->data;
+        if (0 == g_strcmp0(state->appName->str, appName)) {
+            return state;
+        }
+    }
+    return NULL;
 }
 
 void
@@ -46,14 +62,16 @@ handle_application_is_being_refreshed(GVariant *parameters,
 
     g_variant_get(parameters, "(&s&sa{sv})", &appName, &lockFilePath, &extraParams);
 
-    for (GList *list = ds_state->refreshing_list; list != NULL; list=list->next) {
-        state = (RefreshState *)list->data;
-        if (0 == g_strcmp0(state->appName->str, appName)) {
-            return;
-        }
+    if (find_application(ds_state->refreshing_list, appName) != NULL) {
+        return;
     }
+
     state = refresh_state_new(ds_state, appName);
-    state->lockFile = g_strdup(lockFilePath);
+    if (*lockFilePath == 0) {
+        state->lockFile = NULL;
+    } else {
+        state->lockFile = g_strdup(lockFilePath);
+    }
     state->window = GTK_WINDOW(g_object_ref_sink(gtk_window_new(GTK_WINDOW_TOPLEVEL)));
 
     container = g_object_ref_sink(gtk_box_new(GTK_ORIENTATION_VERTICAL, 30));
@@ -77,6 +95,24 @@ handle_application_is_being_refreshed(GVariant *parameters,
     state->closeId = g_signal_connect(G_OBJECT(state->window), "delete-event", G_CALLBACK(delete_window), state);
     gtk_widget_show_all(GTK_WIDGET(state->window));
     ds_state->refreshing_list = g_list_append(ds_state->refreshing_list, state);
+}
+
+void
+handle_close_application_window(GVariant *parameters,
+                                DsState  *ds_state)
+{
+    gchar *appName;
+    RefreshState *state = NULL;
+    g_autoptr(GVariantIter) extraParams = NULL;
+
+
+    g_variant_get(parameters, "(&sa{sv})", &appName, &extraParams);
+
+    state = find_application(ds_state->refreshing_list, appName);
+    if (state == NULL) {
+        return;
+    }
+    refresh_state_free(state);
 }
 
 RefreshState *
