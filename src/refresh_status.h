@@ -32,10 +32,15 @@ typedef struct {
     guint                 closeId;
 } RefreshState;
 
-void handle_application_is_being_refreshed(GVariant *parameters,
-                                           DsState  *state);
-void handle_close_application_window(GVariant *parameters,
-                                     DsState  *ds_state);
+void
+handle_application_is_being_refreshed(gchar *appName,
+                                      gchar *lockFilePath,
+                                      GVariantIter *extraParams,
+                                      DsState  *ds_state);
+void
+handle_close_application_window(gchar *appName,
+                                GVariantIter *extraParams,
+                                DsState  *ds_state);
 RefreshState *refresh_state_new(DsState *state,
                                 gchar *appName);
 

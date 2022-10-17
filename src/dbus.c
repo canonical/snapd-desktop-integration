@@ -17,106 +17,48 @@
 
 #include "dbus.h"
 #include "refresh_status.h"
+#include "io.snapcraft.SnapDesktopIntegration.h"
 
-static void
-handle_notifications_method_call(GDBusConnection       *connection,
-                                 const gchar           *sender,
-                                 const gchar           *object_path,
-                                 const gchar           *interface_name,
-                                 const gchar           *method_name,
-                                 GVariant              *parameters,
-                                 GDBusMethodInvocation *invocation,
-                                 gpointer               user_data)
-{
-    if (g_strcmp0 (interface_name, "io.snapcraft.SnapDesktopIntegration") != 0) {
-        g_dbus_method_invocation_return_error(invocation, G_DBUS_ERROR, G_DBUS_ERROR_UNKNOWN_INTERFACE, "Unknown interface");
-        return;
-    }
-    if (g_strcmp0 (method_name, "ApplicationIsBeingRefreshed") == 0) {
-        handle_application_is_being_refreshed(parameters, (DsState*) user_data);
-        g_dbus_method_invocation_return_value(invocation, NULL);
-        return;
-    }
-    if (g_strcmp0 (method_name, "ApplicationRefreshCompleted") == 0) {
-        handle_close_application_window(parameters, (DsState*) user_data);
-        g_dbus_method_invocation_return_value(invocation, NULL);
-        return;
-    }
-    g_dbus_method_invocation_return_error(invocation, G_DBUS_ERROR, G_DBUS_ERROR_UNKNOWN_METHOD, "Unknown method");
+static gboolean
+dbus_handle_application_is_being_refreshed (SnapDesktopIntegration *skeleton,
+                                            GDBusMethodInvocation *invocation,
+                                            gchar *snapName,
+                                            gchar *lockFilePath,
+                                            GVariantIter *extraParams,
+                                            gpointer data) {
+
+    handle_application_is_being_refreshed(snapName, lockFilePath, extraParams, data);
+    snap_desktop_integration_complete_application_is_being_refreshed(skeleton, invocation);
+    return TRUE;
 }
 
-gboolean
+static gboolean
+dbus_handle_close_application_window (SnapDesktopIntegration *skeleton,
+                                      GDBusMethodInvocation *invocation,
+                                      gchar *snapName,
+                                      GVariantIter *extraParams,
+                                      gpointer data) {
+
+    handle_close_application_window(snapName, extraParams, data);
+    snap_desktop_integration_complete_application_refresh_completed(skeleton, invocation);
+    return TRUE;
+}
+
+void
 register_dbus (GDBusConnection  *connection,
                DsState          *state,
                GError          **error)
 {
-    static const gchar introspection_xml[] =
-    "<node>"
-    "    <!-- io.snapcraft.SnapDesktopIntegration:"
-    "        @short_description: Interface for desktop integration of Snapd"
-    ""
-    "        This D-Bus interface allows to achieve better integration of"
-    "        snapd and snap utilities by allowing to show native windows"
-    "        with messages instead of relying on system notifications,"
-    "        which can be insufficient for our purposes."
-    ""
-    "        It is better to use an specific DBus interface instead of GtkActions"
-    "        because this allows to implement a Qt version if desired without frictions."
-    "        -->"
-    "    <interface name=\"io.snapcraft.SnapDesktopIntegration\">"
-    "        <!--"
-    "            ApplicationIsBeingRefreshed:"
-    "            @application_name: the name of the application name"
-    "            @lock_file: the full path to the lock file, to allow"
-    "                        the daemon to detect when the window must"
-    "                        be closed, or an empty string to not monitor"
-    "                        any lock file."
-    "           @extra_parameters: a dictionary with extra optional parameters."
-    "                              Currently defined parameters are:"
-    "                * icon: a string with the path to an icon."
-    "           Method used to notify to the user that the snap that"
-    "           they wanted to run is being refreshed, and they have"
-    "           to wait until the process has finished."
-    "       -->"
-    "       <method name=\"ApplicationIsBeingRefreshed\">"
-    "       <arg direction=\"in\" type=\"s\" name=\"application_name\"/>"
-    "       <arg direction=\"in\" type=\"s\" name=\"lock_file\"/>"
-    "       <arg direction=\"in\" type=\"a{sv}\" name=\"extra_parameters\"/>"
-    "        </method>"
-    "       <!--"
-    "            ApplicationRefreshCompleted:"
-    "            @application_name: the name of the application name"
-    "           @extra_parameters: a dictionary with extra optional parameters."
-    "           Method used to notify the daemon that the refresh is completed"
-    "           and the dialog can be closed."
-    "       -->"
-    "       <method name=\"ApplicationRefreshCompleted\">"
-    "       <arg direction=\"in\" type=\"s\" name=\"application_name\"/>"
-    "       <arg direction=\"in\" type=\"a{sv}\" name=\"extra_parameters\"/>"
-    "        </method>"
-    "    </interface>"
-    "</node>";
 
-    g_autoptr(GDBusNodeInfo) node_info = g_dbus_node_info_new_for_xml (introspection_xml, error);
-    if (node_info == NULL) {
-        g_prefix_error(error, "Failed to parse D-Bus XML: ");
-        return FALSE;
-    }
-
-    static const GDBusInterfaceVTable notifications_vtable = {
-        handle_notifications_method_call,
-        NULL,
-        NULL,
-    };
-    if (g_dbus_connection_register_object(connection,
-                                          "/io/snapcraft/SnapDesktopIntegration",
-                                          node_info->interfaces[0],
-                                          &notifications_vtable,
-                                          (gpointer) state,
-                                          NULL,
-                                          error) == 0) {
-        g_prefix_error(error, "Failed to register notifications object: ");
-        return FALSE;
-   }
-   return TRUE;
+    SnapDesktopIntegration *skeleton = snap_desktop_integration_skeleton_new();
+    g_signal_connect(skeleton, "handle_application_is_being_refreshed",
+                     G_CALLBACK (dbus_handle_application_is_being_refreshed),
+                     state);
+    g_signal_connect(skeleton, "handle_application_refresh_completed",
+                     G_CALLBACK (dbus_handle_close_application_window),
+                     state);
+    g_dbus_interface_skeleton_export (G_DBUS_INTERFACE_SKELETON(skeleton),
+                                      connection,
+                                      "/io/snapcraft/SnapDesktopIntegration",
+                                      NULL);
 }
