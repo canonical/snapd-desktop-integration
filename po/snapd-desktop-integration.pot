@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: snapd-desktop-integration\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-10-25 18:17+0200\n"
+"POT-Creation-Date: 2022-10-24 13:45+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,9 +17,11 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/refresh_status.c:102
+#: src/refresh_status.c:112
 #, c-format
-msgid "%s is being refreshed."
+msgid ""
+"Please wait while '%s' is being refreshed to the latest version.\n"
+"This process may take a few minutes."
 msgstr ""
 
 #: src/main.c:59 src/main.c:65 src/main.c:88

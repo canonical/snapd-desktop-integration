@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: snapd-desktop-integration\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-10-25 18:17+0200\n"
-"PO-Revision-Date: 2022-10-25 18:02+0200\n"
+"POT-Creation-Date: 2022-10-24 13:45+0200\n"
+"PO-Revision-Date: 2022-10-24 13:48+0200\n"
 "Last-Translator: Sergio Costas <sergio.costas@canonical.com>\n"
 "Language-Team: Spanish - Spain <sergio.costas@canonical.com>\n"
 "Language: es_ES\n"
@@ -18,11 +18,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
 "X-Generator: Gtranslator 41.0\n"
-
-#: src/refresh_status.c:102
-#, c-format
-msgid "%s is being refreshed."
-msgstr "Refrescando %s."
 
 #: src/main.c:59 src/main.c:65 src/main.c:88
 msgid "Installing missing theme snaps:"
@@ -55,3 +50,11 @@ msgstr "Sí"
 #: src/main.c:143
 msgid "No"
 msgstr "No"
+#: src/refresh_status.c:112
+#, c-format
+msgid ""
+"Please wait while '%s' is being refreshed to the latest version.\n"
+"This process may take a few minutes."
+msgstr ""
+"Por favor, espere mientras '%s' se refresca a la última versión.\n"
+"Este proceso puede tardar un rato."
