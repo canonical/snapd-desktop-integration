@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: snapd-desktop-integration\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-10-24 13:45+0200\n"
-"PO-Revision-Date: 2022-10-24 13:48+0200\n"
+"POT-Creation-Date: 2022-10-24 15:38+0200\n"
+"PO-Revision-Date: 2022-10-24 15:38+0200\n"
 "Last-Translator: Sergio Costas <sergio.costas@canonical.com>\n"
 "Language-Team: Spanish - Spain <sergio.costas@canonical.com>\n"
 "Language: es_ES\n"
@@ -58,3 +58,11 @@ msgid ""
 msgstr ""
 "Por favor, espere mientras '%s' se refresca a la última versión.\n"
 "Este proceso puede tardar un rato."
+
+#: src/resources/snap_is_being_refreshed.ui:9
+msgid "Snap refresh in progress"
+msgstr "Refrescando Snap"
+
+#: src/resources/snap_is_being_refreshed.ui:56
+msgid "Hide"
+msgstr "Ocultar"
