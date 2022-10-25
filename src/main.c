@@ -82,7 +82,7 @@ static void
 notify_cb(NotifyNotification *notification, char *action, gpointer user_data) {
     DsState *state = user_data;
 
-    if (strcmp(action, "yes") == 0) {
+    if ((strcmp(action, "yes") == 0) || (strcmp(action, "default") == 0)) {
         g_print("Installing missing theme snaps...\n");
         state->progress_notification = notify_notification_new(
             _("Installing missing theme snaps:"),
@@ -129,21 +129,22 @@ show_install_notification (DsState *state)
         "dialog-question");
     g_signal_connect(state->install_notification, "closed",
                      G_CALLBACK(notification_closed_cb), state);
-    notify_notification_set_timeout(state->install_notification, 0);
+    notify_notification_set_timeout(state->install_notification, NOTIFY_EXPIRES_NEVER);
     notify_notification_add_action(state->install_notification,
         "yes",
-        /// TRANSLATORS: answer to the question "Would you like to install them now?"
+        /// TRANSLATORS: answer to the question "Would you like to install them now?" referred to snap themes
         _("Yes"),
         notify_cb,
         state,
         NULL);
     notify_notification_add_action(state->install_notification,
         "no",
-        /// TRANSLATORS: answer to the question "Would you like to install them now?"
+        /// TRANSLATORS: answer to the question "Would you like to install them now?" referred to snap themes
         _("No"),
         notify_cb,
         state,
         NULL);
+    notify_notification_add_action(state->install_notification, "default", "default", notify_cb, state, NULL);
 
     notify_notification_show(state->install_notification, NULL);
 }
