@@ -55,10 +55,17 @@ install_themes_cb(GObject *object, GAsyncResult *result, gpointer user_data)
 
     if (snapd_client_install_themes_finish(SNAPD_CLIENT (object), result, &error)) {
         g_print("Installation complete.\n");
-        notify_notification_update(state->progress_notification, "Installing missing theme snaps:", "Complete.", "dialog-information");
+        notify_notification_update(state->progress_notification,
+        _("Installing missing theme snaps:"),
+        /// TRANSLATORS: installing a missing theme snap succeed
+        _("Complete."), "dialog-information");
     } else {
         g_print("Installation failed: %s\n", error->message);
-        notify_notification_update(state->progress_notification, "Installing missing theme snaps:", "Failed.", "dialog-information");
+        notify_notification_update(state->progress_notification,
+        _("Installing missing theme snaps:"),
+        /// TRANSLATORS: trying to install a missing theme snap failed
+        _("Failed."),
+        "dialog-information");
     }
 
     notify_notification_show(state->progress_notification, NULL);
@@ -77,7 +84,10 @@ notify_cb(NotifyNotification *notification, char *action, gpointer user_data) {
 
     if (strcmp(action, "yes") == 0) {
         g_print("Installing missing theme snaps...\n");
-        state->progress_notification = notify_notification_new("Installing missing theme snaps:", "...", "dialog-information");
+        state->progress_notification = notify_notification_new(
+            _("Installing missing theme snaps:"),
+            "...",
+            "dialog-information");
         notify_notification_show(state->progress_notification, NULL);
 
         g_autoptr(GPtrArray) gtk_theme_names = g_ptr_array_new();
@@ -114,14 +124,26 @@ show_install_notification (DsState *state)
         return;
 
     state->install_notification = notify_notification_new(
-        "Some required theme snaps are missing.",
-        "Would you like to install them now?",
+        _("Some required theme snaps are missing."),
+        _("Would you like to install them now?"),
         "dialog-question");
     g_signal_connect(state->install_notification, "closed",
                      G_CALLBACK(notification_closed_cb), state);
     notify_notification_set_timeout(state->install_notification, 0);
-    notify_notification_add_action(state->install_notification, "yes", "Yes", notify_cb, state, NULL);
-    notify_notification_add_action(state->install_notification, "no", "No", notify_cb, state, NULL);
+    notify_notification_add_action(state->install_notification,
+        "yes",
+        /// TRANSLATORS: answer to the question "Would you like to install them now?"
+        _("Yes"),
+        notify_cb,
+        state,
+        NULL);
+    notify_notification_add_action(state->install_notification,
+        "no",
+        /// TRANSLATORS: answer to the question "Would you like to install them now?"
+        _("No"),
+        notify_cb,
+        state,
+        NULL);
 
     notify_notification_show(state->install_notification, NULL);
 }
