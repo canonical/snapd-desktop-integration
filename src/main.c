@@ -61,10 +61,20 @@ install_themes_cb(GObject *object, GAsyncResult *result, gpointer user_data)
         _("Complete."), "dialog-information");
     } else {
         g_print("Installation failed: %s\n", error->message);
+        gchar *error_message;
+        switch (error->code) {
+        case SNAPD_ERROR_AUTH_CANCELLED:
+            /// TRANSLATORS: installing a missing theme snap was cancelled by the user
+            error_message = _("Canceled by the user.");
+            break;
+        default:
+            /// TRANSLATORS: installing a missing theme snap failed
+            error_message = _("Failed.");
+            break;
+        }
         notify_notification_update(state->progress_notification,
         _("Installing missing theme snaps:"),
-        /// TRANSLATORS: trying to install a missing theme snap failed
-        _("Failed."),
+        error_message,
         "dialog-information");
     }
 
