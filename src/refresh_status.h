@@ -25,7 +25,7 @@
 typedef struct {
     DsState              *dsstate;
     GString              *appName;
-    GtkWindow *window;
+    GtkApplicationWindow *window;
     GtkWidget            *progressBar;
     gchar                *lockFile;
     guint                 timeoutId;

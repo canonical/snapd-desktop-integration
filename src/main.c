@@ -283,32 +283,26 @@ static GOptionEntry entries[] =
    { NULL }
 };
 
-int
-main(int argc, char **argv)
+static void
+do_startup (GObject  *object,
+            gpointer  data)
 {
-    setlocale(LC_ALL, "");
-    bindtextdomain (GETTEXT_PACKAGE, LOCALEDIR);
-    textdomain (GETTEXT_PACKAGE);
-
-    if (!gtk_init_check(&argc, &argv)) {
-        return 0;
-    }
+    DsState *state = (DsState *)data;
     notify_init("snapd-desktop-integration");
-
-    g_autoptr(GOptionContext) context = g_option_context_new ("- snapd desktop integration daemon");
-    g_option_context_add_main_entries (context, entries, NULL);
-    g_option_context_add_group (context, gtk_get_option_group (TRUE));
-    g_autoptr(GError) error = NULL;
-    if (!g_option_context_parse (context, &argc, &argv, &error)) {
-       g_print ("option parsing failed: %s\n", error->message);
-       return 1;
-    }
-
-    g_autoptr(GMainLoop) main_loop = g_main_loop_new(NULL, FALSE);
-
-    g_autoptr(DsState) state = g_new0(DsState, 1);
     state->settings = gtk_settings_get_default();
     state->client = snapd_client_new();
+    state->app = GTK_APPLICATION (object);
+    register_dbus(g_application_get_dbus_connection(G_APPLICATION(state->app)), state, NULL);
+}
+
+static void
+do_activate (GObject  *object,
+             gpointer  data)
+{
+    DsState *state = (DsState *)data;
+
+    // because, by default, there are no windows, so the application would quit
+    g_application_hold (G_APPLICATION (state->app));
 
     if (snapd_socket_path != NULL) {
         snapd_client_set_socket_path(state->client, snapd_socket_path);
@@ -326,18 +320,36 @@ main(int argc, char **argv)
     g_signal_connect_swapped(state->settings, "notify::gtk-sound-theme-name",
                      G_CALLBACK(queue_check_theme), state);
     get_themes_cb(state);
+}
 
-    g_bus_own_name(G_BUS_TYPE_SESSION,
-                   "io.snapcraft.SnapDesktopIntegration",
-                   G_BUS_NAME_OWNER_FLAGS_NONE,
-                   NULL,
-                   (GBusNameAcquiredCallback) register_dbus,
-                   NULL,
-                   state,
-                   NULL);
-
-    g_main_loop_run(main_loop);
-
+static void
+do_shutdown (GObject  *object,
+             gpointer  data)
+{
     notify_uninit();
-    return 0;
+}
+
+int
+main(int argc, char **argv)
+{
+    setlocale(LC_ALL, "");
+    bindtextdomain (GETTEXT_PACKAGE, LOCALEDIR);
+    textdomain (GETTEXT_PACKAGE);
+
+    if (!gtk_init_check(&argc, &argv)) {
+        return 0;
+    }
+
+    g_autoptr (GtkApplication) app = NULL;
+    g_autoptr(DsState) state = g_new0(DsState, 1);
+
+    app = gtk_application_new ("io.snapcraft.SnapDesktopIntegration",
+                               G_APPLICATION_FLAGS_NONE);
+    g_signal_connect (G_OBJECT (app), "startup", G_CALLBACK (do_startup), state);
+    g_signal_connect (G_OBJECT (app), "shutdown", G_CALLBACK (do_shutdown), state);
+    g_signal_connect (G_OBJECT (app), "activate", G_CALLBACK (do_activate), state);
+
+    g_application_add_main_option_entries (G_APPLICATION (app), entries);
+
+    return g_application_run (G_APPLICATION (app), argc, argv);
 }

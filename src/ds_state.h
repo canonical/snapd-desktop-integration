@@ -25,6 +25,7 @@
 typedef struct {
     GtkSettings *settings;
     SnapdClient *client;
+    GtkApplication *app;
 
     /* Timer to delay checking after theme changes */
     guint check_delay_timer_id;

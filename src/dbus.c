@@ -45,10 +45,10 @@ handle_notifications_method_call(GDBusConnection       *connection,
     g_dbus_method_invocation_return_error(invocation, G_DBUS_ERROR, G_DBUS_ERROR_UNKNOWN_METHOD, "Unknown method");
 }
 
-void
+gboolean
 register_dbus (GDBusConnection  *connection,
-               const char       *name,
-               DsState          *state)
+               DsState          *state,
+               GError          **error)
 {
     static const gchar introspection_xml[] =
     "<node>"
@@ -97,25 +97,26 @@ register_dbus (GDBusConnection  *connection,
     "    </interface>"
     "</node>";
 
-   g_autoptr(GDBusNodeInfo) node_info = g_dbus_node_info_new_for_xml (introspection_xml, NULL);
-   if (node_info == NULL) {
-      g_debug("Failed to parse D-Bus XML\n");
-      return;
-   }
+    g_autoptr(GDBusNodeInfo) node_info = g_dbus_node_info_new_for_xml (introspection_xml, error);
+    if (node_info == NULL) {
+        g_prefix_error(error, "Failed to parse D-Bus XML: ");
+        return FALSE;
+    }
 
-   static const GDBusInterfaceVTable notifications_vtable = {
-      handle_notifications_method_call,
-      NULL,
-      NULL,
-   };
-   if (g_dbus_connection_register_object(connection,
-                                         "/io/snapcraft/SnapDesktopIntegration",
-                                         node_info->interfaces[0],
-                                         &notifications_vtable,
-                                         (gpointer) state,
-                                         NULL,
-                                         NULL) == 0) {
-      g_debug("Failed to register notifications object.");
-      return;
+    static const GDBusInterfaceVTable notifications_vtable = {
+        handle_notifications_method_call,
+        NULL,
+        NULL,
+    };
+    if (g_dbus_connection_register_object(connection,
+                                          "/io/snapcraft/SnapDesktopIntegration",
+                                          node_info->interfaces[0],
+                                          &notifications_vtable,
+                                          (gpointer) state,
+                                          NULL,
+                                          error) == 0) {
+        g_prefix_error(error, "Failed to register notifications object: ");
+        return FALSE;
    }
+   return TRUE;
 }

@@ -89,7 +89,7 @@ handle_application_is_being_refreshed(GVariant *parameters,
     } else {
         state->lockFile = g_strdup(lockFilePath);
     }
-    state->window = GTK_WINDOW(g_object_ref_sink(gtk_window_new(GTK_WINDOW_TOPLEVEL)));
+    state->window = GTK_APPLICATION_WINDOW(g_object_ref_sink(gtk_application_window_new(ds_state->app)));
 
     container = g_object_ref_sink(gtk_box_new(GTK_ORIENTATION_VERTICAL, 30));
     gtk_container_add(GTK_CONTAINER(state->window), container);
