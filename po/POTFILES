@@ -1,2 +1,3 @@
 src/refresh_status.c
 src/main.c
+src/resources/snap_is_being_refreshed.ui

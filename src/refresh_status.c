@@ -20,16 +20,24 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <errno.h>
+#include "iresources.h"
 
 #include <libintl.h>
 
-static gboolean
-delete_window(GtkWindow    *self,
-              GdkEvent     *event,
-              RefreshState *state)
+gboolean
+on_delete_window(GtkWindow    *self,
+                 GdkEvent     *event,
+                 RefreshState *state)
 {
     refresh_state_free (state);
-    return TRUE;
+    return FALSE;
+}
+
+void
+on_hide_clicked(GtkButton *button,
+                RefreshState *state)
+{
+    refresh_state_free (state);
 }
 
 static gboolean
@@ -75,11 +83,15 @@ handle_application_is_being_refreshed(GVariant *parameters,
     g_autoptr(GVariantIter) extraParams = NULL;
     g_autoptr(GtkWidget) container = NULL;
     g_autoptr(GtkWidget) label = NULL;
-    GString *labelText;
+    g_autoptr(GString) labelText = NULL;
+    g_autoptr(GtkBuilder) builder = NULL;
 
     g_variant_get(parameters, "(&s&sa{sv})", &appName, &lockFilePath, &extraParams);
 
-    if (find_application(ds_state->refreshing_list, appName) != NULL) {
+    state = find_application(ds_state->refreshing_list, appName);
+    if (state != NULL) {
+        gtk_widget_hide(GTK_WIDGET(state->window));
+        gtk_window_present(state->window);
         return;
     }
 
@@ -89,27 +101,17 @@ handle_application_is_being_refreshed(GVariant *parameters,
     } else {
         state->lockFile = g_strdup(lockFilePath);
     }
-    state->window = GTK_APPLICATION_WINDOW(g_object_ref_sink(gtk_application_window_new(ds_state->app)));
-
-    container = g_object_ref_sink(gtk_box_new(GTK_ORIENTATION_VERTICAL, 30));
-    gtk_container_add(GTK_CONTAINER(state->window), container);
-    gtk_widget_set_margin_top(GTK_WIDGET(container), 30);
-    gtk_widget_set_margin_bottom(GTK_WIDGET(container), 30);
-    gtk_widget_set_margin_start(GTK_WIDGET(container), 10);
-    gtk_widget_set_margin_end(GTK_WIDGET(container), 10);
+    builder = gtk_builder_new_from_resource("/io/snapcraft/SnapDesktopIntegration/snap_is_being_refreshed.ui");
+    gtk_builder_connect_signals(builder, state);
+    state->window = GTK_APPLICATION_WINDOW(g_object_ref(gtk_builder_get_object(builder, "main_window")));
+    label = GTK_WIDGET(g_object_ref(gtk_builder_get_object(builder, "app_label")));
+    state->progressBar = GTK_WIDGET(g_object_ref(gtk_builder_get_object(builder, "progress_bar")));
 
     labelText = g_string_new("");
-    g_string_printf(labelText, _("%s is being refreshed."), appName);
-    label = g_object_ref_sink(gtk_label_new(labelText->str));
-    g_string_free(labelText, TRUE);
-    gtk_box_pack_start(GTK_BOX(container), label, TRUE, TRUE, 0);
-
-    state->progressBar = g_object_ref_sink(gtk_progress_bar_new());
-    gtk_box_pack_start(GTK_BOX(container), state->progressBar, TRUE, TRUE, 0);
-    gtk_progress_bar_set_pulse_step(GTK_PROGRESS_BAR(state->progressBar), 0.1);
+    g_string_printf(labelText, _("Please wait while '%s' is being refreshed to the latest version.\nThis process may take a few minutes."), appName);
+    gtk_label_set_text(GTK_LABEL(label), labelText->str);
 
     state->timeoutId = g_timeout_add(200, G_SOURCE_FUNC(refresh_progress_bar), state);
-    state->closeId = g_signal_connect(G_OBJECT(state->window), "delete-event", G_CALLBACK(delete_window), state);
     gtk_widget_show_all(GTK_WIDGET(state->window));
     ds_state->refreshing_list = g_list_append(ds_state->refreshing_list, state);
 }
