@@ -22,7 +22,7 @@ apps:
     passthrough: #///! TODO: Remove once daemon-scope lands in snapcraft
       daemon-scope: user
     restart-condition: always
-    restart-delay: 5s
+    restart-delay: 2s
     plugs:
       - snap-themes-control
 
