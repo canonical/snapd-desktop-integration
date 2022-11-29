@@ -91,7 +91,7 @@ handle_application_is_being_refreshed(GVariant *parameters,
     state = find_application(ds_state->refreshing_list, appName);
     if (state != NULL) {
         gtk_widget_hide(GTK_WIDGET(state->window));
-        gtk_window_present(state->window);
+        gtk_window_present(GTK_WINDOW(state->window));
         return;
     }
 
