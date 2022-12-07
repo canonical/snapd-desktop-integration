@@ -21,6 +21,10 @@
 #include <locale.h>
 #include <libintl.h>
 #include "config.h"
+#include <unistd.h>
+#include <sys/wait.h>
+#include <errno.h>
+#include <signal.h>
 
 #include "ds_state.h"
 #include "dbus.h"
@@ -340,14 +344,48 @@ do_shutdown (GObject  *object,
     notify_uninit();
 }
 
+static int global_retval = 0;
+
+void
+sighandler(int v)
+{
+    global_retval = 128 + v; // exit value is usually 128 + signal_id
+}
+
 int
 main(int argc, char **argv)
 {
+    int retval;
+    int pid = fork();
+    if (pid != 0) {
+        if (pid > 0) {
+            // SIGTERM and SIGINT will be ignored, but
+            // will break WAITPID with a EINTR value in
+            // errno.
+            // This allows the program to always exit with
+            // a NO-ERROR value, and kill the child
+            struct sigaction signal_data;
+            signal_data.sa_handler = sighandler;
+            sigemptyset(&signal_data.sa_mask);
+            signal_data.sa_flags = 0;
+            sigaction(SIGTERM, &signal_data, NULL);
+            sigaction(SIGINT, &signal_data, NULL);
+
+            retval = waitpid(pid, NULL, 0);
+            if ((retval < 0) && (errno == EINTR)) {
+                kill(pid, SIGTERM);
+                waitpid(pid, NULL, 0);
+            }
+        }
+        return global_retval;
+    }
+
     setlocale(LC_ALL, "");
     bindtextdomain (GETTEXT_PACKAGE, LOCALEDIR);
     textdomain (GETTEXT_PACKAGE);
 
     if (!gtk_init_check(&argc, &argv)) {
+        g_print("Failed to do gtk init\n");
         return 0;
     }
 
@@ -355,12 +393,16 @@ main(int argc, char **argv)
     g_autoptr(DsState) state = g_new0(DsState, 1);
 
     app = gtk_application_new ("io.snapcraft.SnapDesktopIntegration",
-                               G_APPLICATION_FLAGS_NONE);
+                               G_APPLICATION_ALLOW_REPLACEMENT | G_APPLICATION_REPLACE);
     g_signal_connect (G_OBJECT (app), "startup", G_CALLBACK (do_startup), state);
     g_signal_connect (G_OBJECT (app), "shutdown", G_CALLBACK (do_shutdown), state);
     g_signal_connect (G_OBJECT (app), "activate", G_CALLBACK (do_activate), state);
 
     g_application_add_main_option_entries (G_APPLICATION (app), entries);
 
-    return g_application_run (G_APPLICATION (app), argc, argv);
+    g_application_run (G_APPLICATION (app), argc, argv);
+
+    // since it should never ends, if we reach here, we return 0 as error value to
+    // ensure that systemd will relaunch it.
+    return 0;
 }
