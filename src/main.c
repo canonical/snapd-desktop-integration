@@ -372,7 +372,7 @@ main(int argc, char **argv)
             sigaction(SIGINT, &signal_data, NULL);
 
             retval = waitpid(pid, NULL, 0);
-            if ((retval != 0) && (errno == EINTR)) {
+            if ((retval < 0) && (errno == EINTR)) {
                 kill(pid, SIGTERM);
                 waitpid(pid, NULL, 0);
             }
