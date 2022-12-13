@@ -13,6 +13,7 @@ json_glib_dep = dependency ('json-glib-1.0')
 
 add_global_arguments('-DGETTEXT_PACKAGE="@0@"'.format (meson.project_name()), language:'c')
 
+subdir('data')
 subdir('po')
 subdir('src')
 subdir('tests')
