@@ -1,18 +1,7 @@
-gnome = import('gnome')
-
-# The returned source would be passed to another target
-gdbus_src = gnome.gdbus_codegen('io.snapcraft.SnapDesktopIntegration',
-  sources: 'io.snapcraft.SnapDesktopIntegration.dbus.xml',
-  interface_prefix : 'io.snapcraft.',
-  docbook : 'SnapDesktopIntegration-interface-doc'
-)
-
 conf = configuration_data()
 conf.set_quoted('LOCALEDIR', get_option('prefix') / get_option('localedir'))
 configure_file(output: 'config.h',
                configuration: conf)
-
-subdir('resources')
 
 snapd_desktop_integration = executable(
   'snapd-desktop-integration',
