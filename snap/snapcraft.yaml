@@ -25,6 +25,7 @@ apps:
     restart-delay: 2s
     plugs:
       - snap-themes-control
+      - login-session-observe
 
 slots:
   snapd-desktop-integration:

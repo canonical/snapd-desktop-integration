@@ -7,7 +7,7 @@ subdir('resources')
 
 snapd_desktop_integration = executable(
   'snapd-desktop-integration',
-  'main.c', 'refresh_status.c', 'dbus.c', resources,
+  'main.c', 'refresh_status.c', 'dbus.c', resources, login_src, login_session_src,
   dependencies: [gtk_dep, snapd_glib_dep, libnotify_dep],
   install: true,
   link_args: ['-rdynamic'],

@@ -25,13 +25,19 @@
 #include <sys/wait.h>
 #include <errno.h>
 #include <signal.h>
+#include <syslog.h>
 
 #include "ds_state.h"
 #include "dbus.h"
 #include "refresh_status.h"
+#include "org.freedesktop.login1.h"
+#include "org.freedesktop.login1.Session.h"
 
 /* Number of second to wait after a theme change before checking for installed snaps. */
 #define CHECK_THEME_TIMEOUT_SECONDS 1
+
+
+static Login1Manager *login_manager = NULL;
 
 static void
 ds_state_free(DsState *state)
@@ -58,13 +64,13 @@ install_themes_cb(GObject *object, GAsyncResult *result, gpointer user_data)
     g_autoptr(GError) error = NULL;
 
     if (snapd_client_install_themes_finish(SNAPD_CLIENT (object), result, &error)) {
-        g_print("Installation complete.\n");
+        g_message("Installation complete.\n");
         notify_notification_update(state->progress_notification,
         _("Installing missing theme snaps:"),
         /// TRANSLATORS: installing a missing theme snap succeed
         _("Complete."), "dialog-information");
     } else {
-        g_print("Installation failed: %s\n", error->message);
+        g_message("Installation failed: %s\n", error->message);
         gchar *error_message;
         switch (error->code) {
         case SNAPD_ERROR_AUTH_CANCELLED:
@@ -97,7 +103,7 @@ notify_cb(NotifyNotification *notification, char *action, gpointer user_data) {
     DsState *state = user_data;
 
     if ((strcmp(action, "yes") == 0) || (strcmp(action, "default") == 0)) {
-        g_print("Installing missing theme snaps...\n");
+        g_message("Installing missing theme snaps...\n");
         state->progress_notification = notify_notification_new(
             _("Installing missing theme snaps:"),
             "...",
@@ -200,11 +206,11 @@ check_themes_cb(GObject *object, GAsyncResult *result, gpointer user_data)
                                 state->sound_theme_status == SNAPD_THEME_STATUS_AVAILABLE;
 
     if (!themes_available) {
-        g_print("All available theme snaps installed\n");
+        g_message("All available theme snaps installed\n");
         return;
     }
 
-    g_print("Missing theme snaps\n");
+    g_message("Missing theme snaps\n");
 
     show_install_notification(state);
 }
@@ -298,6 +304,101 @@ static GOptionEntry entries[] =
    { NULL }
 };
 
+static gboolean
+session_is_desktop(const gchar *object_path) {
+    g_autoptr(OrgFreedesktopLogin1Session) session = NULL;
+    g_autoptr (GVariant) user = NULL;
+    GVariant *user_data = NULL; // this value belongs to the session proxy, so it must not be freed
+    const gchar *session_type = NULL; // this value belongs to the session proxy, so it must not be freed
+
+    session = org_freedesktop_login1_session_proxy_new_for_bus_sync(
+        G_BUS_TYPE_SYSTEM,
+        G_DBUS_PROXY_FLAGS_NONE,
+        "org.freedesktop.login1",
+        object_path,
+        NULL,
+        NULL
+    );
+    user_data = org_freedesktop_login1_session_get_user(session);
+    if (user_data == NULL) {
+        g_message("Failed to read the session user data. Forcing a reload.");
+        // if we can't read the data, we can't know whether we are in a desktop session or in a text one,
+        // so we will assume that we are in a session desktop to force a reload.
+        return TRUE;
+    }
+    user = g_variant_get_child_value(user_data, 0);
+    if (user == NULL) {
+        g_message("Failed to read the session user.");
+        return FALSE;
+    }
+    if (getuid() != g_variant_get_uint32(user)) {
+        // the new session isn't for our user
+        return FALSE;
+    }
+    session_type = org_freedesktop_login1_session_get_type_(session);
+    if (session_type == NULL) {
+        g_message("Failed to read the session type");
+        return FALSE;
+    }
+    if (!g_strcmp0("x11", session_type) ||
+        !g_strcmp0("wayland", session_type) ||
+        !g_strcmp0("mir", session_type)) {
+            // this is a graphical session
+            return TRUE;
+        }
+    return FALSE;
+}
+
+static void
+new_session(Login1Manager *manager, gchar *session_id, const gchar *object_path, gpointer data) {
+    GMainLoop *loop = (GMainLoop*)data;
+    g_message("Detected new session %s at %s\n", session_id, object_path);
+
+    if (session_is_desktop(object_path)) {
+        g_message("The new session is of desktop type. Relaunching snapd-desktop-integration.");
+        g_main_loop_quit(loop);
+    }
+}
+
+static gboolean
+check_graphical_sessions(gpointer data) {
+    GMainLoop *loop = (GMainLoop *)data;
+
+    GVariant *sessions = NULL;
+    gboolean got_session_list;
+
+    got_session_list = login1_manager_call_list_sessions_sync(
+        login_manager,
+        &sessions,
+        NULL,
+        NULL
+    );
+
+    if (got_session_list) {
+        // check if there is already a graphical session opened for us, in which case we must just exit
+        // and let systemd to relaunch us, because it means that we run too early and the desktop
+        // wasn't still ready
+        for(int i=0; i<g_variant_n_children(sessions); i++) {
+            GVariant *session = g_variant_get_child_value(sessions, i);
+            if (session == NULL) {
+                continue;
+            }
+            GVariant *session_object_variant = g_variant_get_child_value(session, 4);
+            const gchar *session_object = g_variant_get_string(session_object_variant, NULL);
+            g_message("Checking session %s...", session_object);
+            if (session_is_desktop(session_object)) {
+                g_message("Is a desktop session! Forcing a reload.");
+                g_main_loop_quit(loop);
+            }
+            g_variant_unref(session_object_variant);
+            g_variant_unref(session);
+        }
+    } else {
+        g_message("Failed to get session list (check that login-session-observe interface is connected). Forcing a reload.");
+        g_main_loop_quit(loop);
+    }
+    return G_SOURCE_REMOVE;
+}
 static void
 do_startup (GObject  *object,
             gpointer  data)
@@ -380,12 +481,34 @@ main(int argc, char **argv)
         return global_retval;
     }
 
+
     setlocale(LC_ALL, "");
     bindtextdomain (GETTEXT_PACKAGE, LOCALEDIR);
     textdomain (GETTEXT_PACKAGE);
 
     if (!gtk_init_check(&argc, &argv)) {
-        g_print("Failed to do gtk init\n");
+        g_message("Failed to do gtk init. Waiting for a new session with desktop capabilities.");
+
+        GMainLoop *loop = g_main_loop_new(NULL, TRUE);
+        login_manager = login1_manager_proxy_new_for_bus_sync(
+            G_BUS_TYPE_SYSTEM,
+            G_DBUS_PROXY_FLAGS_NONE,
+            "org.freedesktop.login1",
+            "/org/freedesktop/login1",
+            NULL,
+            NULL
+        );
+        g_signal_connect(login_manager, "session-new", G_CALLBACK(new_session), loop);
+        // Check if we are already in a graphical session to avoid race conditions between
+        // the signals being connected and the main loop being run.
+        // This is a must because, sometimes, snapd-desktop-integration is launched "too quickly"
+        // and the desktop isn't ready, so gtk_init_check() fails but the session IS a graphical
+        // one. For that cases we do check if there is a graphical session active, and if that's
+        // the case, we must exit to let systemd relaunch us again, this time being able to get
+        // access to the session.
+        g_idle_add(check_graphical_sessions, loop);
+        g_main_loop_run(loop);
+        g_message("Loop exited. Forcing reload.");
         return 0;
     }
 
