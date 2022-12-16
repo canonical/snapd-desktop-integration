@@ -1,5 +1,5 @@
 name: snapd-desktop-integration
-base: core20
+base: core22
 adopt-info: snapd-desktop-integration
 summary: Desktop Integration for snapd
 description: |
@@ -16,7 +16,7 @@ layout:
 
 apps:
   snapd-desktop-integration:
-    extensions: [gnome-3-38]
+    extensions: [gnome]
     command: usr/bin/snapd-desktop-integration
     daemon: simple
     passthrough: #///! TODO: Remove once daemon-scope lands in snapcraft
@@ -60,6 +60,6 @@ parts:
     build-packages:
       - jq
     override-build: |
-      snapcraftctl build
-      snapcraftctl set-version "$(meson introspect . --projectinfo |
+      craftctl default
+      craftctl set version="$(meson introspect . --projectinfo |
           jq -r .version)"
