@@ -41,5 +41,28 @@
             <arg direction="in" type="s" name="application_name"/>
             <arg direction="in" type="a{sv}" name="extra_parameters"/>
         </method>
+        <!--"
+             ApplicationRefreshPulsed:"
+             @application_name: the name of the application name"
+             @extra_parameters: a dictionary with extra optional parameters."
+             Method used to notify the daemon that the progress bar must be"
+             set to 'pulsed'."
+        -->"
+        <method name="ApplicationRefreshPulsed">"
+            <arg direction="in" type="s" name="application_name"/>"
+            <arg direction="in" type="a{sv}" name="extra_parameters"/>"
+         </method>"
+        <!--"
+             ApplicationRefreshPercentage:"
+             @application_name: the name of the application name"
+             @percentage: the percent value to set the progress bar (0-100)"
+             @extra_parameters: a dictionary with extra optional parameters."
+             Method used to set the progress bar to an specific value."
+        -->"
+        <method name="ApplicationRefreshPercentage">"
+            <arg direction="in" type="s" name="application_name"/>"
+            <arg direction="in" type="i" name="percentage"/>"
+            <arg direction="in" type="a{sv}" name="extra_parameters"/>"
+        </method>"
     </interface>
 </node>

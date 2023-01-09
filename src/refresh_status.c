@@ -43,7 +43,9 @@ on_hide_clicked(GtkButton *button,
 static gboolean
 refresh_progress_bar(RefreshState *state) {
     struct stat statbuf;
-    gtk_progress_bar_pulse(GTK_PROGRESS_BAR(state->progressBar));
+    if (state->pulsed) {
+        gtk_progress_bar_pulse(GTK_PROGRESS_BAR(state->progressBar));
+    }
     if (state->lockFile == NULL) {
         return G_SOURCE_CONTINUE;
     }
@@ -128,6 +130,38 @@ handle_close_application_window(gchar *appName,
     refresh_state_free(state);
 }
 
+void
+handle_set_pulsed_progress(gchar *appName,
+                           GVariantIter *extraParams,
+                           DsState  *ds_state)
+{
+    RefreshState *state = NULL;
+
+    state = find_application(ds_state->refreshing_list, appName);
+    if (state == NULL) {
+        return;
+    }
+    state->pulsed = TRUE;
+    gtk_progress_bar_set_show_text(GTK_PROGRESS_BAR(state->progressBar), FALSE);
+}
+
+void
+handle_set_percentage_progress(gchar *appName,
+                               gint percent,
+                               GVariantIter *extraParams,
+                               DsState  *ds_state)
+{
+    RefreshState *state = NULL;
+
+    state = find_application(ds_state->refreshing_list, appName);
+    if (state == NULL) {
+        return;
+    }
+    state->pulsed = FALSE;
+    gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(state->progressBar), ((gdouble)percent) / 100.0);
+    gtk_progress_bar_set_show_text(GTK_PROGRESS_BAR(state->progressBar), TRUE);
+}
+
 RefreshState *
 refresh_state_new(DsState *state,
                   gchar *appName)
@@ -135,6 +169,7 @@ refresh_state_new(DsState *state,
     RefreshState *object = g_new0(RefreshState, 1);
     object->appName = g_string_new(appName);
     object->dsstate = state;
+    object->pulsed = TRUE;
     return object;
 }
 
