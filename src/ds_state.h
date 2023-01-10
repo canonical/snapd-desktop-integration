@@ -21,8 +21,11 @@
 #include <gtk/gtk.h>
 #include <snapd-glib/snapd-glib.h>
 #include <libnotify/notify.h>
+#include "io.snapcraft.SnapDesktopIntegration.h"
 
 typedef struct {
+    SnapDesktopIntegration *skeleton;
+
     GtkSettings *settings;
     SnapdClient *client;
     GtkApplication *app;

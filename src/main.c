@@ -42,6 +42,7 @@ static Login1Manager *login_manager = NULL;
 static void
 ds_state_free(DsState *state)
 {
+    g_clear_object(&state->skeleton);
     g_clear_object(&state->settings);
     g_clear_object(&state->client);
     g_clear_handle_id(&state->check_delay_timer_id, g_source_remove);
@@ -408,7 +409,10 @@ do_startup (GObject  *object,
     state->settings = gtk_settings_get_default();
     state->client = snapd_client_new();
     state->app = GTK_APPLICATION (object);
-    register_dbus(g_application_get_dbus_connection(G_APPLICATION(state->app)), state, NULL);
+    if (!register_dbus(g_application_get_dbus_connection(G_APPLICATION(state->app)), state, NULL)) {
+        g_clear_object(&(state->skeleton));
+        g_message("Failed to export the DBus Desktop Integration API");
+    }
 }
 
 static void

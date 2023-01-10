@@ -44,21 +44,21 @@ dbus_handle_close_application_window (SnapDesktopIntegration *skeleton,
     return TRUE;
 }
 
-void
+gboolean
 register_dbus (GDBusConnection  *connection,
                DsState          *state,
                GError          **error)
 {
 
-    SnapDesktopIntegration *skeleton = snap_desktop_integration_skeleton_new();
-    g_signal_connect(skeleton, "handle_application_is_being_refreshed",
+    state->skeleton = snap_desktop_integration_skeleton_new();
+    g_signal_connect(state->skeleton, "handle_application_is_being_refreshed",
                      G_CALLBACK (dbus_handle_application_is_being_refreshed),
                      state);
-    g_signal_connect(skeleton, "handle_application_refresh_completed",
+    g_signal_connect(state->skeleton, "handle_application_refresh_completed",
                      G_CALLBACK (dbus_handle_close_application_window),
                      state);
-    g_dbus_interface_skeleton_export (G_DBUS_INTERFACE_SKELETON(skeleton),
-                                      connection,
-                                      "/io/snapcraft/SnapDesktopIntegration",
-                                      NULL);
+    return g_dbus_interface_skeleton_export (G_DBUS_INTERFACE_SKELETON(state->skeleton),
+                                             connection,
+                                             "/io/snapcraft/SnapDesktopIntegration",
+                                             error);
 }
