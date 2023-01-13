@@ -75,18 +75,16 @@ find_application(GList      *list,
 }
 
 void
-handle_application_is_being_refreshed(GVariant *parameters,
+handle_application_is_being_refreshed(gchar *appName,
+                                      gchar *lockFilePath,
+                                      GVariantIter *extraParams,
                                       DsState  *ds_state)
 {
-    gchar *appName, *lockFilePath;
     RefreshState *state = NULL;
-    g_autoptr(GVariantIter) extraParams = NULL;
     g_autoptr(GtkWidget) container = NULL;
     g_autoptr(GtkWidget) label = NULL;
     g_autoptr(GString) labelText = NULL;
     g_autoptr(GtkBuilder) builder = NULL;
-
-    g_variant_get(parameters, "(&s&sa{sv})", &appName, &lockFilePath, &extraParams);
 
     state = find_application(ds_state->refreshing_list, appName);
     if (state != NULL) {
@@ -117,15 +115,11 @@ handle_application_is_being_refreshed(GVariant *parameters,
 }
 
 void
-handle_close_application_window(GVariant *parameters,
+handle_close_application_window(gchar *appName,
+                                GVariantIter *extraParams,
                                 DsState  *ds_state)
 {
-    gchar *appName;
     RefreshState *state = NULL;
-    g_autoptr(GVariantIter) extraParams = NULL;
-
-
-    g_variant_get(parameters, "(&sa{sv})", &appName, &extraParams);
 
     state = find_application(ds_state->refreshing_list, appName);
     if (state == NULL) {

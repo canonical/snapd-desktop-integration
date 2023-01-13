@@ -1,3 +1,5 @@
+subdir('resources')
+
 gnome = import('gnome')
 
 # The returned source would be passed to another target
@@ -9,4 +11,10 @@ login_src = gnome.gdbus_codegen('org.freedesktop.login1',
 login_session_src = gnome.gdbus_codegen('org.freedesktop.login1.Session',
   sources: 'org.freedesktop.login1.session.dbus.xml',
   interface_prefix : 'org.freedesktop.login1.session'
+)
+
+gdbus_src = gnome.gdbus_codegen('io.snapcraft.SnapDesktopIntegration',
+  sources: 'io.snapcraft.SnapDesktopIntegration.dbus.xml',
+  interface_prefix : 'io.snapcraft.',
+  docbook : 'SnapDesktopIntegration-interface-doc'
 )
