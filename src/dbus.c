@@ -46,10 +46,10 @@ dbus_handle_close_application_window (SnapDesktopIntegration *skeleton,
 
 static gboolean
 dbus_handle_set_pulsed_progress (SnapDesktopIntegration *skeleton,
-                                        GDBusMethodInvocation *invocation,
-                                        gchar *snapName,
-                                        GVariantIter *extraParams,
-                                        gpointer data) {
+                                 GDBusMethodInvocation *invocation,
+                                 gchar *snapName,
+                                 GVariantIter *extraParams,
+                                 gpointer data) {
 
     handle_set_pulsed_progress(snapName, extraParams, data);
     snap_desktop_integration_complete_application_refresh_pulsed(skeleton, invocation);
