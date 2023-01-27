@@ -48,10 +48,11 @@ static gboolean
 dbus_handle_set_pulsed_progress (SnapDesktopIntegration *skeleton,
                                  GDBusMethodInvocation *invocation,
                                  gchar *snapName,
+                                 gchar *barText,
                                  GVariantIter *extraParams,
                                  gpointer data) {
 
-    handle_set_pulsed_progress(snapName, extraParams, data);
+    handle_set_pulsed_progress(snapName, barText, extraParams, data);
     snap_desktop_integration_complete_application_refresh_pulsed(skeleton, invocation);
     return TRUE;
 }
@@ -60,11 +61,12 @@ static gboolean
 dbus_handle_set_percentage_progress (SnapDesktopIntegration *skeleton,
                                      GDBusMethodInvocation *invocation,
                                      gchar *snapName,
-                                     gint percentage,
+                                     gchar *barText,
+                                     gdouble percentage,
                                      GVariantIter *extraParams,
                                      gpointer data) {
 
-    handle_set_percentage_progress(snapName, percentage, extraParams, data);
+    handle_set_percentage_progress(snapName, barText, percentage, extraParams, data);
     snap_desktop_integration_complete_application_refresh_percentage(skeleton, invocation);
     return TRUE;
 }

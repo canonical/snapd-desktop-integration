@@ -132,6 +132,7 @@ handle_close_application_window(gchar *appName,
 
 void
 handle_set_pulsed_progress(gchar *appName,
+                           gchar *barText,
                            GVariantIter *extraParams,
                            DsState  *ds_state)
 {
@@ -142,12 +143,17 @@ handle_set_pulsed_progress(gchar *appName,
         return;
     }
     state->pulsed = TRUE;
-    gtk_progress_bar_set_show_text(GTK_PROGRESS_BAR(state->progressBar), FALSE);
+    if ((barText == NULL) || (barText[0] == 0)) {
+        gtk_progress_bar_set_show_text(GTK_PROGRESS_BAR(state->progressBar), FALSE);
+    } else {
+        gtk_progress_bar_set_show_text(GTK_PROGRESS_BAR(state->progressBar), TRUE);
+    }
 }
 
 void
 handle_set_percentage_progress(gchar *appName,
-                               gint percent,
+                               gchar *barText,
+                               gdouble percent,
                                GVariantIter *extraParams,
                                DsState  *ds_state)
 {
@@ -158,8 +164,13 @@ handle_set_percentage_progress(gchar *appName,
         return;
     }
     state->pulsed = FALSE;
-    gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(state->progressBar), ((gdouble)percent) / 100.0);
+    gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(state->progressBar), percent);
     gtk_progress_bar_set_show_text(GTK_PROGRESS_BAR(state->progressBar), TRUE);
+    if ((barText != NULL) && (barText[0] == 0)) {
+        gtk_progress_bar_set_text(GTK_PROGRESS_BAR(state->progressBar), NULL);
+    } else {
+        gtk_progress_bar_set_text(GTK_PROGRESS_BAR(state->progressBar), barText);
+    }
 }
 
 RefreshState *
