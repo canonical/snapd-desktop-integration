@@ -147,6 +147,7 @@ handle_set_pulsed_progress(gchar *appName,
         gtk_progress_bar_set_show_text(GTK_PROGRESS_BAR(state->progressBar), FALSE);
     } else {
         gtk_progress_bar_set_show_text(GTK_PROGRESS_BAR(state->progressBar), TRUE);
+        gtk_progress_bar_set_text(GTK_PROGRESS_BAR(state->progressBar), barText);
     }
 }
 
