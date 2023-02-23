@@ -44,6 +44,33 @@ dbus_handle_close_application_window (SnapDesktopIntegration *skeleton,
     return TRUE;
 }
 
+static gboolean
+dbus_handle_set_pulsed_progress (SnapDesktopIntegration *skeleton,
+                                 GDBusMethodInvocation *invocation,
+                                 gchar *snapName,
+                                 gchar *barText,
+                                 GVariantIter *extraParams,
+                                 gpointer data) {
+
+    handle_set_pulsed_progress(snapName, barText, extraParams, data);
+    snap_desktop_integration_complete_application_refresh_pulsed(skeleton, invocation);
+    return TRUE;
+}
+
+static gboolean
+dbus_handle_set_percentage_progress (SnapDesktopIntegration *skeleton,
+                                     GDBusMethodInvocation *invocation,
+                                     gchar *snapName,
+                                     gchar *barText,
+                                     gdouble percentage,
+                                     GVariantIter *extraParams,
+                                     gpointer data) {
+
+    handle_set_percentage_progress(snapName, barText, percentage, extraParams, data);
+    snap_desktop_integration_complete_application_refresh_percentage(skeleton, invocation);
+    return TRUE;
+}
+
 gboolean
 register_dbus (GDBusConnection  *connection,
                DsState          *state,
@@ -56,6 +83,12 @@ register_dbus (GDBusConnection  *connection,
                      state);
     g_signal_connect(state->skeleton, "handle_application_refresh_completed",
                      G_CALLBACK (dbus_handle_close_application_window),
+                     state);
+    g_signal_connect(state->skeleton, "handle_application_refresh_pulsed",
+                     G_CALLBACK (dbus_handle_set_pulsed_progress),
+                     state);
+    g_signal_connect(state->skeleton, "handle_application_refresh_percentage",
+                     G_CALLBACK (dbus_handle_set_percentage_progress),
                      state);
     return g_dbus_interface_skeleton_export (G_DBUS_INTERFACE_SKELETON(state->skeleton),
                                              connection,

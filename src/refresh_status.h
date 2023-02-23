@@ -30,17 +30,25 @@ typedef struct {
     gchar                *lockFile;
     guint                 timeoutId;
     guint                 closeId;
+    gboolean              pulsed;
 } RefreshState;
 
-void
-handle_application_is_being_refreshed(gchar *appName,
-                                      gchar *lockFilePath,
-                                      GVariantIter *extraParams,
-                                      DsState  *ds_state);
-void
-handle_close_application_window(gchar *appName,
+void handle_application_is_being_refreshed(gchar *appName,
+                                           gchar *lockFilePath,
+                                           GVariantIter *extraParams,
+                                           DsState  *ds_state);
+void handle_close_application_window(gchar *appName,
+                                     GVariantIter *extraParams,
+                                     DsState  *ds_state);
+void handle_set_pulsed_progress(gchar *appName,
+                                gchar *barText,
                                 GVariantIter *extraParams,
                                 DsState  *ds_state);
+void handle_set_percentage_progress(gchar *appName,
+                                    gchar *barText,
+                                    gdouble percentage,
+                                    GVariantIter *extraParams,
+                                    DsState  *ds_state);
 RefreshState *refresh_state_new(DsState *state,
                                 gchar *appName);
 
