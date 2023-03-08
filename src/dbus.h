@@ -20,9 +20,7 @@
 
 #include "ds_state.h"
 
-gboolean
-register_dbus (GDBusConnection  *connection,
-               DsState          *state,
-               GError          **error);
+gboolean register_dbus(GDBusConnection *connection, DsState *state,
+                       GError **error);
 
 #endif //__DBUS_H__
