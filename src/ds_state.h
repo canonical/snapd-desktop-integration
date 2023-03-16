@@ -23,7 +23,7 @@
 #include <libnotify/notify.h>
 #include <snapd-glib/snapd-glib.h>
 
-#define ICON_SIZE 64
+#define ICON_SIZE 48
 
 typedef struct {
   SnapDesktopIntegration *skeleton;
