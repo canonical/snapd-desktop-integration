@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: snapd-desktop-integration\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2023-03-16 11:33+0100\n"
-"PO-Revision-Date: 2023-02-28 14:51+0100\n"
+"PO-Revision-Date: 2023-03-16 18:31+0100\n"
 "Last-Translator: Quentin PAGÈS\n"
 "Language-Team: \n"
 "Language: oc\n"
@@ -20,7 +20,7 @@ msgstr ""
 #: src/refresh_status.c:103
 #, c-format
 msgid "Please wait while “%s” is being refreshed to the latest version."
-msgstr ""
+msgstr "Mercés d’esperar pendent que s’actualiza a la darrièra version « %s »."
 
 #: src/main.c:68 src/main.c:85 src/main.c:106
 msgid "Installing missing theme snaps:"
@@ -34,7 +34,7 @@ msgstr "Acabat."
 #. TRANSLATORS: installing a missing theme snap was cancelled by the user
 #: src/main.c:77
 msgid "Canceled by the user."
-msgstr ""
+msgstr "Anullada per l’utilizaire."
 
 #. TRANSLATORS: installing a missing theme snap failed
 #: src/main.c:81
@@ -59,7 +59,7 @@ msgstr "Òc"
 #. now?" referred to snap themes
 #: src/main.c:155
 msgid "No"
-msgstr ""
+msgstr "Non"
 
 #: data/resources/snap_is_being_refreshed.ui:9
 msgid "Snap refresh in progress"
