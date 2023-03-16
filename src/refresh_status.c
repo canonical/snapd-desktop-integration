@@ -17,6 +17,7 @@
 
 #include "refresh_status.h"
 #include "iresources.h"
+#include <cairo.h>
 #include <errno.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -90,13 +91,39 @@ static void set_icon(RefreshState *state, const gchar *icon) {
 }
 
 static void set_icon_image(RefreshState *state, const gchar *path) {
+  g_autoptr(GFile) fimage = NULL;
+  g_autoptr(GdkPixbuf) image = NULL;
+  g_autoptr(GdkPixbuf) final_image = NULL;
+  cairo_surface_t *cairo_surface = NULL;
+  gint scale;
+
   if (path == NULL)
     return;
   if (strlen(path) == 0) {
     gtk_widget_hide(state->icon);
     return;
   }
-  gtk_image_set_from_file(GTK_IMAGE(state->icon), path);
+  fimage = g_file_new_for_path(path);
+  if (!g_file_query_exists(fimage, NULL)) {
+    gtk_widget_hide(state->icon);
+    return;
+  }
+  // This convoluted code is needed to be able to scale
+  // any picture to the desired size, and also to allow
+  // to set the scale and take advantage of the monitor
+  // scale.
+  image = gdk_pixbuf_new_from_file(path, NULL);
+  if (image == NULL) {
+    gtk_widget_hide(state->icon);
+    return;
+  }
+  scale = gtk_widget_get_scale_factor(GTK_WIDGET(state->icon));
+  final_image = gdk_pixbuf_scale_simple(image, ICON_SIZE * scale,
+                                        ICON_SIZE * scale, GDK_INTERP_BILINEAR);
+  cairo_surface =
+      gdk_cairo_surface_create_from_pixbuf(final_image, scale, NULL);
+  gtk_image_set_from_surface(GTK_IMAGE(state->icon), cairo_surface);
+  cairo_surface_destroy(cairo_surface);
 }
 
 static void handle_extra_params(RefreshState *state, GVariant *extraParams) {

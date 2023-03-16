@@ -59,6 +59,8 @@ Example for ApplicationIsBeingRefreshed:
 
     "Firefox","",{"icon":GLib.Variant("s","firefox")}
 
+    "Telegram","",{"icon_image":GLib.Variant("s","/snap/telegram-desktop/4627/meta/gui/icon.png")}
+
 ## Code formatting
 
 Use "clang-format -i SOURCE_FILE_NAME" after any change to automatically
