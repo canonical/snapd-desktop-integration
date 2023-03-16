@@ -99,8 +99,7 @@ static void set_icon_image(RefreshState *state, const gchar *path) {
   gtk_image_set_from_file(GTK_IMAGE(state->icon), path);
 }
 
-static void handle_extra_params(RefreshState *state,
-                                GVariant *extraParams) {
+static void handle_extra_params(RefreshState *state, GVariant *extraParams) {
   GVariantIter iter;
   GVariant *value;
   gchar *key;

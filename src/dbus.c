@@ -53,8 +53,8 @@ static gboolean dbus_handle_set_pulsed_progress(
 
 static gboolean dbus_handle_set_percentage_progress(
     SnapDesktopIntegration *skeleton, GDBusMethodInvocation *invocation,
-    gchar *snapName, gchar *barText, gdouble percentage,
-    GVariant *extraParams, gpointer data) {
+    gchar *snapName, gchar *barText, gdouble percentage, GVariant *extraParams,
+    gpointer data) {
 
   handle_set_percentage_progress(snapName, barText, percentage, extraParams,
                                  data);

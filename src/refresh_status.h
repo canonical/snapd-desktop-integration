@@ -43,8 +43,7 @@ void handle_close_application_window(gchar *appName, GVariant *extraParams,
 void handle_set_pulsed_progress(gchar *appName, gchar *barText,
                                 GVariant *extraParams, DsState *ds_state);
 void handle_set_percentage_progress(gchar *appName, gchar *barText,
-                                    gdouble percentage,
-                                    GVariant *extraParams,
+                                    gdouble percentage, GVariant *extraParams,
                                     DsState *ds_state);
 RefreshState *refresh_state_new(DsState *state, gchar *appName);
 
