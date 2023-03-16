@@ -2,14 +2,14 @@
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the snapd-desktop-integration package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
-# Sergio Costas <sergio.costas@canonical.com>, 2022.
+# Sergio Costas <sergio.costas@canonical.com>, 2022-2023.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: snapd-desktop-integration\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-10-24 15:38+0200\n"
-"PO-Revision-Date: 2022-10-24 15:38+0200\n"
+"POT-Creation-Date: 2023-03-16 11:33+0100\n"
+"PO-Revision-Date: 2023-03-16 11:34+0100\n"
 "Last-Translator: Sergio Costas <sergio.costas@canonical.com>\n"
 "Language-Team: Spanish - Spain <sergio.costas@canonical.com>\n"
 "Language: es_ES\n"
@@ -17,52 +17,56 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"X-Generator: Gtranslator 41.0\n"
+"X-Generator: Gtranslator 42.0\n"
 
-#: src/main.c:59 src/main.c:65 src/main.c:88
+#: src/refresh_status.c:103
+#, c-format
+msgid "Please wait while “%s” is being refreshed to the latest version."
+msgstr "Por favor, espere mientras '%s' se refresca a la última versión."
+
+#: src/main.c:68 src/main.c:85 src/main.c:106
 msgid "Installing missing theme snaps:"
 msgstr "Instalando snaps de temas:"
 
 #. TRANSLATORS: installing a missing theme snap succeed
-#: src/main.c:61
+#: src/main.c:70
 msgid "Complete."
 msgstr "Completado."
 
-#. TRANSLATORS: trying to install a missing theme snap failed
-#: src/main.c:67
+#. TRANSLATORS: installing a missing theme snap was cancelled by the user
+#: src/main.c:77
+msgid "Canceled by the user."
+msgstr "Cancelado por el usuario."
+
+#. TRANSLATORS: installing a missing theme snap failed
+#: src/main.c:81
 msgid "Failed."
 msgstr "Fallo."
 
-#: src/main.c:127
+#: src/main.c:140
 msgid "Some required theme snaps are missing."
 msgstr "Algunos snaps con temas no están instalados."
 
-#: src/main.c:128
+#: src/main.c:141
 msgid "Would you like to install them now?"
 msgstr "¿Quiere instalarlos ahora?"
 
-#. TRANSLATORS: answer to the question "Would you like to install them now?"
-#: src/main.c:136
+#. TRANSLATORS: answer to the question "Would you like to install them
+#. now?" referred to snap themes
+#: src/main.c:150
 msgid "Yes"
 msgstr "Sí"
 
-#. TRANSLATORS: answer to the question "Would you like to install them now?"
-#: src/main.c:143
+#. TRANSLATORS: answer to the question "Would you like to install them
+#. now?" referred to snap themes
+#: src/main.c:155
 msgid "No"
 msgstr "No"
-#: src/refresh_status.c:112
-#, c-format
-msgid ""
-"Please wait while '%s' is being refreshed to the latest version.\n"
-"This process may take a few minutes."
-msgstr ""
-"Por favor, espere mientras '%s' se refresca a la última versión.\n"
-"Este proceso puede tardar un rato."
 
-#: src/resources/snap_is_being_refreshed.ui:9
+#: data/resources/snap_is_being_refreshed.ui:9
 msgid "Snap refresh in progress"
 msgstr "Refrescando Snap"
 
-#: src/resources/snap_is_being_refreshed.ui:56
+#: data/resources/snap_is_being_refreshed.ui:58
 msgid "Hide"
 msgstr "Ocultar"

@@ -100,8 +100,8 @@ void handle_application_is_being_refreshed(gchar *appName, gchar *lockFilePath,
 
   labelText = g_string_new("");
   g_string_printf(labelText,
-                  _("Please wait while '%s' is being refreshed to the latest "
-                    "version.\nThis process may take a few minutes."),
+                  _("Please wait while “%s” is being refreshed to the latest "
+                    "version."),
                   appName);
   gtk_label_set_text(GTK_LABEL(label), labelText->str);
 
