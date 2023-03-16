@@ -50,6 +50,15 @@ and its associated data are:
 * icon_image: the value must be a string variant with the path to a picture. It will show
               that picture to the right of the message. Be careful with the picture size.
 
+### Using d-feet
+
+D-feet can be used to call the methods. To pass the 'extra_data' field, it is required to
+specify the format in the dictionary.
+
+Example for ApplicationIsBeingRefreshed:
+
+    "Firefox","",{"icon":GLib.Variant("s","firefox")}
+
 ## Code formatting
 
 Use "clang-format -i SOURCE_FILE_NAME" after any change to automatically
