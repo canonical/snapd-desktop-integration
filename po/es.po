@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: snapd-desktop-integration\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-03-16 11:33+0100\n"
-"PO-Revision-Date: 2023-03-16 16:30+0100\n"
+"POT-Creation-Date: 2023-03-30 12:55+0200\n"
+"PO-Revision-Date: 2023-03-30 12:56+0200\n"
 "Last-Translator: Sergio Costas <sergio.costas@canonical.com>\n"
 "Language-Team: Spanish - Spain <sergio.costas@canonical.com>\n"
 "Language: es_ES\n"
@@ -19,10 +19,10 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
 "X-Generator: Gtranslator 42.0\n"
 
-#: src/refresh_status.c:103
+#: src/refresh_status.c:186
 #, c-format
-msgid "Please wait while “%s” is being refreshed to the latest version."
-msgstr "Por favor, espere mientras “%s” se refresca a la última versión."
+msgid "Refreshing “%s” to latest version. Please wait."
+msgstr "Actualizando “%s” a la última versión. Espere, por favor."
 
 #: src/main.c:68 src/main.c:85 src/main.c:106
 msgid "Installing missing theme snaps:"
@@ -63,10 +63,14 @@ msgstr "Sí"
 msgid "No"
 msgstr "No"
 
-#: data/resources/snap_is_being_refreshed.ui:9
+#: data/resources/snap_is_being_refreshed.ui:13
 msgid "Snap refresh in progress"
-msgstr "Refrescando Snap"
+msgstr "Actualizando Snap"
 
-#: data/resources/snap_is_being_refreshed.ui:58
+#: data/resources/snap_is_being_refreshed.ui:89
 msgid "Hide"
 msgstr "Ocultar"
+
+#, c-format
+#~ msgid "Please wait while “%s” is being refreshed to the latest version."
+#~ msgstr "Por favor, espere mientras “%s” se refresca a la última versión."

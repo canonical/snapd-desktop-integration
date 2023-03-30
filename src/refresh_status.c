@@ -183,8 +183,7 @@ void handle_application_is_being_refreshed(gchar *appName, gchar *lockFilePath,
       GTK_WIDGET(g_object_ref(gtk_builder_get_object(builder, "app_icon")));
   labelText = g_string_new("");
   g_string_printf(labelText,
-                  _("Please wait while “%s” is being refreshed to the latest "
-                    "version."),
+                  _("Refreshing “%s” to latest version. Please wait."),
                   appName);
   gtk_label_set_text(state->message, labelText->str);
 
