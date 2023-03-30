@@ -182,9 +182,8 @@ void handle_application_is_being_refreshed(gchar *appName, gchar *lockFilePath,
   state->icon =
       GTK_WIDGET(g_object_ref(gtk_builder_get_object(builder, "app_icon")));
   labelText = g_string_new("");
-  g_string_printf(labelText,
-                  _("Refreshing “%s” to latest version. Please wait."),
-                  appName);
+  g_string_printf(
+      labelText, _("Refreshing “%s” to latest version. Please wait."), appName);
   gtk_label_set_text(state->message, labelText->str);
 
   state->timeoutId =
