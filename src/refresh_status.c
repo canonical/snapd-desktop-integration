@@ -17,6 +17,7 @@
 
 #include "refresh_status.h"
 #include "iresources.h"
+#include <cairo.h>
 #include <errno.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -66,8 +67,89 @@ static RefreshState *find_application(GList *list, const char *appName) {
   return NULL;
 }
 
+static void set_message(RefreshState *state, const gchar *message) {
+  if (message == NULL)
+    return;
+  gtk_label_set_text(state->message, message);
+}
+
+static void set_title(RefreshState *state, const gchar *title) {
+  if (title == NULL)
+    return;
+  gtk_window_set_title(GTK_WINDOW(state->window), title);
+}
+
+static void set_icon(RefreshState *state, const gchar *icon) {
+  if (icon == NULL)
+    return;
+  if (strlen(icon) == 0) {
+    gtk_widget_hide(state->icon);
+    return;
+  }
+  gtk_image_set_from_icon_name(GTK_IMAGE(state->icon), icon,
+                               GTK_ICON_SIZE_DIALOG);
+}
+
+static void set_icon_image(RefreshState *state, const gchar *path) {
+  g_autoptr(GFile) fimage = NULL;
+  g_autoptr(GdkPixbuf) image = NULL;
+  g_autoptr(GdkPixbuf) final_image = NULL;
+  cairo_surface_t *cairo_surface = NULL;
+  gint scale;
+
+  if (path == NULL)
+    return;
+  if (strlen(path) == 0) {
+    gtk_widget_hide(state->icon);
+    return;
+  }
+  fimage = g_file_new_for_path(path);
+  if (!g_file_query_exists(fimage, NULL)) {
+    gtk_widget_hide(state->icon);
+    return;
+  }
+  // This convoluted code is needed to be able to scale
+  // any picture to the desired size, and also to allow
+  // to set the scale and take advantage of the monitor
+  // scale.
+  image = gdk_pixbuf_new_from_file(path, NULL);
+  if (image == NULL) {
+    gtk_widget_hide(state->icon);
+    return;
+  }
+  scale = gtk_widget_get_scale_factor(GTK_WIDGET(state->icon));
+  final_image = gdk_pixbuf_scale_simple(image, ICON_SIZE * scale,
+                                        ICON_SIZE * scale, GDK_INTERP_BILINEAR);
+  cairo_surface =
+      gdk_cairo_surface_create_from_pixbuf(final_image, scale, NULL);
+  gtk_image_set_from_surface(GTK_IMAGE(state->icon), cairo_surface);
+  cairo_surface_destroy(cairo_surface);
+}
+
+static void handle_extra_params(RefreshState *state, GVariant *extraParams) {
+  GVariantIter iter;
+  GVariant *value;
+  gchar *key;
+
+  // Do a copy to allow manage the iter in other places if needed
+  g_variant_iter_init(&iter, extraParams);
+  while (g_variant_iter_next(&iter, "{sv}", &key, &value)) {
+    if (!g_strcmp0(key, "message")) {
+      set_message(state, g_variant_get_string(value, NULL));
+    } else if (!g_strcmp0(key, "title")) {
+      set_title(state, g_variant_get_string(value, NULL));
+    } else if (!g_strcmp0(key, "icon")) {
+      set_icon(state, g_variant_get_string(value, NULL));
+    } else if (!g_strcmp0(key, "icon_image")) {
+      set_icon_image(state, g_variant_get_string(value, NULL));
+    }
+    g_variant_unref(value);
+    g_free(key);
+  }
+}
+
 void handle_application_is_being_refreshed(gchar *appName, gchar *lockFilePath,
-                                           GVariantIter *extraParams,
+                                           GVariant *extraParams,
                                            DsState *ds_state) {
   RefreshState *state = NULL;
   g_autoptr(GtkWidget) container = NULL;
@@ -77,8 +159,8 @@ void handle_application_is_being_refreshed(gchar *appName, gchar *lockFilePath,
 
   state = find_application(ds_state->refreshing_list, appName);
   if (state != NULL) {
-    gtk_widget_hide(GTK_WIDGET(state->window));
     gtk_window_present(GTK_WINDOW(state->window));
+    handle_extra_params(state, extraParams);
     return;
   }
 
@@ -93,25 +175,25 @@ void handle_application_is_being_refreshed(gchar *appName, gchar *lockFilePath,
   gtk_builder_connect_signals(builder, state);
   state->window = GTK_APPLICATION_WINDOW(
       g_object_ref(gtk_builder_get_object(builder, "main_window")));
-  label =
-      GTK_WIDGET(g_object_ref(gtk_builder_get_object(builder, "app_label")));
+  state->message =
+      GTK_LABEL(g_object_ref(gtk_builder_get_object(builder, "app_label")));
   state->progressBar =
       GTK_WIDGET(g_object_ref(gtk_builder_get_object(builder, "progress_bar")));
-
+  state->icon =
+      GTK_WIDGET(g_object_ref(gtk_builder_get_object(builder, "app_icon")));
   labelText = g_string_new("");
-  g_string_printf(labelText,
-                  _("Please wait while “%s” is being refreshed to the latest "
-                    "version."),
-                  appName);
-  gtk_label_set_text(GTK_LABEL(label), labelText->str);
+  g_string_printf(
+      labelText, _("Refreshing “%s” to latest version. Please wait."), appName);
+  gtk_label_set_text(state->message, labelText->str);
 
   state->timeoutId =
       g_timeout_add(200, G_SOURCE_FUNC(refresh_progress_bar), state);
   gtk_widget_show_all(GTK_WIDGET(state->window));
   ds_state->refreshing_list = g_list_append(ds_state->refreshing_list, state);
+  handle_extra_params(state, extraParams);
 }
 
-void handle_close_application_window(gchar *appName, GVariantIter *extraParams,
+void handle_close_application_window(gchar *appName, GVariant *extraParams,
                                      DsState *ds_state) {
   RefreshState *state = NULL;
 
@@ -123,7 +205,7 @@ void handle_close_application_window(gchar *appName, GVariantIter *extraParams,
 }
 
 void handle_set_pulsed_progress(gchar *appName, gchar *barText,
-                                GVariantIter *extraParams, DsState *ds_state) {
+                                GVariant *extraParams, DsState *ds_state) {
   RefreshState *state = NULL;
 
   state = find_application(ds_state->refreshing_list, appName);
@@ -137,10 +219,11 @@ void handle_set_pulsed_progress(gchar *appName, gchar *barText,
     gtk_progress_bar_set_show_text(GTK_PROGRESS_BAR(state->progressBar), TRUE);
     gtk_progress_bar_set_text(GTK_PROGRESS_BAR(state->progressBar), barText);
   }
+  handle_extra_params(state, extraParams);
 }
 
 void handle_set_percentage_progress(gchar *appName, gchar *barText,
-                                    gdouble percent, GVariantIter *extraParams,
+                                    gdouble percent, GVariant *extraParams,
                                     DsState *ds_state) {
   RefreshState *state = NULL;
 
@@ -156,6 +239,7 @@ void handle_set_percentage_progress(gchar *appName, gchar *barText,
   } else {
     gtk_progress_bar_set_text(GTK_PROGRESS_BAR(state->progressBar), barText);
   }
+  handle_extra_params(state, extraParams);
 }
 
 RefreshState *refresh_state_new(DsState *state, gchar *appName) {

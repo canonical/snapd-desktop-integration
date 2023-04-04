@@ -1,4 +1,4 @@
-project('snapd-desktop-integration', 'c', version: '0.1')
+project('snapd-desktop-integration', 'c', version: '0.9')
 
 gio_dep = dependency('gio-2.0')
 gio_unix_dep = dependency('gio-unix-2.0')

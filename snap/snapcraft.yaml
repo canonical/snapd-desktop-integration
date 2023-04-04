@@ -26,6 +26,7 @@ apps:
     plugs:
       - snap-themes-control
       - login-session-observe
+      - desktop-launch
 
 slots:
   snapd-desktop-integration:

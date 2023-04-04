@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: snapd-desktop-integration\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-03-16 11:33+0100\n"
+"POT-Creation-Date: 2023-03-30 12:55+0200\n"
 "PO-Revision-Date: 2023-02-28 14:51+0100\n"
 "Last-Translator: Quentin PAGÈS\n"
 "Language-Team: \n"
@@ -17,9 +17,9 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Poedit 3.2.2\n"
 
-#: src/refresh_status.c:103
+#: src/refresh_status.c:186
 #, c-format
-msgid "Please wait while “%s” is being refreshed to the latest version."
+msgid "Refreshing “%s” to latest version. Please wait."
 msgstr ""
 
 #: src/main.c:68 src/main.c:85 src/main.c:106
@@ -61,10 +61,10 @@ msgstr "Òc"
 msgid "No"
 msgstr ""
 
-#: data/resources/snap_is_being_refreshed.ui:9
+#: data/resources/snap_is_being_refreshed.ui:13
 msgid "Snap refresh in progress"
 msgstr "Actualizacion de Snap en cors"
 
-#: data/resources/snap_is_being_refreshed.ui:58
+#: data/resources/snap_is_being_refreshed.ui:89
 msgid "Hide"
 msgstr "Amagar"
