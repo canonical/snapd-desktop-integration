@@ -14,6 +14,12 @@ layout:
   /usr/share/locale:
     bind: $SNAP/usr/share/locale
 
+plugs:
+  read-snap:
+    interface: system-files
+    read:
+      - /snap
+
 apps:
   snapd-desktop-integration:
     extensions: [gnome]
@@ -26,7 +32,7 @@ apps:
     plugs:
       - snap-themes-control
       - login-session-observe
-      - desktop-launch
+      - read-snap
 
 slots:
   snapd-desktop-integration:
