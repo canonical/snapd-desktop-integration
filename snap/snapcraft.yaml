@@ -15,7 +15,7 @@ layout:
     bind: $SNAP/usr/share/locale
 
 plugs:
-  read-snap:
+  snap:
     interface: system-files
     read:
       - /snap
@@ -32,7 +32,7 @@ apps:
     plugs:
       - snap-themes-control
       - login-session-observe
-      - read-snap
+      - snap
 
 slots:
   snapd-desktop-integration:
