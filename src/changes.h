@@ -24,10 +24,10 @@
 #define CHANGE_CHECK_INTERVAL 333
 
 typedef struct {
-    gchar *change_id;
-    gint timeout_id;
-    DsState *state;
-    gboolean busy;
+  gchar *change_id;
+  gint timeout_id;
+  DsState *state;
+  gboolean busy;
 } SnapProgress;
 
 void manage_snap_dbus(GDBusConnection *connection, DsState *state);

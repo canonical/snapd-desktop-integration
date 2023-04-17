@@ -18,8 +18,8 @@
 #ifndef __DS_STATE_H__
 #define __DS_STATE_H__
 
-#include "io.snapcraft.SnapDesktopIntegration.h"
 #include "io.snapcraft.SnapChanges.h"
+#include "io.snapcraft.SnapDesktopIntegration.h"
 #include <gtk/gtk.h>
 #include <libnotify/notify.h>
 #include <snapd-glib/snapd-glib.h>
