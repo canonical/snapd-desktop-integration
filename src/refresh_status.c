@@ -45,15 +45,23 @@ static gboolean refresh_progress_bar(RefreshState *state) {
   }
   if (stat(state->lockFile, &statbuf) != 0) {
     if ((errno == ENOENT) || (errno == ENOTDIR)) {
+      if (state->wait_change_in_lock_file) {
+        return G_SOURCE_CONTINUE;
+      }
       refresh_state_free(state);
       return G_SOURCE_REMOVE;
     }
   } else {
     if (statbuf.st_size == 0) {
+      if (state->wait_change_in_lock_file) {
+        return G_SOURCE_CONTINUE;
+      }
       refresh_state_free(state);
       return G_SOURCE_REMOVE;
     }
   }
+  // if we arrive here, we wait for the lock file to be empty
+  state->wait_change_in_lock_file = FALSE;
   return G_SOURCE_CONTINUE;
 }
 
@@ -142,6 +150,8 @@ static void handle_extra_params(RefreshState *state, GVariant *extraParams) {
       set_icon(state, g_variant_get_string(value, NULL));
     } else if (!g_strcmp0(key, "icon_image")) {
       set_icon_image(state, g_variant_get_string(value, NULL));
+    } else if (!g_strcmp0(key, "wait_change_in_lock_file")) {
+      state->wait_change_in_lock_file = TRUE;
     }
     g_variant_unref(value);
     g_free(key);
@@ -170,6 +180,7 @@ void handle_application_is_being_refreshed(gchar *appName, gchar *lockFilePath,
   } else {
     state->lockFile = g_strdup(lockFilePath);
   }
+  state->wait_change_in_lock_file = FALSE;
   builder = gtk_builder_new_from_resource(
       "/io/snapcraft/SnapDesktopIntegration/snap_is_being_refreshed.ui");
   gtk_builder_connect_signals(builder, state);
