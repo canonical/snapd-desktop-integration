@@ -82,7 +82,8 @@ static gboolean refresh_progress_bar(RefreshState *state) {
   return G_SOURCE_CONTINUE;
 }
 
-static RefreshState *find_application(GList *list, const char *appName) {
+RefreshState *ds_state_find_application(DsState *state, const char *appName) {
+  GList *list = state->refreshing_list;
   for (; list != NULL; list = list->next) {
     RefreshState *state = (RefreshState *)list->data;
     if (0 == g_strcmp0(state->appName->str, appName)) {
@@ -156,6 +157,10 @@ static void handle_extra_params(RefreshState *state, GVariant *extraParams) {
   GVariant *value;
   gchar *key;
 
+  if (extraParams == NULL) {
+    return;
+  }
+
   // Do a copy to allow manage the iter in other places if needed
   g_variant_iter_init(&iter, extraParams);
   while (g_variant_iter_next(&iter, "{sv}", &key, &value)) {
@@ -184,7 +189,7 @@ void handle_application_is_being_refreshed(gchar *appName, gchar *lockFilePath,
   g_autoptr(GString) labelText = NULL;
   g_autoptr(GtkBuilder) builder = NULL;
 
-  state = find_application(ds_state->refreshing_list, appName);
+  state = ds_state_find_application(ds_state, appName);
   if (state != NULL) {
     gtk_window_present(GTK_WINDOW(state->window));
     handle_extra_params(state, extraParams);
@@ -225,7 +230,7 @@ void handle_close_application_window(gchar *appName, GVariant *extraParams,
                                      DsState *ds_state) {
   RefreshState *state = NULL;
 
-  state = find_application(ds_state->refreshing_list, appName);
+  state = ds_state_find_application(ds_state, appName);
   if (state == NULL) {
     return;
   }
@@ -236,7 +241,7 @@ void handle_set_pulsed_progress(gchar *appName, gchar *barText,
                                 GVariant *extraParams, DsState *ds_state) {
   RefreshState *state = NULL;
 
-  state = find_application(ds_state->refreshing_list, appName);
+  state = ds_state_find_application(ds_state, appName);
   if (state == NULL) {
     return;
   }
@@ -255,7 +260,7 @@ void handle_set_percentage_progress(gchar *appName, gchar *barText,
                                     DsState *ds_state) {
   RefreshState *state = NULL;
 
-  state = find_application(ds_state->refreshing_list, appName);
+  state = ds_state_find_application(ds_state, appName);
   if (state == NULL) {
     return;
   }
@@ -298,6 +303,7 @@ void refresh_state_free(RefreshState *state) {
   if (state->window != NULL) {
     gtk_widget_destroy(GTK_WIDGET(state->window));
   }
+  g_free(state->summary);
   g_clear_object(&state->window);
   g_free(state);
 }
