@@ -35,6 +35,23 @@ void on_hide_clicked(GtkButton *button, RefreshState *state) {
   refresh_state_free(state);
 }
 
+void on_main_window_size_allocate(GtkApplicationWindow *self,
+                                  GtkAllocation *allocation,
+                                  RefreshState *state) {
+  gboolean modified = FALSE;
+  if (allocation->width > state->width) {
+    modified = TRUE;
+    state->width = allocation->width;
+  }
+  if (allocation->height > state->height) {
+    modified = TRUE;
+    state->height = allocation->height;
+  }
+  if (modified) {
+    gtk_widget_set_size_request(GTK_WIDGET(self), state->width, state->height);
+  }
+}
+
 static gboolean refresh_progress_bar(RefreshState *state) {
   struct stat statbuf;
   if (state->pulsed) {
@@ -258,6 +275,8 @@ RefreshState *refresh_state_new(DsState *state, gchar *appName) {
   object->appName = g_string_new(appName);
   object->dsstate = state;
   object->pulsed = TRUE;
+  object->width = 0;
+  object->height = 0;
   return object;
 }
 
