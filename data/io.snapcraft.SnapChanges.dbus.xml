@@ -8,7 +8,6 @@
 	<signal name="Change">
 		<arg type="s" name="change_id" />
 		<arg type="s" name="change_type" />
-		<arg type="s" name="change_kind" />
 		<arg type="a{sv}" name="metadata" />
 	</signal>
 </interface>

@@ -181,7 +181,6 @@ static void launch_progress_bar(const gchar *change_id, DsState *state) {
 static void snap_dbus_handle_change(SnapChanges *object,
                                     const gchar *arg_change_id,
                                     const gchar *arg_change_type,
-                                    const gchar *arg_change_kind,
                                     GVariant *arg_metadata, DsState *state) {
   if (g_strcmp0(arg_change_type, "delayed-auto-refresh") == 0) {
     launch_progress_bar(arg_change_id, state);
