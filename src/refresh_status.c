@@ -113,6 +113,7 @@ static void set_icon(RefreshState *state, const gchar *icon) {
   }
   gtk_image_set_from_icon_name(GTK_IMAGE(state->icon), icon,
                                GTK_ICON_SIZE_DIALOG);
+  gtk_widget_show(state->icon);
 }
 
 static void set_icon_image(RefreshState *state, const gchar *path) {
@@ -149,6 +150,7 @@ static void set_icon_image(RefreshState *state, const gchar *path) {
       gdk_cairo_surface_create_from_pixbuf(final_image, scale, NULL);
   gtk_image_set_from_surface(GTK_IMAGE(state->icon), cairo_surface);
   cairo_surface_destroy(cairo_surface);
+  gtk_widget_show(state->icon);
 }
 
 static void set_desktop_file(RefreshState *state, const gchar *path) {
