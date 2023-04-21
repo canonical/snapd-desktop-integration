@@ -19,11 +19,11 @@
 #include "iresources.h"
 #include <cairo.h>
 #include <errno.h>
+#include <gio/gdesktopappinfo.h>
+#include <libintl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
-
-#include <libintl.h>
 
 gboolean on_delete_window(GtkWindow *self, GdkEvent *event,
                           RefreshState *state) {
@@ -151,6 +151,26 @@ static void set_icon_image(RefreshState *state, const gchar *path) {
   cairo_surface_destroy(cairo_surface);
 }
 
+static void set_desktop_file(RefreshState *state, const gchar *path) {
+  g_autoptr(GDesktopAppInfo) app_info = NULL;
+  g_autofree gchar *icon = NULL;
+
+  if (path == NULL)
+    return;
+
+  if (strlen(path) == 0)
+    return;
+
+  app_info = g_desktop_app_info_new_from_filename(path);
+  if (app_info == NULL) {
+    return;
+  }
+  // extract the icon from the desktop file
+  icon = g_desktop_app_info_get_string(app_info, "Icon");
+  if (icon != NULL)
+    set_icon_image(state, icon);
+}
+
 static void handle_extra_params(RefreshState *state, GVariant *extraParams) {
   GVariantIter iter;
   GVariant *value;
@@ -169,6 +189,8 @@ static void handle_extra_params(RefreshState *state, GVariant *extraParams) {
       set_icon_image(state, g_variant_get_string(value, NULL));
     } else if (!g_strcmp0(key, "wait_change_in_lock_file")) {
       state->wait_change_in_lock_file = TRUE;
+    } else if (!g_strcmp0(key, "desktop_file")) {
+      set_desktop_file(state, g_variant_get_string(value, NULL));
     }
     g_variant_unref(value);
     g_free(key);
@@ -213,6 +235,8 @@ void handle_application_is_being_refreshed(gchar *appName, gchar *lockFilePath,
   g_string_printf(
       labelText, _("Refreshing “%s” to latest version. Please wait."), appName);
   gtk_label_set_text(state->message, labelText->str);
+
+  gtk_widget_hide(state->icon);
 
   state->timeoutId =
       g_timeout_add(200, G_SOURCE_FUNC(refresh_progress_bar), state);
