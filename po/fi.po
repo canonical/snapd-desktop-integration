@@ -1,4 +1,4 @@
-# Spanish translation for snapd-desktop-integration
+# Finnish translation for snapd-desktop-integration
 # Copyright (c) 2023 Rosetta Contributors and Canonical Ltd 2023
 # This file is distributed under the same license as the snapd-desktop-integration package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2023.
@@ -8,9 +8,9 @@ msgstr ""
 "Project-Id-Version: snapd-desktop-integration\n"
 "Report-Msgid-Bugs-To: FULL NAME <EMAIL@ADDRESS>\n"
 "POT-Creation-Date: 2023-04-06 09:46+0200\n"
-"PO-Revision-Date: 2023-04-20 06:38+0000\n"
-"Last-Translator: Adolfo Jayme Barrientos <fitoschido@gmail.com>\n"
-"Language-Team: Spanish <es@li.org>\n"
+"PO-Revision-Date: 2023-04-07 05:42+0000\n"
+"Last-Translator: Jiri Grönroos <Unknown>\n"
+"Language-Team: Finnish <fi@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -20,51 +20,51 @@ msgstr ""
 #: src/refresh_status.c:186
 #, c-format
 msgid "Refreshing “%s” to latest version. Please wait."
-msgstr "Actualizando «%s» a la versión más reciente. Espere."
+msgstr "Päivitetään “%s” uusimpaan versioon."
 
 #: src/main.c:68 src/main.c:85 src/main.c:106
 msgid "Installing missing theme snaps:"
-msgstr "Instalando los «snaps» de temas faltantes:"
+msgstr "Asennetaan puuttuvat teema-snapit:"
 
 #. TRANSLATORS: installing a missing theme snap succeed
 #: src/main.c:70
 msgid "Complete."
-msgstr "Completado."
+msgstr "Valmis."
 
 #. TRANSLATORS: installing a missing theme snap was cancelled by the user
 #: src/main.c:77
 msgid "Canceled by the user."
-msgstr "Cancelado por usted."
+msgstr "Peruttu käyttäjän toimesta."
 
 #. TRANSLATORS: installing a missing theme snap failed
 #: src/main.c:81
 msgid "Failed."
-msgstr "Falló."
+msgstr "Epäonnistui."
 
 #: src/main.c:140
 msgid "Some required theme snaps are missing."
-msgstr "Faltan algunos «snaps» de temas requeridos."
+msgstr "Joitain vaadittuja teema-snapeja puuttuu."
 
 #: src/main.c:141
 msgid "Would you like to install them now?"
-msgstr "¿Quiere instalarlos ahora?"
+msgstr "Haluatko asentaa ne nyt?"
 
 #. TRANSLATORS: answer to the question "Would you like to install them
 #. now?" referred to snap themes
 #: src/main.c:150
 msgid "Yes"
-msgstr "Sí"
+msgstr "Kyllä"
 
 #. TRANSLATORS: answer to the question "Would you like to install them
 #. now?" referred to snap themes
 #: src/main.c:155
 msgid "No"
-msgstr "No"
+msgstr "Ei"
 
 #: data/resources/snap_is_being_refreshed.ui:13
 msgid "Snap refresh in progress"
-msgstr "Actualización de «snaps» en curso"
+msgstr "Snapin päivitys meneillään"
 
 #: data/resources/snap_is_being_refreshed.ui:89
 msgid "Hide"
-msgstr "Ocultar"
+msgstr "Piilota"
