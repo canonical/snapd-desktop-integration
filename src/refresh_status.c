@@ -25,8 +25,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-gboolean on_close_window(GtkWindow *self,
-                      RefreshState *state) {
+gboolean on_close_window(GtkWindow *self, RefreshState *state) {
   refresh_state_free(state);
   return TRUE;
 }
@@ -234,9 +233,12 @@ void handle_application_is_being_refreshed(gchar *appName, gchar *lockFilePath,
       labelText, _("Refreshing “%s” to latest version. Please wait."), appName);
   gtk_label_set_text(state->message, labelText->str);
 
-  g_signal_connect(G_OBJECT(state->window), "close-request", G_CALLBACK(on_close_window), state);
-  //g_signal_connect(G_OBJECT(state->window), "size-allocate", G_CALLBACK(on_main_window_size_allocate), state);
-  g_signal_connect(G_OBJECT(button), "clicked", G_CALLBACK(on_hide_clicked), state);
+  g_signal_connect(G_OBJECT(state->window), "close-request",
+                   G_CALLBACK(on_close_window), state);
+  // g_signal_connect(G_OBJECT(state->window), "size-allocate",
+  //                  G_CALLBACK(on_main_window_size_allocate), state);
+  g_signal_connect(G_OBJECT(button), "clicked", G_CALLBACK(on_hide_clicked),
+                   state);
 
   gtk_widget_set_visible(state->icon, FALSE);
 
