@@ -25,10 +25,10 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-gboolean on_delete_window(GtkWindow *self, GdkEvent *event,
-                          RefreshState *state) {
+gboolean on_close_window(GtkWindow *self,
+                      RefreshState *state) {
   refresh_state_free(state);
-  return FALSE;
+  return TRUE;
 }
 
 void on_hide_clicked(GtkButton *button, RefreshState *state) {
@@ -108,12 +108,11 @@ static void set_icon(RefreshState *state, const gchar *icon) {
   if (icon == NULL)
     return;
   if (strlen(icon) == 0) {
-    gtk_widget_hide(state->icon);
+    gtk_widget_set_visible(state->icon, FALSE);
     return;
   }
-  gtk_image_set_from_icon_name(GTK_IMAGE(state->icon), icon,
-                               GTK_ICON_SIZE_DIALOG);
-  gtk_widget_show(state->icon);
+  gtk_image_set_from_icon_name(GTK_IMAGE(state->icon), icon);
+  gtk_widget_set_visible(state->icon, TRUE);
 }
 
 static void set_icon_image(RefreshState *state, const gchar *path) {
@@ -126,12 +125,12 @@ static void set_icon_image(RefreshState *state, const gchar *path) {
   if (path == NULL)
     return;
   if (strlen(path) == 0) {
-    gtk_widget_hide(state->icon);
+    gtk_widget_set_visible(state->icon, FALSE);
     return;
   }
   fimage = g_file_new_for_path(path);
   if (!g_file_query_exists(fimage, NULL)) {
-    gtk_widget_hide(state->icon);
+    gtk_widget_set_visible(state->icon, FALSE);
     return;
   }
   // This convoluted code is needed to be able to scale
@@ -140,15 +139,15 @@ static void set_icon_image(RefreshState *state, const gchar *path) {
   // scale.
   image = gdk_pixbuf_new_from_file(path, NULL);
   if (image == NULL) {
-    gtk_widget_hide(state->icon);
+    gtk_widget_set_visible(state->icon, FALSE);
     return;
   }
   scale = gtk_widget_get_scale_factor(GTK_WIDGET(state->icon));
   final_image = gdk_pixbuf_scale_simple(image, ICON_SIZE * scale,
                                         ICON_SIZE * scale, GDK_INTERP_BILINEAR);
-  cairo_surface =
+  /*cairo_surface =
       gdk_cairo_surface_create_from_pixbuf(final_image, scale, NULL);
-  gtk_image_set_from_surface(GTK_IMAGE(state->icon), cairo_surface);
+  gtk_image_set_from_surface(GTK_IMAGE(state->icon), cairo_surface);*/
   cairo_surface_destroy(cairo_surface);
   gtk_widget_show(state->icon);
 }
@@ -207,6 +206,7 @@ void handle_application_is_being_refreshed(gchar *appName, gchar *lockFilePath,
   g_autoptr(GtkWidget) label = NULL;
   g_autoptr(GString) labelText = NULL;
   g_autoptr(GtkBuilder) builder = NULL;
+  GtkButton *button;
 
   state = find_application(ds_state->refreshing_list, appName);
   if (state != NULL) {
@@ -223,8 +223,7 @@ void handle_application_is_being_refreshed(gchar *appName, gchar *lockFilePath,
   }
   state->wait_change_in_lock_file = FALSE;
   builder = gtk_builder_new_from_resource(
-      "/io/snapcraft/SnapDesktopIntegration/snap_is_being_refreshed.ui");
-  gtk_builder_connect_signals(builder, state);
+      "/io/snapcraft/SnapDesktopIntegration/snap_is_being_refreshed_gtk4.ui");
   state->window = GTK_APPLICATION_WINDOW(
       g_object_ref(gtk_builder_get_object(builder, "main_window")));
   state->message =
@@ -233,16 +232,21 @@ void handle_application_is_being_refreshed(gchar *appName, gchar *lockFilePath,
       GTK_WIDGET(g_object_ref(gtk_builder_get_object(builder, "progress_bar")));
   state->icon =
       GTK_WIDGET(g_object_ref(gtk_builder_get_object(builder, "app_icon")));
+  button = GTK_BUTTON(gtk_builder_get_object(builder, "button_hide"));
   labelText = g_string_new("");
   g_string_printf(
       labelText, _("Refreshing “%s” to latest version. Please wait."), appName);
   gtk_label_set_text(state->message, labelText->str);
 
-  gtk_widget_hide(state->icon);
+  g_signal_connect(G_OBJECT(state->window), "close-request", G_CALLBACK(on_close_window), state);
+  //g_signal_connect(G_OBJECT(state->window), "size-allocate", G_CALLBACK(on_main_window_size_allocate), state);
+  g_signal_connect(G_OBJECT(button), "clicked", G_CALLBACK(on_hide_clicked), state);
+
+  gtk_widget_set_visible(state->icon, FALSE);
 
   state->timeoutId =
       g_timeout_add(200, G_SOURCE_FUNC(refresh_progress_bar), state);
-  gtk_widget_show_all(GTK_WIDGET(state->window));
+  gtk_window_present(GTK_WINDOW(state->window));
   ds_state->refreshing_list = g_list_append(ds_state->refreshing_list, state);
   handle_extra_params(state, extraParams);
 }
@@ -322,7 +326,7 @@ void refresh_state_free(RefreshState *state) {
   g_clear_object(&state->progressBar);
   g_string_free(state->appName, TRUE);
   if (state->window != NULL) {
-    gtk_widget_destroy(GTK_WIDGET(state->window));
+    gtk_window_destroy(GTK_WINDOW(state->window));
   }
   g_clear_object(&state->window);
   g_free(state);
