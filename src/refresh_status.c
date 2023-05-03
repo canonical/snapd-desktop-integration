@@ -119,7 +119,6 @@ static void set_icon_image(RefreshState *state, const gchar *path) {
   g_autoptr(GFile) fimage = NULL;
   g_autoptr(GdkPixbuf) image = NULL;
   g_autoptr(GdkPixbuf) final_image = NULL;
-  cairo_surface_t *cairo_surface = NULL;
   gint scale;
 
   if (path == NULL)
@@ -145,11 +144,8 @@ static void set_icon_image(RefreshState *state, const gchar *path) {
   scale = gtk_widget_get_scale_factor(GTK_WIDGET(state->icon));
   final_image = gdk_pixbuf_scale_simple(image, ICON_SIZE * scale,
                                         ICON_SIZE * scale, GDK_INTERP_BILINEAR);
-  /*cairo_surface =
-      gdk_cairo_surface_create_from_pixbuf(final_image, scale, NULL);
-  gtk_image_set_from_surface(GTK_IMAGE(state->icon), cairo_surface);*/
-  cairo_surface_destroy(cairo_surface);
-  gtk_widget_show(state->icon);
+  gtk_image_set_from_pixbuf(GTK_IMAGE(state->icon), final_image);
+  gtk_widget_set_visible(state->icon, TRUE);
 }
 
 static void set_desktop_file(RefreshState *state, const gchar *path) {
