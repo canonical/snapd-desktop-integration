@@ -1,0 +1,50 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<!DOCTYPE cambalache-project SYSTEM "cambalache-project.dtd">
+<cambalache-project version="0.10.3" target_tk="gtk-4.0">
+  <ui>
+	(1,None,"snap_is_being_refreshed_gtk4.ui","snap_is_being_refreshed_gtk4.ui",None,None,None,None,None,None)
+  </ui>
+  <object>
+	(1,1,"GtkApplicationWindow","main_window",None,None,None,None,None),
+	(1,2,"GtkBox",None,1,None,None,None,-1),
+	(1,3,"GtkBox",None,2,None,None,None,None),
+	(1,4,"GtkBox",None,2,None,None,None,1),
+	(1,5,"GtkImage","app_icon",3,None,None,None,None),
+	(1,6,"GtkLabel","app_label",3,None,None,None,1),
+	(1,7,"GtkProgressBar","progress_bar",4,None,None,None,None),
+	(1,8,"GtkButton","button_hide",4,None,None,None,1)
+  </object>
+  <object_property>
+	(1,1,"GtkWindow","default-height","200",None,None,None,None,None),
+	(1,1,"GtkWindow","default-width","560",None,None,None,None,None),
+	(1,2,"GtkBox","spacing","4",None,None,None,None,None),
+	(1,2,"GtkOrientable","orientation","vertical",None,None,None,None,None),
+	(1,2,"GtkWidget","margin-bottom","20",None,None,None,None,None),
+	(1,2,"GtkWidget","margin-end","20",None,None,None,None,None),
+	(1,2,"GtkWidget","margin-start","20",None,None,None,None,None),
+	(1,2,"GtkWidget","margin-top","20",None,None,None,None,None),
+	(1,3,"GtkWidget","hexpand","True",None,None,None,None,None),
+	(1,3,"GtkWidget","hexpand-set","True",None,None,None,None,None),
+	(1,4,"GtkWidget","hexpand","True",None,None,None,None,None),
+	(1,4,"GtkWidget","hexpand-set","True",None,None,None,None,None),
+	(1,5,"GtkImage","icon-size","large",None,None,None,None,None),
+	(1,5,"GtkWidget","margin-end","2",None,None,None,None,None),
+	(1,5,"GtkWidget","margin-start","2",None,None,None,None,None),
+	(1,5,"GtkWidget","vexpand","True",None,None,None,None,None),
+	(1,5,"GtkWidget","vexpand-set","True",None,None,None,None,None),
+	(1,6,"GtkWidget","hexpand","True",None,None,None,None,None),
+	(1,6,"GtkWidget","hexpand-set","True",None,None,None,None,None),
+	(1,6,"GtkWidget","margin-end","2",None,None,None,None,None),
+	(1,6,"GtkWidget","margin-start","2",None,None,None,None,None),
+	(1,6,"GtkWidget","vexpand","True",None,None,None,None,None),
+	(1,6,"GtkWidget","vexpand-set","True",None,None,None,None,None),
+	(1,7,"GtkProgressBar","fraction","0.1",None,None,None,None,None),
+	(1,7,"GtkWidget","hexpand","True",None,None,None,None,None),
+	(1,7,"GtkWidget","hexpand-set","True",None,None,None,None,None),
+	(1,7,"GtkWidget","margin-end","4",None,None,None,None,None),
+	(1,7,"GtkWidget","valign","center",None,None,None,None,None),
+	(1,7,"GtkWidget","vexpand","True",None,None,None,None,None),
+	(1,7,"GtkWidget","vexpand-set","True",None,None,None,None,None),
+	(1,8,"GtkButton","label","Hide",None,None,None,None,None)
+  </object_property>
+</cambalache-project>

@@ -455,7 +455,7 @@ int main(int argc, char **argv) {
   bindtextdomain(GETTEXT_PACKAGE, LOCALEDIR);
   textdomain(GETTEXT_PACKAGE);
 
-  if (!gtk_init_check(&argc, &argv)) {
+  if (!gtk_init_check()) {
     g_message("Failed to do gtk init. Waiting for a new session with desktop "
               "capabilities.");
 
