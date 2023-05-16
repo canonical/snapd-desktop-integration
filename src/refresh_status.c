@@ -176,7 +176,8 @@ static void handle_extra_params(RefreshState *state, GVariant *extraParams) {
   }
 }
 
-void handle_application_is_being_refreshed(gchar *appName, gchar *lockFilePath,
+void handle_application_is_being_refreshed(const gchar *appName,
+                                           const gchar *lockFilePath,
                                            GVariant *extraParams,
                                            DsState *ds_state) {
   RefreshState *state = NULL;
@@ -230,8 +231,8 @@ void handle_application_is_being_refreshed(gchar *appName, gchar *lockFilePath,
   handle_extra_params(state, extraParams);
 }
 
-void handle_close_application_window(gchar *appName, GVariant *extraParams,
-                                     DsState *ds_state) {
+void handle_close_application_window(const gchar *appName,
+                                     GVariant *extraParams, DsState *ds_state) {
   RefreshState *state = NULL;
 
   state = find_application(ds_state->refreshing_list, appName);
@@ -241,7 +242,7 @@ void handle_close_application_window(gchar *appName, GVariant *extraParams,
   refresh_state_free(state);
 }
 
-void handle_set_pulsed_progress(gchar *appName, gchar *barText,
+void handle_set_pulsed_progress(const gchar *appName, const gchar *barText,
                                 GVariant *extraParams, DsState *ds_state) {
   RefreshState *state = NULL;
 
@@ -259,7 +260,7 @@ void handle_set_pulsed_progress(gchar *appName, gchar *barText,
   handle_extra_params(state, extraParams);
 }
 
-void handle_set_percentage_progress(gchar *appName, gchar *barText,
+void handle_set_percentage_progress(const gchar *appName, const gchar *barText,
                                     gdouble percent, GVariant *extraParams,
                                     DsState *ds_state) {
   RefreshState *state = NULL;
@@ -279,7 +280,7 @@ void handle_set_percentage_progress(gchar *appName, gchar *barText,
   handle_extra_params(state, extraParams);
 }
 
-RefreshState *refresh_state_new(DsState *state, gchar *appName) {
+RefreshState *refresh_state_new(DsState *state, const gchar *appName) {
   RefreshState *object = g_new0(RefreshState, 1);
   object->appName = g_string_new(appName);
   object->dsstate = state;

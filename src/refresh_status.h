@@ -35,17 +35,18 @@ typedef struct {
   gint height;
 } RefreshState;
 
-void handle_application_is_being_refreshed(gchar *appName, gchar *lockFilePath,
+void handle_application_is_being_refreshed(const gchar *appName,
+                                           const gchar *lockFilePath,
                                            GVariant *extraParams,
                                            DsState *ds_state);
-void handle_close_application_window(gchar *appName, GVariant *extraParams,
-                                     DsState *ds_state);
-void handle_set_pulsed_progress(gchar *appName, gchar *barText,
+void handle_close_application_window(const gchar *appName,
+                                     GVariant *extraParams, DsState *ds_state);
+void handle_set_pulsed_progress(const gchar *appName, const gchar *barText,
                                 GVariant *extraParams, DsState *ds_state);
-void handle_set_percentage_progress(gchar *appName, gchar *barText,
+void handle_set_percentage_progress(const gchar *appName, const gchar *barText,
                                     gdouble percentage, GVariant *extraParams,
                                     DsState *ds_state);
-RefreshState *refresh_state_new(DsState *state, gchar *appName);
+RefreshState *refresh_state_new(DsState *state, const gchar *appName);
 
 void refresh_state_free(RefreshState *state);
 
