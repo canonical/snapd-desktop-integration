@@ -37,12 +37,12 @@ static void on_hide_clicked(GtkButton *button, RefreshState *state) {
 static gboolean refresh_progress_bar(RefreshState *state) {
   struct stat statbuf;
   if (state->pulsed) {
-    gtk_progress_bar_pulse(GTK_PROGRESS_BAR(state->progressBar));
+    gtk_progress_bar_pulse(GTK_PROGRESS_BAR(state->progress_bar));
   }
-  if (state->lockFile == NULL) {
+  if (state->lock_file == NULL) {
     return G_SOURCE_CONTINUE;
   }
-  if (stat(state->lockFile, &statbuf) != 0) {
+  if (stat(state->lock_file, &statbuf) != 0) {
     if ((errno == ENOENT) || (errno == ENOTDIR)) {
       if (state->wait_change_in_lock_file) {
         return G_SOURCE_CONTINUE;
@@ -64,10 +64,10 @@ static gboolean refresh_progress_bar(RefreshState *state) {
   return G_SOURCE_CONTINUE;
 }
 
-static RefreshState *find_application(GList *list, const char *appName) {
+static RefreshState *find_application(GList *list, const char *app_name) {
   for (; list != NULL; list = list->next) {
     RefreshState *state = (RefreshState *)list->data;
-    if (0 == g_strcmp0(state->appName->str, appName)) {
+    if (0 == g_strcmp0(state->app_name->str, app_name)) {
       return state;
     }
   }
@@ -150,13 +150,13 @@ static void set_desktop_file(RefreshState *state, const gchar *path) {
     set_icon_image(state, icon);
 }
 
-static void handle_extra_params(RefreshState *state, GVariant *extraParams) {
+static void handle_extra_params(RefreshState *state, GVariant *extra_params) {
   GVariantIter iter;
   GVariant *value;
   gchar *key;
 
   // Do a copy to allow manage the iter in other places if needed
-  g_variant_iter_init(&iter, extraParams);
+  g_variant_iter_init(&iter, extra_params);
   while (g_variant_iter_next(&iter, "{sv}", &key, &value)) {
     if (!g_strcmp0(key, "message")) {
       set_message(state, g_variant_get_string(value, NULL));
@@ -176,29 +176,29 @@ static void handle_extra_params(RefreshState *state, GVariant *extraParams) {
   }
 }
 
-void handle_application_is_being_refreshed(const gchar *appName,
-                                           const gchar *lockFilePath,
-                                           GVariant *extraParams,
+void handle_application_is_being_refreshed(const gchar *app_name,
+                                           const gchar *lock_file_path,
+                                           GVariant *extra_params,
                                            DsState *ds_state) {
   RefreshState *state = NULL;
   g_autoptr(GtkWidget) container = NULL;
   g_autoptr(GtkWidget) label = NULL;
-  g_autoptr(GString) labelText = NULL;
+  g_autoptr(GString) label_text = NULL;
   g_autoptr(GtkBuilder) builder = NULL;
   GtkButton *button;
 
-  state = find_application(ds_state->refreshing_list, appName);
+  state = find_application(ds_state->refreshing_list, app_name);
   if (state != NULL) {
     gtk_window_present(GTK_WINDOW(state->window));
-    handle_extra_params(state, extraParams);
+    handle_extra_params(state, extra_params);
     return;
   }
 
-  state = refresh_state_new(ds_state, appName);
-  if (*lockFilePath == 0) {
-    state->lockFile = NULL;
+  state = refresh_state_new(ds_state, app_name);
+  if (*lock_file_path == 0) {
+    state->lock_file = NULL;
   } else {
-    state->lockFile = g_strdup(lockFilePath);
+    state->lock_file = g_strdup(lock_file_path);
   }
   state->wait_change_in_lock_file = FALSE;
   builder = gtk_builder_new_from_resource(
@@ -207,15 +207,16 @@ void handle_application_is_being_refreshed(const gchar *appName,
       g_object_ref(gtk_builder_get_object(builder, "main_window")));
   state->message =
       GTK_LABEL(g_object_ref(gtk_builder_get_object(builder, "app_label")));
-  state->progressBar =
+  state->progress_bar =
       GTK_WIDGET(g_object_ref(gtk_builder_get_object(builder, "progress_bar")));
   state->icon =
       GTK_WIDGET(g_object_ref(gtk_builder_get_object(builder, "app_icon")));
   button = GTK_BUTTON(gtk_builder_get_object(builder, "button_hide"));
-  labelText = g_string_new("");
-  g_string_printf(
-      labelText, _("Refreshing “%s” to latest version. Please wait."), appName);
-  gtk_label_set_text(state->message, labelText->str);
+  label_text = g_string_new("");
+  g_string_printf(label_text,
+                  _("Refreshing “%s” to latest version. Please wait."),
+                  app_name);
+  gtk_label_set_text(state->message, label_text->str);
 
   g_signal_connect(G_OBJECT(state->window), "close-request",
                    G_CALLBACK(on_close_window), state);
@@ -224,65 +225,67 @@ void handle_application_is_being_refreshed(const gchar *appName,
 
   gtk_widget_set_visible(state->icon, FALSE);
 
-  state->timeoutId =
+  state->timeout_id =
       g_timeout_add(200, G_SOURCE_FUNC(refresh_progress_bar), state);
   gtk_window_present(GTK_WINDOW(state->window));
   ds_state->refreshing_list = g_list_append(ds_state->refreshing_list, state);
-  handle_extra_params(state, extraParams);
+  handle_extra_params(state, extra_params);
 }
 
-void handle_close_application_window(const gchar *appName,
-                                     GVariant *extraParams, DsState *ds_state) {
+void handle_close_application_window(const gchar *app_name,
+                                     GVariant *extra_params,
+                                     DsState *ds_state) {
   RefreshState *state = NULL;
 
-  state = find_application(ds_state->refreshing_list, appName);
+  state = find_application(ds_state->refreshing_list, app_name);
   if (state == NULL) {
     return;
   }
   refresh_state_free(state);
 }
 
-void handle_set_pulsed_progress(const gchar *appName, const gchar *barText,
-                                GVariant *extraParams, DsState *ds_state) {
+void handle_set_pulsed_progress(const gchar *app_name, const gchar *bar_text,
+                                GVariant *extra_params, DsState *ds_state) {
   RefreshState *state = NULL;
 
-  state = find_application(ds_state->refreshing_list, appName);
+  state = find_application(ds_state->refreshing_list, app_name);
   if (state == NULL) {
     return;
   }
   state->pulsed = TRUE;
-  if ((barText == NULL) || (barText[0] == 0)) {
-    gtk_progress_bar_set_show_text(GTK_PROGRESS_BAR(state->progressBar), FALSE);
+  if ((bar_text == NULL) || (bar_text[0] == 0)) {
+    gtk_progress_bar_set_show_text(GTK_PROGRESS_BAR(state->progress_bar),
+                                   FALSE);
   } else {
-    gtk_progress_bar_set_show_text(GTK_PROGRESS_BAR(state->progressBar), TRUE);
-    gtk_progress_bar_set_text(GTK_PROGRESS_BAR(state->progressBar), barText);
+    gtk_progress_bar_set_show_text(GTK_PROGRESS_BAR(state->progress_bar), TRUE);
+    gtk_progress_bar_set_text(GTK_PROGRESS_BAR(state->progress_bar), bar_text);
   }
-  handle_extra_params(state, extraParams);
+  handle_extra_params(state, extra_params);
 }
 
-void handle_set_percentage_progress(const gchar *appName, const gchar *barText,
-                                    gdouble percent, GVariant *extraParams,
-                                    DsState *ds_state) {
+void handle_set_percentage_progress(const gchar *app_name,
+                                    const gchar *bar_text, gdouble percent,
+                                    GVariant *extra_params, DsState *ds_state) {
   RefreshState *state = NULL;
 
-  state = find_application(ds_state->refreshing_list, appName);
+  state = find_application(ds_state->refreshing_list, app_name);
   if (state == NULL) {
     return;
   }
   state->pulsed = FALSE;
-  gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(state->progressBar), percent);
-  gtk_progress_bar_set_show_text(GTK_PROGRESS_BAR(state->progressBar), TRUE);
-  if ((barText != NULL) && (barText[0] == 0)) {
-    gtk_progress_bar_set_text(GTK_PROGRESS_BAR(state->progressBar), NULL);
+  gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(state->progress_bar), percent);
+  gtk_progress_bar_set_show_text(GTK_PROGRESS_BAR(state->progress_bar), TRUE);
+  if ((bar_text != NULL) && (bar_text[0] == 0)) {
+    gtk_progress_bar_set_text(GTK_PROGRESS_BAR(state->progress_bar), NULL);
   } else {
-    gtk_progress_bar_set_text(GTK_PROGRESS_BAR(state->progressBar), barText);
+    gtk_progress_bar_set_text(GTK_PROGRESS_BAR(state->progress_bar), bar_text);
   }
-  handle_extra_params(state, extraParams);
+  handle_extra_params(state, extra_params);
 }
 
-RefreshState *refresh_state_new(DsState *state, const gchar *appName) {
+RefreshState *refresh_state_new(DsState *state, const gchar *app_name) {
   RefreshState *object = g_new0(RefreshState, 1);
-  object->appName = g_string_new(appName);
+  object->app_name = g_string_new(app_name);
   object->dsstate = state;
   object->pulsed = TRUE;
   object->width = 0;
@@ -296,15 +299,15 @@ void refresh_state_free(RefreshState *state) {
 
   dsstate->refreshing_list = g_list_remove(dsstate->refreshing_list, state);
 
-  if (state->timeoutId != 0) {
-    g_source_remove(state->timeoutId);
+  if (state->timeout_id != 0) {
+    g_source_remove(state->timeout_id);
   }
-  if (state->closeId != 0) {
-    g_signal_handler_disconnect(G_OBJECT(state->window), state->closeId);
+  if (state->close_id != 0) {
+    g_signal_handler_disconnect(G_OBJECT(state->window), state->close_id);
   }
-  g_free(state->lockFile);
-  g_clear_object(&state->progressBar);
-  g_string_free(state->appName, TRUE);
+  g_free(state->lock_file);
+  g_clear_object(&state->progress_bar);
+  g_string_free(state->app_name, TRUE);
   if (state->window != NULL) {
     gtk_window_destroy(GTK_WINDOW(state->window));
   }
