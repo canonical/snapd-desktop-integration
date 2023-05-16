@@ -70,7 +70,7 @@ static void install_themes_cb(GObject *object, GAsyncResult *result,
         _("Complete."), "dialog-information");
   } else {
     g_message("Installation failed: %s\n", error->message);
-    gchar *error_message;
+    const gchar *error_message;
     switch (error->code) {
     case SNAPD_ERROR_AUTH_CANCELLED:
       /// TRANSLATORS: installing a missing theme snap was cancelled by the user
@@ -96,7 +96,7 @@ static void notification_closed_cb(NotifyNotification *notification,
   g_clear_object(&state->install_notification);
 }
 
-static void notify_cb(NotifyNotification *notification, char *action,
+static void notify_cb(NotifyNotification *notification, gchar *action,
                       gpointer user_data) {
   DsState *state = user_data;
 
@@ -331,7 +331,7 @@ static gboolean session_is_desktop(const gchar *object_path) {
   return FALSE;
 }
 
-static void new_session(Login1Manager *manager, gchar *session_id,
+static void new_session(Login1Manager *manager, const gchar *session_id,
                         const gchar *object_path, gpointer data) {
   GMainLoop *loop = (GMainLoop *)data;
   g_message("Detected new session %s at %s\n", session_id, object_path);
