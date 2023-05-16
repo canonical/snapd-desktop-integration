@@ -25,12 +25,12 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-gboolean on_close_window(GtkWindow *self, RefreshState *state) {
+static gboolean on_close_window(GtkWindow *self, RefreshState *state) {
   refresh_state_free(state);
   return TRUE;
 }
 
-void on_hide_clicked(GtkButton *button, RefreshState *state) {
+static void on_hide_clicked(GtkButton *button, RefreshState *state) {
   refresh_state_free(state);
 }
 
