@@ -1,3 +1,4 @@
 src/sdi-refresh-dialog.c
 src/sdi-theme-monitor.c
+src/sdi-apparmor-prompt-dialog.c
 data/resources/snap_is_being_refreshed.ui

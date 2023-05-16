@@ -29,6 +29,7 @@
 
 #include "org.freedesktop.login1.Session.h"
 #include "org.freedesktop.login1.h"
+#include "sdi-apparmor-prompt-agent.h"
 #include "sdi-refresh-monitor.h"
 #include "sdi-theme-monitor.h"
 
@@ -37,6 +38,7 @@ static SnapdClient *client = NULL;
 static GtkApplication *app = NULL;
 static SdiThemeMonitor *theme_monitor = NULL;
 static SdiRefreshMonitor *refresh_monitor = NULL;
+static SdiApparmorPromptAgent *apparmor_prompt_agent = NULL;
 
 static gchar *snapd_socket_path = NULL;
 
@@ -157,6 +159,12 @@ static void do_activate(GObject *object, gpointer data) {
 
   theme_monitor = sdi_theme_monitor_new(client);
   sdi_theme_monitor_start(theme_monitor);
+
+  apparmor_prompt_agent = sdi_apparmor_prompt_agent_new(client);
+  g_autoptr(GError) error = NULL;
+  if (!sdi_apparmor_prompt_agent_start(apparmor_prompt_agent, &error)) {
+    g_warning("Failed to start AppArmor prompt agent: %s", error->message);
+  }
 }
 
 static void do_shutdown(GObject *object, gpointer data) { notify_uninit(); }

@@ -5,7 +5,7 @@ configure_file(output: 'config.h',
 
 snapd_desktop_integration = executable(
   'snapd-desktop-integration',
-  'main.c', 'sdi-refresh-dialog.c', 'sdi-refresh-monitor.c', 'sdi-theme-monitor.c',
+  'main.c', 'sdi-apparmor-prompt-agent.c', 'sdi-apparmor-prompt-dialog.c', 'sdi-refresh-dialog.c', 'sdi-refresh-monitor.c', 'sdi-theme-monitor.c',
   resources, gdbus_src,login_src, login_session_src,
   dependencies: [gtk_dep, snapd_glib_dep, libnotify_dep],
   install: true,
