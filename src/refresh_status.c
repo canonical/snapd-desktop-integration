@@ -37,7 +37,7 @@ static void on_hide_clicked(GtkButton *button, RefreshState *state) {
 static gboolean refresh_progress_bar(RefreshState *state) {
   struct stat statbuf;
   if (state->pulsed) {
-    gtk_progress_bar_pulse(GTK_PROGRESS_BAR(state->progress_bar));
+    gtk_progress_bar_pulse(state->progress_bar);
   }
   if (state->lock_file == NULL) {
     return G_SOURCE_CONTINUE;
@@ -204,7 +204,7 @@ void handle_application_is_being_refreshed(const gchar *app_name,
       GTK_APPLICATION_WINDOW(gtk_builder_get_object(builder, "main_window"));
   state->message = GTK_LABEL(gtk_builder_get_object(builder, "app_label"));
   state->progress_bar =
-      GTK_WIDGET(gtk_builder_get_object(builder, "progress_bar"));
+      GTK_PROGRESS_BAR(gtk_builder_get_object(builder, "progress_bar"));
   state->icon = GTK_WIDGET(gtk_builder_get_object(builder, "app_icon"));
   button = GTK_BUTTON(gtk_builder_get_object(builder, "button_hide"));
   label_text = g_strdup_printf(
@@ -247,11 +247,10 @@ void handle_set_pulsed_progress(const gchar *app_name, const gchar *bar_text,
   }
   state->pulsed = TRUE;
   if ((bar_text == NULL) || (bar_text[0] == 0)) {
-    gtk_progress_bar_set_show_text(GTK_PROGRESS_BAR(state->progress_bar),
-                                   FALSE);
+    gtk_progress_bar_set_show_text(state->progress_bar, FALSE);
   } else {
-    gtk_progress_bar_set_show_text(GTK_PROGRESS_BAR(state->progress_bar), TRUE);
-    gtk_progress_bar_set_text(GTK_PROGRESS_BAR(state->progress_bar), bar_text);
+    gtk_progress_bar_set_show_text(state->progress_bar, TRUE);
+    gtk_progress_bar_set_text(state->progress_bar, bar_text);
   }
   handle_extra_params(state, extra_params);
 }
@@ -266,12 +265,12 @@ void handle_set_percentage_progress(const gchar *app_name,
     return;
   }
   state->pulsed = FALSE;
-  gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(state->progress_bar), percent);
-  gtk_progress_bar_set_show_text(GTK_PROGRESS_BAR(state->progress_bar), TRUE);
+  gtk_progress_bar_set_fraction(state->progress_bar, percent);
+  gtk_progress_bar_set_show_text(state->progress_bar, TRUE);
   if ((bar_text != NULL) && (bar_text[0] == 0)) {
-    gtk_progress_bar_set_text(GTK_PROGRESS_BAR(state->progress_bar), NULL);
+    gtk_progress_bar_set_text(state->progress_bar, NULL);
   } else {
-    gtk_progress_bar_set_text(GTK_PROGRESS_BAR(state->progress_bar), bar_text);
+    gtk_progress_bar_set_text(state->progress_bar, bar_text);
   }
   handle_extra_params(state, extra_params);
 }

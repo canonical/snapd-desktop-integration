@@ -23,7 +23,7 @@ typedef struct {
   DsState *ds_state;
   gchar *app_name;
   GtkApplicationWindow *window;
-  GtkWidget *progress_bar;
+  GtkProgressBar *progress_bar;
   GtkLabel *message;
   GtkWidget *icon;
   gchar *lock_file;
