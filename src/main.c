@@ -27,24 +27,17 @@
 #include <syslog.h>
 #include <unistd.h>
 
-#include "dbus.h"
-#include "ds_state.h"
 #include "org.freedesktop.login1.Session.h"
 #include "org.freedesktop.login1.h"
 #include "refresh_status.h"
+#include "sdi-refresh-monitor.h"
 #include "sdi-theme-monitor.h"
 
 static Login1Manager *login_manager = NULL;
-
-static void ds_state_free(DsState *state) {
-  g_clear_object(&state->skeleton);
-  g_clear_object(&state->client);
-  g_clear_object(&state->theme_monitor);
-  g_list_free_full(state->refreshing_list, (GDestroyNotify)refresh_state_free);
-  g_free(state);
-}
-
-G_DEFINE_AUTOPTR_CLEANUP_FUNC(DsState, ds_state_free);
+static SnapdClient *client = NULL;
+static GtkApplication *app = NULL;
+static SdiThemeMonitor *theme_monitor = NULL;
+static SdiRefreshMonitor *refresh_monitor = NULL;
 
 static gchar *snapd_socket_path = NULL;
 
@@ -143,32 +136,28 @@ static gboolean check_graphical_sessions(gpointer data) {
   return G_SOURCE_REMOVE;
 }
 static void do_startup(GObject *object, gpointer data) {
-  DsState *state = (DsState *)data;
   notify_init("snapd-desktop-integration");
-  state->client = snapd_client_new();
-  state->app = GTK_APPLICATION(object);
-  if (!register_dbus(
-          g_application_get_dbus_connection(G_APPLICATION(state->app)), state,
-          NULL)) {
-    g_clear_object(&(state->skeleton));
+  client = snapd_client_new();
+  refresh_monitor = sdi_refresh_monitor_new();
+  if (!sdi_refresh_monitor_start(
+          refresh_monitor,
+          g_application_get_dbus_connection(G_APPLICATION(app)), NULL)) {
     g_message("Failed to export the DBus Desktop Integration API");
   }
 }
 
 static void do_activate(GObject *object, gpointer data) {
-  DsState *state = (DsState *)data;
-
   // because, by default, there are no windows, so the application would quit
-  g_application_hold(G_APPLICATION(state->app));
+  g_application_hold(G_APPLICATION(app));
 
   if (snapd_socket_path != NULL) {
-    snapd_client_set_socket_path(state->client, snapd_socket_path);
+    snapd_client_set_socket_path(client, snapd_socket_path);
   } else if (g_getenv("SNAP") != NULL) {
-    snapd_client_set_socket_path(state->client, "/run/snapd-snap.socket");
+    snapd_client_set_socket_path(client, "/run/snapd-snap.socket");
   }
 
-  state->theme_monitor = sdi_theme_monitor_new(state->client);
-  sdi_theme_monitor_start(state->theme_monitor);
+  theme_monitor = sdi_theme_monitor_new(client);
+  sdi_theme_monitor_start(theme_monitor);
 }
 
 static void do_shutdown(GObject *object, gpointer data) { notify_uninit(); }
@@ -233,15 +222,12 @@ int main(int argc, char **argv) {
     return 0;
   }
 
-  g_autoptr(GtkApplication) app = NULL;
-  g_autoptr(DsState) state = g_new0(DsState, 1);
-
   app = gtk_application_new("io.snapcraft.SnapDesktopIntegration",
                             G_APPLICATION_ALLOW_REPLACEMENT |
                                 G_APPLICATION_REPLACE);
-  g_signal_connect(G_OBJECT(app), "startup", G_CALLBACK(do_startup), state);
-  g_signal_connect(G_OBJECT(app), "shutdown", G_CALLBACK(do_shutdown), state);
-  g_signal_connect(G_OBJECT(app), "activate", G_CALLBACK(do_activate), state);
+  g_signal_connect(G_OBJECT(app), "startup", G_CALLBACK(do_startup), NULL);
+  g_signal_connect(G_OBJECT(app), "shutdown", G_CALLBACK(do_shutdown), NULL);
+  g_signal_connect(G_OBJECT(app), "activate", G_CALLBACK(do_activate), NULL);
 
   g_application_add_main_option_entries(G_APPLICATION(app), entries);
 

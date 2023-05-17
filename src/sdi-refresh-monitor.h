@@ -17,7 +17,12 @@
 
 #pragma once
 
-#include "ds_state.h"
+#include <gio/gio.h>
 
-gboolean register_dbus(GDBusConnection *connection, DsState *state,
-                       GError **error);
+G_DECLARE_FINAL_TYPE(SdiRefreshMonitor, sdi_refresh_monitor, SDI,
+                     REFRESH_MONITOR, GObject)
+
+SdiRefreshMonitor *sdi_refresh_monitor_new();
+
+gboolean sdi_refresh_monitor_start(SdiRefreshMonitor *monitor,
+                                   GDBusConnection *connection, GError **error);

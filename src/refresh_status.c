@@ -17,13 +17,16 @@
 
 #include "refresh_status.h"
 #include "iresources.h"
-#include <cairo.h>
+#include "sdi-refresh-monitor-private.h"
 #include <errno.h>
 #include <gio/gdesktopappinfo.h>
 #include <glib/gi18n.h>
+#include <gtk/gtk.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+
+#define ICON_SIZE 48
 
 static gboolean on_close_window(GtkWindow *self, RefreshState *state) {
   refresh_state_free(state);
@@ -62,16 +65,6 @@ static gboolean refresh_progress_bar(RefreshState *state) {
   // if we arrive here, we wait for the lock file to be empty
   state->wait_change_in_lock_file = FALSE;
   return G_SOURCE_CONTINUE;
-}
-
-static RefreshState *find_application(GList *list, const char *app_name) {
-  for (; list != NULL; list = list->next) {
-    RefreshState *state = (RefreshState *)list->data;
-    if (0 == g_strcmp0(state->app_name, app_name)) {
-      return state;
-    }
-  }
-  return NULL;
 }
 
 static void set_message(RefreshState *state, const gchar *message) {
@@ -178,20 +171,20 @@ static void handle_extra_params(RefreshState *state, GVariant *extra_params) {
 void handle_application_is_being_refreshed(const gchar *app_name,
                                            const gchar *lock_file_path,
                                            GVariant *extra_params,
-                                           DsState *ds_state) {
+                                           SdiRefreshMonitor *monitor) {
   RefreshState *state = NULL;
   g_autofree gchar *label_text = NULL;
   g_autoptr(GtkBuilder) builder = NULL;
   GtkButton *button;
 
-  state = find_application(ds_state->refreshing_list, app_name);
+  state = sdi_refresh_monitor_lookup_application(monitor, app_name);
   if (state != NULL) {
     gtk_window_present(GTK_WINDOW(state->window));
     handle_extra_params(state, extra_params);
     return;
   }
 
-  state = refresh_state_new(ds_state, app_name);
+  state = refresh_state_new(monitor, app_name);
   if (*lock_file_path == 0) {
     state->lock_file = NULL;
   } else {
@@ -221,16 +214,16 @@ void handle_application_is_being_refreshed(const gchar *app_name,
   state->timeout_id =
       g_timeout_add(200, G_SOURCE_FUNC(refresh_progress_bar), state);
   gtk_window_present(GTK_WINDOW(state->window));
-  ds_state->refreshing_list = g_list_append(ds_state->refreshing_list, state);
+  sdi_refresh_monitor_add_application(monitor, state);
   handle_extra_params(state, extra_params);
 }
 
 void handle_application_refresh_completed(const gchar *app_name,
                                           GVariant *extra_params,
-                                          DsState *ds_state) {
+                                          SdiRefreshMonitor *monitor) {
   RefreshState *state = NULL;
 
-  state = find_application(ds_state->refreshing_list, app_name);
+  state = sdi_refresh_monitor_lookup_application(monitor, app_name);
   if (state == NULL) {
     return;
   }
@@ -238,10 +231,11 @@ void handle_application_refresh_completed(const gchar *app_name,
 }
 
 void handle_set_pulsed_progress(const gchar *app_name, const gchar *bar_text,
-                                GVariant *extra_params, DsState *ds_state) {
+                                GVariant *extra_params,
+                                SdiRefreshMonitor *monitor) {
   RefreshState *state = NULL;
 
-  state = find_application(ds_state->refreshing_list, app_name);
+  state = sdi_refresh_monitor_lookup_application(monitor, app_name);
   if (state == NULL) {
     return;
   }
@@ -257,10 +251,11 @@ void handle_set_pulsed_progress(const gchar *app_name, const gchar *bar_text,
 
 void handle_set_percentage_progress(const gchar *app_name,
                                     const gchar *bar_text, gdouble percent,
-                                    GVariant *extra_params, DsState *ds_state) {
+                                    GVariant *extra_params,
+                                    SdiRefreshMonitor *monitor) {
   RefreshState *state = NULL;
 
-  state = find_application(ds_state->refreshing_list, app_name);
+  state = sdi_refresh_monitor_lookup_application(monitor, app_name);
   if (state == NULL) {
     return;
   }
@@ -275,19 +270,20 @@ void handle_set_percentage_progress(const gchar *app_name,
   handle_extra_params(state, extra_params);
 }
 
-RefreshState *refresh_state_new(DsState *ds_state, const gchar *app_name) {
+RefreshState *refresh_state_new(SdiRefreshMonitor *monitor,
+                                const gchar *app_name) {
   RefreshState *object = g_new0(RefreshState, 1);
   object->app_name = g_strdup(app_name);
-  object->ds_state = ds_state;
+  object->monitor = monitor;
   object->pulsed = TRUE;
   return object;
 }
 
 void refresh_state_free(RefreshState *state) {
 
-  DsState *ds_state = state->ds_state;
+  SdiRefreshMonitor *monitor = state->monitor;
 
-  ds_state->refreshing_list = g_list_remove(ds_state->refreshing_list, state);
+  sdi_refresh_monitor_remove_application(monitor, state);
 
   if (state->timeout_id != 0) {
     g_source_remove(state->timeout_id);

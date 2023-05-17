@@ -17,20 +17,14 @@
 
 #pragma once
 
-#include "io.snapcraft.SnapDesktopIntegration.h"
-#include "sdi-theme-monitor.h"
-#include <gtk/gtk.h>
+#include "refresh_status.h"
+#include "sdi-refresh-monitor.h"
 
-#define ICON_SIZE 48
+RefreshState *sdi_refresh_monitor_lookup_application(SdiRefreshMonitor *monitor,
+                                                     const char *app_name);
 
-typedef struct {
-  SnapDesktopIntegration *skeleton;
+void sdi_refresh_monitor_add_application(SdiRefreshMonitor *monitor,
+                                         RefreshState *state);
 
-  SnapdClient *client;
-  GtkApplication *app;
-
-  SdiThemeMonitor *theme_monitor;
-
-  /* The list of current refresh popups */
-  GList *refreshing_list;
-} DsState;
+void sdi_refresh_monitor_remove_application(SdiRefreshMonitor *monitor,
+                                            RefreshState *state);

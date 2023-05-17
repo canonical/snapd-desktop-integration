@@ -17,10 +17,12 @@
 
 #pragma once
 
-#include "ds_state.h"
+#include <gtk/gtk.h>
+
+#include "sdi-refresh-monitor.h"
 
 typedef struct {
-  DsState *ds_state;
+  SdiRefreshMonitor *monitor;
   gchar *app_name;
   GtkApplicationWindow *window;
   GtkProgressBar *progress_bar;
@@ -36,15 +38,18 @@ typedef struct {
 void handle_application_is_being_refreshed(const gchar *app_name,
                                            const gchar *lock_file_path,
                                            GVariant *extra_params,
-                                           DsState *ds_state);
+                                           SdiRefreshMonitor *monitor);
 void handle_application_refresh_completed(const gchar *app_name,
                                           GVariant *extra_params,
-                                          DsState *ds_state);
+                                          SdiRefreshMonitor *monitor);
 void handle_set_pulsed_progress(const gchar *app_name, const gchar *bar_text,
-                                GVariant *extra_params, DsState *ds_state);
+                                GVariant *extra_params,
+                                SdiRefreshMonitor *monitor);
 void handle_set_percentage_progress(const gchar *app_name,
                                     const gchar *bar_text, gdouble percentage,
-                                    GVariant *extra_params, DsState *ds_state);
-RefreshState *refresh_state_new(DsState *ds_state, const gchar *app_name);
+                                    GVariant *extra_params,
+                                    SdiRefreshMonitor *monitor);
+RefreshState *refresh_state_new(SdiRefreshMonitor *monitor,
+                                const gchar *app_name);
 
 void refresh_state_free(RefreshState *state);
