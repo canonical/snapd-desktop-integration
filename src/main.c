@@ -29,7 +29,6 @@
 
 #include "org.freedesktop.login1.Session.h"
 #include "org.freedesktop.login1.h"
-#include "refresh_status.h"
 #include "sdi-refresh-monitor.h"
 #include "sdi-theme-monitor.h"
 

@@ -33,7 +33,7 @@ typedef struct {
   guint close_id;
   gboolean pulsed;
   gboolean wait_change_in_lock_file;
-} RefreshState;
+} SdiRefreshDialog;
 
 void handle_application_is_being_refreshed(const gchar *app_name,
                                            const gchar *lock_file_path,
@@ -49,7 +49,7 @@ void handle_set_percentage_progress(const gchar *app_name,
                                     const gchar *bar_text, gdouble percentage,
                                     GVariant *extra_params,
                                     SdiRefreshMonitor *monitor);
-RefreshState *refresh_state_new(SdiRefreshMonitor *monitor,
-                                const gchar *app_name);
+SdiRefreshDialog *sdi_refresh_dialog_new(SdiRefreshMonitor *monitor,
+                                         const gchar *app_name);
 
-void refresh_state_free(RefreshState *state);
+void sdi_refresh_dialog_free(SdiRefreshDialog *state);

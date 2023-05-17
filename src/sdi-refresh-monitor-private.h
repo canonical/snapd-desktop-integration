@@ -17,14 +17,15 @@
 
 #pragma once
 
-#include "refresh_status.h"
+#include "sdi-refresh-dialog.h"
 #include "sdi-refresh-monitor.h"
 
-RefreshState *sdi_refresh_monitor_lookup_application(SdiRefreshMonitor *monitor,
-                                                     const char *app_name);
+SdiRefreshDialog *
+sdi_refresh_monitor_lookup_application(SdiRefreshMonitor *monitor,
+                                       const char *app_name);
 
 void sdi_refresh_monitor_add_application(SdiRefreshMonitor *monitor,
-                                         RefreshState *state);
+                                         SdiRefreshDialog *dialog);
 
 void sdi_refresh_monitor_remove_application(SdiRefreshMonitor *monitor,
-                                            RefreshState *state);
+                                            SdiRefreshDialog *dialog);

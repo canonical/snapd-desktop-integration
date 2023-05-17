@@ -19,7 +19,7 @@
 #include <gtk/gtk.h>
 
 #include "io.snapcraft.SnapDesktopIntegration.h"
-#include "refresh_status.h"
+#include "sdi-refresh-dialog.h"
 #include "sdi-refresh-monitor.h"
 
 struct _SdiRefreshMonitor {
@@ -77,7 +77,8 @@ static void sdi_refresh_monitor_dispose(GObject *object) {
   SdiRefreshMonitor *self = SDI_REFRESH_MONITOR(object);
 
   g_clear_object(&self->skeleton);
-  g_list_free_full(self->refreshing_list, (GDestroyNotify)refresh_state_free);
+  g_list_free_full(self->refreshing_list,
+                   (GDestroyNotify)sdi_refresh_dialog_free);
 
   G_OBJECT_CLASS(sdi_refresh_monitor_parent_class)->dispose(object);
 }
@@ -112,23 +113,24 @@ gboolean sdi_refresh_monitor_start(SdiRefreshMonitor *self,
       "/io/snapcraft/SnapDesktopIntegration", error);
 }
 
-RefreshState *sdi_refresh_monitor_lookup_application(SdiRefreshMonitor *self,
-                                                     const char *app_name) {
+SdiRefreshDialog *
+sdi_refresh_monitor_lookup_application(SdiRefreshMonitor *self,
+                                       const char *app_name) {
   for (GList *link = self->refreshing_list; link != NULL; link = link->next) {
-    RefreshState *state = (RefreshState *)link->data;
-    if (0 == g_strcmp0(state->app_name, app_name)) {
-      return state;
+    SdiRefreshDialog *dialog = (SdiRefreshDialog *)link->data;
+    if (0 == g_strcmp0(dialog->app_name, app_name)) {
+      return dialog;
     }
   }
   return NULL;
 }
 
 void sdi_refresh_monitor_add_application(SdiRefreshMonitor *self,
-                                         RefreshState *state) {
-  self->refreshing_list = g_list_append(self->refreshing_list, state);
+                                         SdiRefreshDialog *dialog) {
+  self->refreshing_list = g_list_append(self->refreshing_list, dialog);
 }
 
 void sdi_refresh_monitor_remove_application(SdiRefreshMonitor *self,
-                                            RefreshState *state) {
-  self->refreshing_list = g_list_remove(self->refreshing_list, state);
+                                            SdiRefreshDialog *dialog) {
+  self->refreshing_list = g_list_remove(self->refreshing_list, dialog);
 }
