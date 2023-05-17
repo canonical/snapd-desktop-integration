@@ -20,7 +20,7 @@
 #include "ds_state.h"
 
 typedef struct {
-  DsState *dsstate;
+  DsState *ds_state;
   gchar *app_name;
   GtkApplicationWindow *window;
   GtkWidget *progress_bar;
@@ -44,7 +44,7 @@ void handle_set_pulsed_progress(const gchar *app_name, const gchar *bar_text,
 void handle_set_percentage_progress(const gchar *app_name,
                                     const gchar *bar_text, gdouble percentage,
                                     GVariant *extra_params, DsState *ds_state);
-RefreshState *refresh_state_new(DsState *state, const gchar *app_name);
+RefreshState *refresh_state_new(DsState *ds_state, const gchar *app_name);
 
 void refresh_state_free(RefreshState *state);
 

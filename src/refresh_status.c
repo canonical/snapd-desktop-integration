@@ -277,19 +277,19 @@ void handle_set_percentage_progress(const gchar *app_name,
   handle_extra_params(state, extra_params);
 }
 
-RefreshState *refresh_state_new(DsState *state, const gchar *app_name) {
+RefreshState *refresh_state_new(DsState *ds_state, const gchar *app_name) {
   RefreshState *object = g_new0(RefreshState, 1);
   object->app_name = g_strdup(app_name);
-  object->dsstate = state;
+  object->ds_state = ds_state;
   object->pulsed = TRUE;
   return object;
 }
 
 void refresh_state_free(RefreshState *state) {
 
-  DsState *dsstate = state->dsstate;
+  DsState *ds_state = state->ds_state;
 
-  dsstate->refreshing_list = g_list_remove(dsstate->refreshing_list, state);
+  ds_state->refreshing_list = g_list_remove(ds_state->refreshing_list, state);
 
   if (state->timeout_id != 0) {
     g_source_remove(state->timeout_id);
