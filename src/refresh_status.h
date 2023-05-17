@@ -21,7 +21,7 @@
 
 typedef struct {
   DsState *dsstate;
-  GString *app_name;
+  gchar *app_name;
   GtkApplicationWindow *window;
   GtkWidget *progress_bar;
   GtkLabel *message;

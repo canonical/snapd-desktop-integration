@@ -67,7 +67,7 @@ static gboolean refresh_progress_bar(RefreshState *state) {
 static RefreshState *find_application(GList *list, const char *app_name) {
   for (; list != NULL; list = list->next) {
     RefreshState *state = (RefreshState *)list->data;
-    if (0 == g_strcmp0(state->app_name->str, app_name)) {
+    if (0 == g_strcmp0(state->app_name, app_name)) {
       return state;
     }
   }
@@ -285,7 +285,7 @@ void handle_set_percentage_progress(const gchar *app_name,
 
 RefreshState *refresh_state_new(DsState *state, const gchar *app_name) {
   RefreshState *object = g_new0(RefreshState, 1);
-  object->app_name = g_string_new(app_name);
+  object->app_name = g_strdup(app_name);
   object->dsstate = state;
   object->pulsed = TRUE;
   return object;
@@ -305,7 +305,7 @@ void refresh_state_free(RefreshState *state) {
   }
   g_free(state->lock_file);
   g_clear_object(&state->progress_bar);
-  g_string_free(state->app_name, TRUE);
+  g_clear_pointer(&state->app_name, g_free);
   if (state->window != NULL) {
     gtk_window_destroy(GTK_WINDOW(state->window));
   }
