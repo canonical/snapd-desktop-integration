@@ -20,8 +20,6 @@
 
 #include "ds_state.h"
 
-#define _(XX) gettext(XX)
-
 typedef struct {
   DsState *dsstate;
   GString *appName;

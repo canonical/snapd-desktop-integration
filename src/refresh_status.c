@@ -20,7 +20,7 @@
 #include <cairo.h>
 #include <errno.h>
 #include <gio/gdesktopappinfo.h>
-#include <libintl.h>
+#include <glib/gi18n.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>

@@ -17,8 +17,8 @@
 
 #include "config.h"
 #include <errno.h>
+#include <glib/gi18n.h>
 #include <gtk/gtk.h>
-#include <libintl.h>
 #include <libnotify/notify.h>
 #include <locale.h>
 #include <signal.h>
