@@ -47,5 +47,3 @@ void handle_set_percentage_progress(const gchar *app_name,
 RefreshState *refresh_state_new(DsState *ds_state, const gchar *app_name);
 
 void refresh_state_free(RefreshState *state);
-
-G_DEFINE_AUTOPTR_CLEANUP_FUNC(RefreshState, refresh_state_free);
