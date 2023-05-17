@@ -21,10 +21,10 @@
 
 static gboolean dbus_handle_application_is_being_refreshed(
     SnapDesktopIntegration *skeleton, GDBusMethodInvocation *invocation,
-    gchar *snapName, gchar *lockFilePath, GVariant *extraParams,
+    gchar *snapName, gchar *lockFilePath, GVariant *extra_params,
     gpointer data) {
 
-  handle_application_is_being_refreshed(snapName, lockFilePath, extraParams,
+  handle_application_is_being_refreshed(snapName, lockFilePath, extra_params,
                                         data);
   snap_desktop_integration_complete_application_is_being_refreshed(skeleton,
                                                                    invocation);
@@ -33,9 +33,9 @@ static gboolean dbus_handle_application_is_being_refreshed(
 
 static gboolean dbus_handle_close_application_window(
     SnapDesktopIntegration *skeleton, GDBusMethodInvocation *invocation,
-    gchar *snapName, GVariant *extraParams, gpointer data) {
+    gchar *snapName, GVariant *extra_params, gpointer data) {
 
-  handle_close_application_window(snapName, extraParams, data);
+  handle_close_application_window(snapName, extra_params, data);
   snap_desktop_integration_complete_application_refresh_completed(skeleton,
                                                                   invocation);
   return TRUE;
@@ -43,9 +43,9 @@ static gboolean dbus_handle_close_application_window(
 
 static gboolean dbus_handle_set_pulsed_progress(
     SnapDesktopIntegration *skeleton, GDBusMethodInvocation *invocation,
-    gchar *snapName, gchar *barText, GVariant *extraParams, gpointer data) {
+    gchar *snapName, gchar *bar_text, GVariant *extra_params, gpointer data) {
 
-  handle_set_pulsed_progress(snapName, barText, extraParams, data);
+  handle_set_pulsed_progress(snapName, bar_text, extra_params, data);
   snap_desktop_integration_complete_application_refresh_pulsed(skeleton,
                                                                invocation);
   return TRUE;
@@ -53,10 +53,10 @@ static gboolean dbus_handle_set_pulsed_progress(
 
 static gboolean dbus_handle_set_percentage_progress(
     SnapDesktopIntegration *skeleton, GDBusMethodInvocation *invocation,
-    gchar *snapName, gchar *barText, gdouble percentage, GVariant *extraParams,
-    gpointer data) {
+    gchar *snapName, gchar *bar_text, gdouble percentage,
+    GVariant *extra_params, gpointer data) {
 
-  handle_set_percentage_progress(snapName, barText, percentage, extraParams,
+  handle_set_percentage_progress(snapName, bar_text, percentage, extra_params,
                                  data);
   snap_desktop_integration_complete_application_refresh_percentage(skeleton,
                                                                    invocation);
