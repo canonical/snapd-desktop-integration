@@ -183,7 +183,7 @@ void handle_application_is_being_refreshed(const gchar *app_name,
   RefreshState *state = NULL;
   g_autoptr(GtkWidget) container = NULL;
   g_autoptr(GtkWidget) label = NULL;
-  g_autoptr(GString) label_text = NULL;
+  g_autofree gchar *label_text = NULL;
   g_autoptr(GtkBuilder) builder = NULL;
   GtkButton *button;
 
@@ -210,11 +210,9 @@ void handle_application_is_being_refreshed(const gchar *app_name,
       GTK_WIDGET(gtk_builder_get_object(builder, "progress_bar"));
   state->icon = GTK_WIDGET(gtk_builder_get_object(builder, "app_icon"));
   button = GTK_BUTTON(gtk_builder_get_object(builder, "button_hide"));
-  label_text = g_string_new("");
-  g_string_printf(label_text,
-                  _("Refreshing “%s” to latest version. Please wait."),
-                  app_name);
-  gtk_label_set_text(state->message, label_text->str);
+  label_text = g_strdup_printf(
+      _("Refreshing “%s” to latest version. Please wait."), app_name);
+  gtk_label_set_text(state->message, label_text);
 
   g_signal_connect(G_OBJECT(state->window), "close-request",
                    G_CALLBACK(on_close_window), state);
