@@ -153,11 +153,11 @@ static void set_desktop_file(RefreshState *state, const gchar *path) {
 static void handle_extra_params(RefreshState *state, GVariant *extra_params) {
   GVariantIter iter;
   GVariant *value;
-  gchar *key;
+  const gchar *key;
 
   // Do a copy to allow manage the iter in other places if needed
   g_variant_iter_init(&iter, extra_params);
-  while (g_variant_iter_next(&iter, "{sv}", &key, &value)) {
+  while (g_variant_iter_next(&iter, "{&sv}", &key, &value)) {
     if (!g_strcmp0(key, "message")) {
       set_message(state, g_variant_get_string(value, NULL));
     } else if (!g_strcmp0(key, "title")) {
@@ -172,7 +172,6 @@ static void handle_extra_params(RefreshState *state, GVariant *extra_params) {
       set_desktop_file(state, g_variant_get_string(value, NULL));
     }
     g_variant_unref(value);
-    g_free(key);
   }
 }
 
