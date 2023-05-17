@@ -15,12 +15,9 @@
  *
  */
 
-#ifndef __DBUS_H__
-#define __DBUS_H__
+#pragma once
 
 #include "ds_state.h"
 
 gboolean register_dbus(GDBusConnection *connection, DsState *state,
                        GError **error);
-
-#endif //__DBUS_H__

@@ -15,8 +15,7 @@
  *
  */
 
-#ifndef __REFRESH_STATUS_H__
-#define __REFRESH_STATUS_H__
+#pragma once
 
 #include "ds_state.h"
 
@@ -51,5 +50,3 @@ RefreshState *refresh_state_new(DsState *state, gchar *appName);
 void refresh_state_free(RefreshState *state);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(RefreshState, refresh_state_free);
-
-#endif // __REFRESH_STATUS_H__

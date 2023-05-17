@@ -15,8 +15,7 @@
  *
  */
 
-#ifndef __DS_STATE_H__
-#define __DS_STATE_H__
+#pragma once
 
 #include "io.snapcraft.SnapDesktopIntegration.h"
 #include <gtk/gtk.h>
@@ -52,5 +51,3 @@ typedef struct {
   /* The list of current refresh popups */
   GList *refreshing_list;
 } DsState;
-
-#endif // __DS_STATE_H__
