@@ -203,14 +203,12 @@ void handle_application_is_being_refreshed(const gchar *app_name,
   state->wait_change_in_lock_file = FALSE;
   builder = gtk_builder_new_from_resource(
       "/io/snapcraft/SnapDesktopIntegration/snap_is_being_refreshed_gtk4.ui");
-  state->window = GTK_APPLICATION_WINDOW(
-      g_object_ref(gtk_builder_get_object(builder, "main_window")));
-  state->message =
-      GTK_LABEL(g_object_ref(gtk_builder_get_object(builder, "app_label")));
+  state->window =
+      GTK_APPLICATION_WINDOW(gtk_builder_get_object(builder, "main_window"));
+  state->message = GTK_LABEL(gtk_builder_get_object(builder, "app_label"));
   state->progress_bar =
-      GTK_WIDGET(g_object_ref(gtk_builder_get_object(builder, "progress_bar")));
-  state->icon =
-      GTK_WIDGET(g_object_ref(gtk_builder_get_object(builder, "app_icon")));
+      GTK_WIDGET(gtk_builder_get_object(builder, "progress_bar"));
+  state->icon = GTK_WIDGET(gtk_builder_get_object(builder, "app_icon"));
   button = GTK_BUTTON(gtk_builder_get_object(builder, "button_hide"));
   label_text = g_string_new("");
   g_string_printf(label_text,
@@ -304,11 +302,9 @@ void refresh_state_free(RefreshState *state) {
     g_signal_handler_disconnect(G_OBJECT(state->window), state->close_id);
   }
   g_free(state->lock_file);
-  g_clear_object(&state->progress_bar);
   g_clear_pointer(&state->app_name, g_free);
   if (state->window != NULL) {
     gtk_window_destroy(GTK_WINDOW(state->window));
   }
-  g_clear_object(&state->window);
   g_free(state);
 }
