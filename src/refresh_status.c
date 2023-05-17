@@ -288,8 +288,6 @@ RefreshState *refresh_state_new(DsState *state, const gchar *app_name) {
   object->app_name = g_string_new(app_name);
   object->dsstate = state;
   object->pulsed = TRUE;
-  object->width = 0;
-  object->height = 0;
   return object;
 }
 
