@@ -181,8 +181,6 @@ void handle_application_is_being_refreshed(const gchar *app_name,
                                            GVariant *extra_params,
                                            DsState *ds_state) {
   RefreshState *state = NULL;
-  g_autoptr(GtkWidget) container = NULL;
-  g_autoptr(GtkWidget) label = NULL;
   g_autofree gchar *label_text = NULL;
   g_autoptr(GtkBuilder) builder = NULL;
   GtkButton *button;
