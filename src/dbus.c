@@ -31,11 +31,11 @@ static gboolean dbus_handle_application_is_being_refreshed(
   return TRUE;
 }
 
-static gboolean dbus_handle_close_application_window(
+static gboolean dbus_handle_application_refresh_completed(
     SnapDesktopIntegration *skeleton, GDBusMethodInvocation *invocation,
     gchar *snapName, GVariant *extra_params, gpointer data) {
 
-  handle_close_application_window(snapName, extra_params, data);
+  handle_application_refresh_completed(snapName, extra_params, data);
   snap_desktop_integration_complete_application_refresh_completed(skeleton,
                                                                   invocation);
   return TRUE;
@@ -71,7 +71,8 @@ gboolean register_dbus(GDBusConnection *connection, DsState *state,
                    G_CALLBACK(dbus_handle_application_is_being_refreshed),
                    state);
   g_signal_connect(state->skeleton, "handle_application_refresh_completed",
-                   G_CALLBACK(dbus_handle_close_application_window), state);
+                   G_CALLBACK(dbus_handle_application_refresh_completed),
+                   state);
   g_signal_connect(state->skeleton, "handle_application_refresh_pulsed",
                    G_CALLBACK(dbus_handle_set_pulsed_progress), state);
   g_signal_connect(state->skeleton, "handle_application_refresh_percentage",

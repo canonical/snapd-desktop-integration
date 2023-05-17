@@ -37,8 +37,9 @@ void handle_application_is_being_refreshed(const gchar *app_name,
                                            const gchar *lock_file_path,
                                            GVariant *extra_params,
                                            DsState *ds_state);
-void handle_close_application_window(const gchar *app_name,
-                                     GVariant *extra_params, DsState *ds_state);
+void handle_application_refresh_completed(const gchar *app_name,
+                                          GVariant *extra_params,
+                                          DsState *ds_state);
 void handle_set_pulsed_progress(const gchar *app_name, const gchar *bar_text,
                                 GVariant *extra_params, DsState *ds_state);
 void handle_set_percentage_progress(const gchar *app_name,
