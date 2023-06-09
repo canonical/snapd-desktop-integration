@@ -77,8 +77,11 @@ static void sdi_refresh_monitor_dispose(GObject *object) {
   SdiRefreshMonitor *self = SDI_REFRESH_MONITOR(object);
 
   g_clear_object(&self->skeleton);
-  g_list_free_full(self->refreshing_list,
-                   (GDestroyNotify)sdi_refresh_dialog_free);
+  for (GList *link = self->refreshing_list; link != NULL; link = link->next) {
+    SdiRefreshDialog *dialog = (SdiRefreshDialog *)link->data;
+    gtk_window_destroy(GTK_WINDOW(dialog));
+  }
+  g_list_free(self->refreshing_list);
 
   G_OBJECT_CLASS(sdi_refresh_monitor_parent_class)->dispose(object);
 }
@@ -118,7 +121,7 @@ sdi_refresh_monitor_lookup_application(SdiRefreshMonitor *self,
                                        const char *app_name) {
   for (GList *link = self->refreshing_list; link != NULL; link = link->next) {
     SdiRefreshDialog *dialog = (SdiRefreshDialog *)link->data;
-    if (0 == g_strcmp0(dialog->app_name, app_name)) {
+    if (0 == g_strcmp0(sdi_refresh_dialog_get_app_name(dialog), app_name)) {
       return dialog;
     }
   }

@@ -21,19 +21,8 @@
 
 #include "sdi-refresh-monitor.h"
 
-typedef struct {
-  SdiRefreshMonitor *monitor;
-  gchar *app_name;
-  GtkApplicationWindow *window;
-  GtkProgressBar *progress_bar;
-  GtkLabel *message;
-  GtkWidget *icon;
-  gchar *lock_file;
-  guint timeout_id;
-  guint close_id;
-  gboolean pulsed;
-  gboolean wait_change_in_lock_file;
-} SdiRefreshDialog;
+G_DECLARE_FINAL_TYPE(SdiRefreshDialog, sdi_refresh_dialog, SDI, REFRESH_DIALOG,
+                     GtkWindow)
 
 void handle_application_is_being_refreshed(const gchar *app_name,
                                            const gchar *lock_file_path,
@@ -51,5 +40,4 @@ void handle_set_percentage_progress(const gchar *app_name,
                                     SdiRefreshMonitor *monitor);
 SdiRefreshDialog *sdi_refresh_dialog_new(SdiRefreshMonitor *monitor,
                                          const gchar *app_name);
-
-void sdi_refresh_dialog_free(SdiRefreshDialog *state);
+const gchar *sdi_refresh_dialog_get_app_name(SdiRefreshDialog *dialog);
