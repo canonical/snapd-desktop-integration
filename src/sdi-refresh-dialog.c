@@ -29,13 +29,32 @@
 
 #define ICON_SIZE 48
 
-static gboolean on_close_window(GtkWindow *self, SdiRefreshDialog *dialog) {
-  sdi_refresh_dialog_free(dialog);
+struct _SdiRefreshDialog {
+  GtkWindow parent_instance;
+
+  GtkLabel *message;
+  GtkLabel *app_label;
+  GtkProgressBar *progress_bar;
+  GtkImage *app_icon;
+
+  SdiRefreshMonitor *monitor;
+  gchar *app_name;
+  gchar *lock_file;
+  guint timeout_id;
+  guint close_id;
+  gboolean pulsed;
+  gboolean wait_change_in_lock_file;
+};
+
+G_DEFINE_TYPE(SdiRefreshDialog, sdi_refresh_dialog, GTK_TYPE_WINDOW)
+
+static gboolean on_close_window(GtkWindow *self) {
+  gtk_window_destroy(GTK_WINDOW(self));
   return TRUE;
 }
 
-static void on_hide_clicked(GtkButton *button, SdiRefreshDialog *dialog) {
-  sdi_refresh_dialog_free(dialog);
+static void hide_cb(SdiRefreshDialog *self) {
+  gtk_window_destroy(GTK_WINDOW(self));
 }
 
 static gboolean refresh_progress_bar(SdiRefreshDialog *dialog) {
@@ -51,7 +70,7 @@ static gboolean refresh_progress_bar(SdiRefreshDialog *dialog) {
       if (dialog->wait_change_in_lock_file) {
         return G_SOURCE_CONTINUE;
       }
-      sdi_refresh_dialog_free(dialog);
+      gtk_window_destroy(GTK_WINDOW(dialog));
       return G_SOURCE_REMOVE;
     }
   } else {
@@ -59,7 +78,7 @@ static gboolean refresh_progress_bar(SdiRefreshDialog *dialog) {
       if (dialog->wait_change_in_lock_file) {
         return G_SOURCE_CONTINUE;
       }
-      sdi_refresh_dialog_free(dialog);
+      gtk_window_destroy(GTK_WINDOW(dialog));
       return G_SOURCE_REMOVE;
     }
   }
@@ -71,24 +90,24 @@ static gboolean refresh_progress_bar(SdiRefreshDialog *dialog) {
 static void set_message(SdiRefreshDialog *dialog, const gchar *message) {
   if (message == NULL)
     return;
-  gtk_label_set_text(dialog->message, message);
+  gtk_label_set_text(dialog->app_label, message);
 }
 
 static void set_title(SdiRefreshDialog *dialog, const gchar *title) {
   if (title == NULL)
     return;
-  gtk_window_set_title(GTK_WINDOW(dialog->window), title);
+  gtk_window_set_title(GTK_WINDOW(dialog), title);
 }
 
 static void set_icon(SdiRefreshDialog *dialog, const gchar *icon) {
   if (icon == NULL)
     return;
   if (strlen(icon) == 0) {
-    gtk_widget_set_visible(dialog->icon, FALSE);
+    gtk_widget_set_visible(GTK_WIDGET(dialog->app_icon), FALSE);
     return;
   }
-  gtk_image_set_from_icon_name(GTK_IMAGE(dialog->icon), icon);
-  gtk_widget_set_visible(dialog->icon, TRUE);
+  gtk_image_set_from_icon_name(dialog->app_icon, icon);
+  gtk_widget_set_visible(GTK_WIDGET(dialog->app_icon), TRUE);
 }
 
 static void set_icon_image(SdiRefreshDialog *dialog, const gchar *path) {
@@ -100,12 +119,12 @@ static void set_icon_image(SdiRefreshDialog *dialog, const gchar *path) {
   if (path == NULL)
     return;
   if (strlen(path) == 0) {
-    gtk_widget_set_visible(dialog->icon, FALSE);
+    gtk_widget_set_visible(GTK_WIDGET(dialog->app_icon), FALSE);
     return;
   }
   fimage = g_file_new_for_path(path);
   if (!g_file_query_exists(fimage, NULL)) {
-    gtk_widget_set_visible(dialog->icon, FALSE);
+    gtk_widget_set_visible(GTK_WIDGET(dialog->app_icon), FALSE);
     return;
   }
   // This convoluted code is needed to be able to scale
@@ -114,14 +133,14 @@ static void set_icon_image(SdiRefreshDialog *dialog, const gchar *path) {
   // scale.
   image = gdk_pixbuf_new_from_file(path, NULL);
   if (image == NULL) {
-    gtk_widget_set_visible(dialog->icon, FALSE);
+    gtk_widget_set_visible(GTK_WIDGET(dialog->app_icon), FALSE);
     return;
   }
-  scale = gtk_widget_get_scale_factor(GTK_WIDGET(dialog->icon));
+  scale = gtk_widget_get_scale_factor(GTK_WIDGET(dialog->app_icon));
   final_image = gdk_pixbuf_scale_simple(image, ICON_SIZE * scale,
                                         ICON_SIZE * scale, GDK_INTERP_BILINEAR);
-  gtk_image_set_from_pixbuf(GTK_IMAGE(dialog->icon), final_image);
-  gtk_widget_set_visible(dialog->icon, TRUE);
+  gtk_image_set_from_pixbuf(dialog->app_icon, final_image);
+  gtk_widget_set_visible(GTK_WIDGET(dialog->app_icon), TRUE);
 }
 
 static void set_desktop_file(SdiRefreshDialog *dialog, const gchar *path) {
@@ -170,18 +189,54 @@ static void handle_extra_params(SdiRefreshDialog *dialog,
   }
 }
 
+static void sdi_refresh_dialog_dispose(GObject *object) {
+  SdiRefreshDialog *self = SDI_REFRESH_DIALOG(object);
+
+  sdi_refresh_monitor_remove_application(self->monitor, self);
+
+  if (self->timeout_id != 0) {
+    g_source_remove(self->timeout_id);
+  }
+  if (self->close_id != 0) {
+    g_signal_handler_disconnect(self, self->close_id);
+  }
+  g_free(self->lock_file);
+  g_clear_pointer(&self->app_name, g_free);
+
+  G_OBJECT_CLASS(sdi_refresh_dialog_parent_class)->dispose(object);
+}
+
+static void sdi_refresh_dialog_init(SdiRefreshDialog *self) {
+  gtk_widget_init_template(GTK_WIDGET(self));
+}
+
+static void sdi_refresh_dialog_class_init(SdiRefreshDialogClass *klass) {
+  G_OBJECT_CLASS(klass)->dispose = sdi_refresh_dialog_dispose;
+
+  gtk_widget_class_set_template_from_resource(
+      GTK_WIDGET_CLASS(klass),
+      "/io/snapcraft/SnapDesktopIntegration/sdi-refresh-dialog.ui");
+
+  gtk_widget_class_bind_template_child(GTK_WIDGET_CLASS(klass),
+                                       SdiRefreshDialog, app_label);
+  gtk_widget_class_bind_template_child(GTK_WIDGET_CLASS(klass),
+                                       SdiRefreshDialog, progress_bar);
+  gtk_widget_class_bind_template_child(GTK_WIDGET_CLASS(klass),
+                                       SdiRefreshDialog, app_icon);
+
+  gtk_widget_class_bind_template_callback(GTK_WIDGET_CLASS(klass), hide_cb);
+}
+
 void handle_application_is_being_refreshed(const gchar *app_name,
                                            const gchar *lock_file_path,
                                            GVariant *extra_params,
                                            SdiRefreshMonitor *monitor) {
   SdiRefreshDialog *dialog = NULL;
   g_autofree gchar *label_text = NULL;
-  g_autoptr(GtkBuilder) builder = NULL;
-  GtkButton *button;
 
   dialog = sdi_refresh_monitor_lookup_application(monitor, app_name);
   if (dialog != NULL) {
-    gtk_window_present(GTK_WINDOW(dialog->window));
+    gtk_window_present(GTK_WINDOW(dialog));
     handle_extra_params(dialog, extra_params);
     return;
   }
@@ -193,29 +248,16 @@ void handle_application_is_being_refreshed(const gchar *app_name,
     dialog->lock_file = g_strdup(lock_file_path);
   }
   dialog->wait_change_in_lock_file = FALSE;
-  builder = gtk_builder_new_from_resource(
-      "/io/snapcraft/SnapDesktopIntegration/snap_is_being_refreshed_gtk4.ui");
-  dialog->window =
-      GTK_APPLICATION_WINDOW(gtk_builder_get_object(builder, "main_window"));
-  dialog->message = GTK_LABEL(gtk_builder_get_object(builder, "app_label"));
-  dialog->progress_bar =
-      GTK_PROGRESS_BAR(gtk_builder_get_object(builder, "progress_bar"));
-  dialog->icon = GTK_WIDGET(gtk_builder_get_object(builder, "app_icon"));
-  button = GTK_BUTTON(gtk_builder_get_object(builder, "button_hide"));
   label_text = g_strdup_printf(
       _("Refreshing “%s” to latest version. Please wait."), app_name);
-  gtk_label_set_text(dialog->message, label_text);
+  gtk_label_set_text(dialog->app_label, label_text);
 
-  g_signal_connect(G_OBJECT(dialog->window), "close-request",
+  g_signal_connect(G_OBJECT(dialog), "close-request",
                    G_CALLBACK(on_close_window), dialog);
-  g_signal_connect(G_OBJECT(button), "clicked", G_CALLBACK(on_hide_clicked),
-                   dialog);
-
-  gtk_widget_set_visible(dialog->icon, FALSE);
 
   dialog->timeout_id =
       g_timeout_add(200, G_SOURCE_FUNC(refresh_progress_bar), dialog);
-  gtk_window_present(GTK_WINDOW(dialog->window));
+  gtk_window_present(GTK_WINDOW(dialog));
   sdi_refresh_monitor_add_application(monitor, dialog);
   handle_extra_params(dialog, extra_params);
 }
@@ -229,7 +271,7 @@ void handle_application_refresh_completed(const gchar *app_name,
   if (dialog == NULL) {
     return;
   }
-  sdi_refresh_dialog_free(dialog);
+  gtk_window_destroy(GTK_WINDOW(dialog));
 }
 
 void handle_set_pulsed_progress(const gchar *app_name, const gchar *bar_text,
@@ -274,29 +316,15 @@ void handle_set_percentage_progress(const gchar *app_name,
 
 SdiRefreshDialog *sdi_refresh_dialog_new(SdiRefreshMonitor *monitor,
                                          const gchar *app_name) {
-  SdiRefreshDialog *object = g_new0(SdiRefreshDialog, 1);
-  object->app_name = g_strdup(app_name);
-  object->monitor = monitor;
-  object->pulsed = TRUE;
-  return object;
+  SdiRefreshDialog *self = g_object_new(sdi_refresh_dialog_get_type(), NULL);
+
+  self->app_name = g_strdup(app_name);
+  self->monitor = monitor;
+  self->pulsed = TRUE;
+
+  return self;
 }
 
-void sdi_refresh_dialog_free(SdiRefreshDialog *dialog) {
-
-  SdiRefreshMonitor *monitor = dialog->monitor;
-
-  sdi_refresh_monitor_remove_application(monitor, dialog);
-
-  if (dialog->timeout_id != 0) {
-    g_source_remove(dialog->timeout_id);
-  }
-  if (dialog->close_id != 0) {
-    g_signal_handler_disconnect(G_OBJECT(dialog->window), dialog->close_id);
-  }
-  g_free(dialog->lock_file);
-  g_clear_pointer(&dialog->app_name, g_free);
-  if (dialog->window != NULL) {
-    gtk_window_destroy(GTK_WINDOW(dialog->window));
-  }
-  g_free(dialog);
+const gchar *sdi_refresh_dialog_get_app_name(SdiRefreshDialog *self) {
+  return self->app_name;
 }

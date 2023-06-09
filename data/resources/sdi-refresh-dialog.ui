@@ -1,9 +1,7 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<!-- Created with Cambalache 0.10.3 -->
 <interface>
-  <!-- interface-name snap_is_being_refreshed_gtk4.ui -->
   <requires lib="gtk" version="4.6"/>
-  <object class="GtkApplicationWindow" id="main_window">
+  <template class="SdiRefreshDialog" parent="GtkWindow">
     <property name="default-height">200</property>
     <property name="default-width">560</property>
     <child>
@@ -20,6 +18,7 @@
             <property name="hexpand-set">True</property>
             <child>
               <object class="GtkImage" id="app_icon">
+                <property name="visible">FALSE</property>
                 <property name="icon-size">large</property>
                 <property name="margin-end">2</property>
                 <property name="margin-start">2</property>
@@ -55,13 +54,14 @@
               </object>
             </child>
             <child>
-              <object class="GtkButton" id="button_hide">
-                <property name="label">Hide</property>
+              <object class="GtkButton">
+                <property name="label" translatable="yes">Hide</property>
+                <signal name="clicked" handler="hide_cb" object="SdiRefreshDialog" swapped="yes"/>
               </object>
             </child>
           </object>
         </child>
       </object>
     </child>
-  </object>
+  </template>
 </interface>
