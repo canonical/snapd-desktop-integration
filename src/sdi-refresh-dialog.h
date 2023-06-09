@@ -19,25 +19,32 @@
 
 #include <gtk/gtk.h>
 
-#include "sdi-refresh-monitor.h"
-
 G_DECLARE_FINAL_TYPE(SdiRefreshDialog, sdi_refresh_dialog, SDI, REFRESH_DIALOG,
                      GtkWindow)
 
-void handle_application_is_being_refreshed(const gchar *app_name,
-                                           const gchar *lock_file_path,
-                                           GVariant *extra_params,
-                                           SdiRefreshMonitor *monitor);
-void handle_application_refresh_completed(const gchar *app_name,
-                                          GVariant *extra_params,
-                                          SdiRefreshMonitor *monitor);
-void handle_set_pulsed_progress(const gchar *app_name, const gchar *bar_text,
-                                GVariant *extra_params,
-                                SdiRefreshMonitor *monitor);
-void handle_set_percentage_progress(const gchar *app_name,
-                                    const gchar *bar_text, gdouble percentage,
-                                    GVariant *extra_params,
-                                    SdiRefreshMonitor *monitor);
-SdiRefreshDialog *sdi_refresh_dialog_new(SdiRefreshMonitor *monitor,
-                                         const gchar *app_name);
+SdiRefreshDialog *sdi_refresh_dialog_new(const gchar *app_name,
+                                         const gchar *lock_file_path);
+
 const gchar *sdi_refresh_dialog_get_app_name(SdiRefreshDialog *dialog);
+
+void sdi_refresh_dialog_set_pulsed_progress(SdiRefreshDialog *dialog,
+                                            const gchar *bar_text);
+
+void sdi_refresh_dialog_set_percentage_progress(SdiRefreshDialog *dialog,
+                                                const gchar *bar_text,
+                                                gdouble percentage);
+
+void sdi_refresh_dialog_set_message(SdiRefreshDialog *dialog,
+                                    const gchar *message);
+
+void sdi_refresh_dialog_set_title(SdiRefreshDialog *dialog, const gchar *title);
+
+void sdi_refresh_dialog_set_icon(SdiRefreshDialog *dialog, const gchar *icon);
+
+void sdi_refresh_dialog_set_icon_image(SdiRefreshDialog *dialog,
+                                       const gchar *icon_image);
+
+void sdi_refresh_dialog_set_wait_change_in_lock_file(SdiRefreshDialog *dialog);
+
+void sdi_refresh_dialog_set_desktop_file(SdiRefreshDialog *dialog,
+                                         const gchar *desktop_file);
