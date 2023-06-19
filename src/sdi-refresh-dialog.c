@@ -57,60 +57,60 @@ static void hide_cb(SdiRefreshDialog *self) {
   gtk_window_destroy(GTK_WINDOW(self));
 }
 
-static gboolean refresh_progress_bar(SdiRefreshDialog *dialog) {
+static gboolean refresh_progress_bar(SdiRefreshDialog *self) {
   struct stat statbuf;
-  if (dialog->pulsed) {
-    gtk_progress_bar_pulse(dialog->progress_bar);
+  if (self->pulsed) {
+    gtk_progress_bar_pulse(self->progress_bar);
   }
-  if (dialog->lock_file == NULL) {
+  if (self->lock_file == NULL) {
     return G_SOURCE_CONTINUE;
   }
-  if (stat(dialog->lock_file, &statbuf) != 0) {
+  if (stat(self->lock_file, &statbuf) != 0) {
     if ((errno == ENOENT) || (errno == ENOTDIR)) {
-      if (dialog->wait_change_in_lock_file) {
+      if (self->wait_change_in_lock_file) {
         return G_SOURCE_CONTINUE;
       }
-      gtk_window_destroy(GTK_WINDOW(dialog));
+      gtk_window_destroy(GTK_WINDOW(self));
       return G_SOURCE_REMOVE;
     }
   } else {
     if (statbuf.st_size == 0) {
-      if (dialog->wait_change_in_lock_file) {
+      if (self->wait_change_in_lock_file) {
         return G_SOURCE_CONTINUE;
       }
-      gtk_window_destroy(GTK_WINDOW(dialog));
+      gtk_window_destroy(GTK_WINDOW(self));
       return G_SOURCE_REMOVE;
     }
   }
   // if we arrive here, we wait for the lock file to be empty
-  dialog->wait_change_in_lock_file = FALSE;
+  self->wait_change_in_lock_file = FALSE;
   return G_SOURCE_CONTINUE;
 }
 
-static void set_message(SdiRefreshDialog *dialog, const gchar *message) {
+static void set_message(SdiRefreshDialog *self, const gchar *message) {
   if (message == NULL)
     return;
-  gtk_label_set_text(dialog->app_label, message);
+  gtk_label_set_text(self->app_label, message);
 }
 
-static void set_title(SdiRefreshDialog *dialog, const gchar *title) {
+static void set_title(SdiRefreshDialog *self, const gchar *title) {
   if (title == NULL)
     return;
-  gtk_window_set_title(GTK_WINDOW(dialog), title);
+  gtk_window_set_title(GTK_WINDOW(self), title);
 }
 
-static void set_icon(SdiRefreshDialog *dialog, const gchar *icon) {
+static void set_icon(SdiRefreshDialog *self, const gchar *icon) {
   if (icon == NULL)
     return;
   if (strlen(icon) == 0) {
-    gtk_widget_set_visible(GTK_WIDGET(dialog->app_icon), FALSE);
+    gtk_widget_set_visible(GTK_WIDGET(self->app_icon), FALSE);
     return;
   }
-  gtk_image_set_from_icon_name(dialog->app_icon, icon);
-  gtk_widget_set_visible(GTK_WIDGET(dialog->app_icon), TRUE);
+  gtk_image_set_from_icon_name(self->app_icon, icon);
+  gtk_widget_set_visible(GTK_WIDGET(self->app_icon), TRUE);
 }
 
-static void set_icon_image(SdiRefreshDialog *dialog, const gchar *path) {
+static void set_icon_image(SdiRefreshDialog *self, const gchar *path) {
   g_autoptr(GFile) fimage = NULL;
   g_autoptr(GdkPixbuf) image = NULL;
   g_autoptr(GdkPixbuf) final_image = NULL;
@@ -119,12 +119,12 @@ static void set_icon_image(SdiRefreshDialog *dialog, const gchar *path) {
   if (path == NULL)
     return;
   if (strlen(path) == 0) {
-    gtk_widget_set_visible(GTK_WIDGET(dialog->app_icon), FALSE);
+    gtk_widget_set_visible(GTK_WIDGET(self->app_icon), FALSE);
     return;
   }
   fimage = g_file_new_for_path(path);
   if (!g_file_query_exists(fimage, NULL)) {
-    gtk_widget_set_visible(GTK_WIDGET(dialog->app_icon), FALSE);
+    gtk_widget_set_visible(GTK_WIDGET(self->app_icon), FALSE);
     return;
   }
   // This convoluted code is needed to be able to scale
@@ -133,17 +133,17 @@ static void set_icon_image(SdiRefreshDialog *dialog, const gchar *path) {
   // scale.
   image = gdk_pixbuf_new_from_file(path, NULL);
   if (image == NULL) {
-    gtk_widget_set_visible(GTK_WIDGET(dialog->app_icon), FALSE);
+    gtk_widget_set_visible(GTK_WIDGET(self->app_icon), FALSE);
     return;
   }
-  scale = gtk_widget_get_scale_factor(GTK_WIDGET(dialog->app_icon));
+  scale = gtk_widget_get_scale_factor(GTK_WIDGET(self->app_icon));
   final_image = gdk_pixbuf_scale_simple(image, ICON_SIZE * scale,
                                         ICON_SIZE * scale, GDK_INTERP_BILINEAR);
-  gtk_image_set_from_pixbuf(dialog->app_icon, final_image);
-  gtk_widget_set_visible(GTK_WIDGET(dialog->app_icon), TRUE);
+  gtk_image_set_from_pixbuf(self->app_icon, final_image);
+  gtk_widget_set_visible(GTK_WIDGET(self->app_icon), TRUE);
 }
 
-static void set_desktop_file(SdiRefreshDialog *dialog, const gchar *path) {
+static void set_desktop_file(SdiRefreshDialog *self, const gchar *path) {
   g_autoptr(GDesktopAppInfo) app_info = NULL;
   g_autofree gchar *icon = NULL;
 
@@ -160,10 +160,10 @@ static void set_desktop_file(SdiRefreshDialog *dialog, const gchar *path) {
   // extract the icon from the desktop file
   icon = g_desktop_app_info_get_string(app_info, "Icon");
   if (icon != NULL)
-    set_icon_image(dialog, icon);
+    set_icon_image(self, icon);
 }
 
-static void handle_extra_params(SdiRefreshDialog *dialog,
+static void handle_extra_params(SdiRefreshDialog *self,
                                 GVariant *extra_params) {
   GVariantIter iter;
   GVariant *value;
@@ -173,17 +173,17 @@ static void handle_extra_params(SdiRefreshDialog *dialog,
   g_variant_iter_init(&iter, extra_params);
   while (g_variant_iter_next(&iter, "{&sv}", &key, &value)) {
     if (!g_strcmp0(key, "message")) {
-      set_message(dialog, g_variant_get_string(value, NULL));
+      set_message(self, g_variant_get_string(value, NULL));
     } else if (!g_strcmp0(key, "title")) {
-      set_title(dialog, g_variant_get_string(value, NULL));
+      set_title(self, g_variant_get_string(value, NULL));
     } else if (!g_strcmp0(key, "icon")) {
-      set_icon(dialog, g_variant_get_string(value, NULL));
+      set_icon(self, g_variant_get_string(value, NULL));
     } else if (!g_strcmp0(key, "icon_image")) {
-      set_icon_image(dialog, g_variant_get_string(value, NULL));
+      set_icon_image(self, g_variant_get_string(value, NULL));
     } else if (!g_strcmp0(key, "wait_change_in_lock_file")) {
-      dialog->wait_change_in_lock_file = TRUE;
+      self->wait_change_in_lock_file = TRUE;
     } else if (!g_strcmp0(key, "desktop_file")) {
-      set_desktop_file(dialog, g_variant_get_string(value, NULL));
+      set_desktop_file(self, g_variant_get_string(value, NULL));
     }
     g_variant_unref(value);
   }
