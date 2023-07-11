@@ -1,3 +1,4 @@
+src/sdi-reboot-monitor.c
 src/sdi-refresh-dialog.c
 src/sdi-theme-monitor.c
 data/resources/snap_is_being_refreshed.ui

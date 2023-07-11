@@ -29,6 +29,7 @@
 
 #include "org.freedesktop.login1.Session.h"
 #include "org.freedesktop.login1.h"
+#include "sdi-reboot-monitor.h"
 #include "sdi-refresh-monitor.h"
 #include "sdi-theme-monitor.h"
 
@@ -36,6 +37,7 @@ static Login1Manager *login_manager = NULL;
 static SnapdClient *client = NULL;
 static GtkApplication *app = NULL;
 static SdiThemeMonitor *theme_monitor = NULL;
+static SdiRebootMonitor *reboot_monitor = NULL;
 static SdiRefreshMonitor *refresh_monitor = NULL;
 
 static gchar *snapd_socket_path = NULL;
@@ -154,6 +156,9 @@ static void do_activate(GObject *object, gpointer data) {
   } else if (g_getenv("SNAP") != NULL) {
     snapd_client_set_socket_path(client, "/run/snapd-snap.socket");
   }
+
+  reboot_monitor = sdi_reboot_monitor_new(client);
+  sdi_reboot_monitor_start(reboot_monitor);
 
   theme_monitor = sdi_theme_monitor_new(client);
   sdi_theme_monitor_start(theme_monitor);
