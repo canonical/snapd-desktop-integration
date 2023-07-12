@@ -131,6 +131,29 @@ static gboolean get_changes(SdiRebootMonitor *self) {
   return G_SOURCE_REMOVE;
 }
 
+static void get_system_information_cb(GObject *object, GAsyncResult *result,
+                                      gpointer user_data) {
+  SdiRebootMonitor *self = user_data;
+
+  g_autoptr(GError) error = NULL;
+  g_autoptr(SnapdSystemInformation) info =
+      snapd_client_get_system_information_finish(SNAPD_CLIENT(object), result,
+                                                 &error);
+  if (info == NULL) {
+    if (g_error_matches(error, G_IO_ERROR, G_IO_ERROR_CANCELLED)) {
+      return;
+    }
+
+    g_warning("Failed to snapd system information changes: %s", error->message);
+    return;
+  }
+
+  // Reboot notifications are only done on Ubuntu Core desktop.
+  if (g_str_equal(snapd_system_information_get_os_id(info), "ubuntu-core")) {
+    get_changes(self);
+  }
+}
+
 static void sdi_reboot_monitor_dispose(GObject *object) {
   SdiRebootMonitor *self = SDI_REBOOT_MONITOR(object);
 
@@ -160,4 +183,8 @@ SdiRebootMonitor *sdi_reboot_monitor_new(SnapdClient *client) {
   return self;
 }
 
-void sdi_reboot_monitor_start(SdiRebootMonitor *self) { get_changes(self); }
+void sdi_reboot_monitor_start(SdiRebootMonitor *self) {
+  // Check if this a core system.
+  snapd_client_get_system_information_async(self->client, self->cancellable,
+                                            get_system_information_cb, self);
+}
