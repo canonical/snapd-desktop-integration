@@ -26,15 +26,15 @@
 #include "iresources.h"
 #include "sdi-refresh-dialog.h"
 
-#define ICON_SIZE 48
+#define ICON_SIZE 64
 
 struct _SdiRefreshDialog {
   GtkWindow parent_instance;
 
   GtkLabel *message;
-  GtkLabel *app_label;
+  GtkLabel *message_label;
   GtkProgressBar *progress_bar;
-  GtkImage *app_icon;
+  GtkImage *icon_image;
 
   gchar *app_name;
   gchar *lock_file;
@@ -110,11 +110,11 @@ static void sdi_refresh_dialog_class_init(SdiRefreshDialogClass *klass) {
       "/io/snapcraft/SnapDesktopIntegration/sdi-refresh-dialog.ui");
 
   gtk_widget_class_bind_template_child(GTK_WIDGET_CLASS(klass),
-                                       SdiRefreshDialog, app_label);
+                                       SdiRefreshDialog, message_label);
   gtk_widget_class_bind_template_child(GTK_WIDGET_CLASS(klass),
                                        SdiRefreshDialog, progress_bar);
   gtk_widget_class_bind_template_child(GTK_WIDGET_CLASS(klass),
-                                       SdiRefreshDialog, app_icon);
+                                       SdiRefreshDialog, icon_image);
 
   gtk_widget_class_bind_template_callback(GTK_WIDGET_CLASS(klass), hide_cb);
 }
@@ -174,7 +174,7 @@ void sdi_refresh_dialog_set_message(SdiRefreshDialog *self,
                                     const gchar *message) {
   if (message == NULL)
     return;
-  gtk_label_set_text(self->app_label, message);
+  gtk_label_set_text(self->message_label, message);
 }
 
 void sdi_refresh_dialog_set_title(SdiRefreshDialog *self, const gchar *title) {
@@ -187,11 +187,11 @@ void sdi_refresh_dialog_set_icon(SdiRefreshDialog *self, const gchar *icon) {
   if (icon == NULL)
     return;
   if (strlen(icon) == 0) {
-    gtk_widget_set_visible(GTK_WIDGET(self->app_icon), FALSE);
+    gtk_widget_set_visible(GTK_WIDGET(self->icon_image), FALSE);
     return;
   }
-  gtk_image_set_from_icon_name(self->app_icon, icon);
-  gtk_widget_set_visible(GTK_WIDGET(self->app_icon), TRUE);
+  gtk_image_set_from_icon_name(self->icon_image, icon);
+  gtk_widget_set_visible(GTK_WIDGET(self->icon_image), TRUE);
 }
 
 void sdi_refresh_dialog_set_icon_image(SdiRefreshDialog *self,
@@ -204,12 +204,12 @@ void sdi_refresh_dialog_set_icon_image(SdiRefreshDialog *self,
   if (icon_image == NULL)
     return;
   if (strlen(icon_image) == 0) {
-    gtk_widget_set_visible(GTK_WIDGET(self->app_icon), FALSE);
+    gtk_widget_set_visible(GTK_WIDGET(self->icon_image), FALSE);
     return;
   }
   fimage = g_file_new_for_path(icon_image);
   if (!g_file_query_exists(fimage, NULL)) {
-    gtk_widget_set_visible(GTK_WIDGET(self->app_icon), FALSE);
+    gtk_widget_set_visible(GTK_WIDGET(self->icon_image), FALSE);
     return;
   }
   // This convoluted code is needed to be able to scale
@@ -218,14 +218,14 @@ void sdi_refresh_dialog_set_icon_image(SdiRefreshDialog *self,
   // scale.
   image = gdk_pixbuf_new_from_file(icon_image, NULL);
   if (image == NULL) {
-    gtk_widget_set_visible(GTK_WIDGET(self->app_icon), FALSE);
+    gtk_widget_set_visible(GTK_WIDGET(self->icon_image), FALSE);
     return;
   }
-  scale = gtk_widget_get_scale_factor(GTK_WIDGET(self->app_icon));
+  scale = gtk_widget_get_scale_factor(GTK_WIDGET(self->icon_image));
   final_image = gdk_pixbuf_scale_simple(image, ICON_SIZE * scale,
                                         ICON_SIZE * scale, GDK_INTERP_BILINEAR);
-  gtk_image_set_from_pixbuf(self->app_icon, final_image);
-  gtk_widget_set_visible(GTK_WIDGET(self->app_icon), TRUE);
+  gtk_image_set_from_pixbuf(self->icon_image, final_image);
+  gtk_widget_set_visible(GTK_WIDGET(self->icon_image), TRUE);
 }
 
 void sdi_refresh_dialog_set_wait_change_in_lock_file(SdiRefreshDialog *self) {
