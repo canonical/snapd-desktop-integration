@@ -19,7 +19,7 @@
             <child>
               <object class="GtkImage" id="app_icon">
                 <property name="visible">FALSE</property>
-                <property name="icon-size">large</property>
+                <property name="pixel-size">48</property>
                 <property name="margin-end">2</property>
                 <property name="margin-start">2</property>
                 <property name="vexpand">True</property>
