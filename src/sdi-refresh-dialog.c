@@ -122,6 +122,7 @@ static void sdi_refresh_dialog_class_init(SdiRefreshDialogClass *klass) {
 SdiRefreshDialog *sdi_refresh_dialog_new(const gchar *app_name,
                                          const gchar *lock_file_path) {
   SdiRefreshDialog *self = g_object_new(sdi_refresh_dialog_get_type(), NULL);
+  g_autofree gchar *title_text = NULL;
   g_autofree gchar *label_text = NULL;
 
   self->app_name = g_strdup(app_name);
@@ -132,9 +133,11 @@ SdiRefreshDialog *sdi_refresh_dialog_new(const gchar *app_name,
     self->lock_file = g_strdup(lock_file_path);
   }
   self->wait_change_in_lock_file = FALSE;
-  label_text = g_strdup_printf(
-      _("Refreshing “%s” to latest version. Please wait."), app_name);
-  gtk_label_set_text(self->app_label, label_text);
+  title_text = g_strdup_printf(_("%s update in progress"), app_name);
+  sdi_refresh_dialog_set_title(self, title_text);
+  label_text =
+      g_strdup_printf(_("Updating %s to the latest version."), app_name);
+  sdi_refresh_dialog_set_message(self, label_text);
 
   return self;
 }

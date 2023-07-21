@@ -4,7 +4,6 @@
   <template class="SdiRefreshDialog" parent="GtkWindow">
     <property name="default-height">200</property>
     <property name="default-width">560</property>
-    <property name="title" translatable="yes">Snap refresh in progress</property>
     <child>
       <object class="GtkBox">
         <property name="margin-bottom">20</property>
