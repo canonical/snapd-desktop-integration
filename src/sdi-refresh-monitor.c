@@ -15,7 +15,6 @@
  *
  */
 
-#include <glib/gi18n.h>
 #include <gtk/gtk.h>
 
 #include "io.snapcraft.SnapDesktopIntegration.h"
