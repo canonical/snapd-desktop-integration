@@ -23,7 +23,9 @@
 G_DECLARE_FINAL_TYPE(SdiApparmorPromptDialog, sdi_apparmor_prompt_dialog, SDI,
                      APPARMOR_PROMPT_DIALOG, GtkWindow)
 
-SdiApparmorPromptDialog *sdi_apparmor_prompt_dialog_new(SnapdClient *client,
-                                                        const gchar *id,
-                                                        const gchar *path,
-                                                        GVariant *info);
+SdiApparmorPromptDialog *
+sdi_apparmor_prompt_dialog_new(SnapdClient *client,
+                               SnapdPromptingRequest *request);
+
+SnapdPromptingRequest *
+sdi_apparmor_prompt_dialog_get_request(SdiApparmorPromptDialog *dialog);

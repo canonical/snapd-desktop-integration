@@ -30,7 +30,7 @@ struct _SdiApparmorPromptDialog {
 
   // The request this dialog is responding to.
   SnapdClient *client;
-  gchar *id;
+  SnapdPromptingRequest *request;
 
   // Metrics recorded on usage of dialog.
   GDateTime *create_time;
@@ -75,7 +75,7 @@ static void sdi_apparmor_prompt_dialog_dispose(GObject *object) {
   SdiApparmorPromptDialog *self = SDI_APPARMOR_PROMPT_DIALOG(object);
 
   g_clear_object(&self->client);
-  g_clear_pointer(&self->id, g_free);
+  g_clear_object(&self->request);
   g_clear_pointer(&self->create_time, g_date_time_unref);
 
   G_OBJECT_CLASS(sdi_apparmor_prompt_dialog_parent_class)->dispose(object);
@@ -117,22 +117,20 @@ void sdi_apparmor_prompt_dialog_class_init(
                                           more_info_cb);
 }
 
-SdiApparmorPromptDialog *sdi_apparmor_prompt_dialog_new(SnapdClient *client,
-                                                        const gchar *id,
-                                                        const gchar *path,
-                                                        GVariant *info) {
+SdiApparmorPromptDialog *
+sdi_apparmor_prompt_dialog_new(SnapdClient *client,
+                               SnapdPromptingRequest *request) {
   SdiApparmorPromptDialog *self =
       g_object_new(sdi_apparmor_prompt_dialog_get_type(), NULL);
 
   self->client = g_object_ref(client);
-  self->id = g_strdup(id);
+  self->request = g_object_ref(request);
 
+  // FIXME
   const gchar *icon = NULL, *label = NULL, *permission = NULL;
-  g_variant_lookup(info, "icon", "&s", &icon);
-  g_variant_lookup(info, "label", "&s", &label);
-  g_variant_lookup(info, "permission", "&s", &permission);
 
-  const gchar *snap_name = label;
+  const gchar *snap_name = snapd_prompting_request_get_snap(request);
+  const gchar *path = snapd_prompting_request_get_path(request);
 
   gtk_image_set_from_icon_name(self->image, icon);
 
@@ -165,4 +163,9 @@ SdiApparmorPromptDialog *sdi_apparmor_prompt_dialog_new(SnapdClient *client,
   gtk_label_set_markup(self->more_information_label, more_information_text);
 
   return self;
+}
+
+SnapdPromptingRequest *
+sdi_apparmor_prompt_dialog_get_request(SdiApparmorPromptDialog *self) {
+  return self->request;
 }

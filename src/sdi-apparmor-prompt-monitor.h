@@ -20,10 +20,10 @@
 #include <glib-object.h>
 #include <snapd-glib/snapd-glib.h>
 
-G_DECLARE_FINAL_TYPE(SdiApparmorPromptAgent, sdi_apparmor_prompt_agent, SDI,
-                     APPARMOR_PROMPT_AGENT, GObject)
+G_DECLARE_FINAL_TYPE(SdiApparmorPromptMonitor, sdi_apparmor_prompt_monitor, SDI,
+                     APPARMOR_PROMPT_MONITOR, GObject)
 
-SdiApparmorPromptAgent *sdi_apparmor_prompt_agent_new(SnapdClient *client);
+SdiApparmorPromptMonitor *sdi_apparmor_prompt_monitor_new(SnapdClient *client);
 
-gboolean sdi_apparmor_prompt_agent_start(SdiApparmorPromptAgent *agent,
-                                         GError **error);
+gboolean sdi_apparmor_prompt_monitor_start(SdiApparmorPromptMonitor *monitor,
+                                           GError **error);
