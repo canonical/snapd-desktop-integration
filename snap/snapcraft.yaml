@@ -42,8 +42,9 @@ slots:
 
 parts:
   snapd-glib:
-    source: https://github.com/snapcore/snapd-glib
+    source: https://github.com/robert-ancell/snapd-glib
     source-type: git
+    source-branch: prompting
     plugin: meson
     meson-parameters:
       - --prefix=/usr
