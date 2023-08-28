@@ -144,9 +144,9 @@ static void get_prompting_requests_cb(GObject *object, GAsyncResult *result,
     }
 
     g_warning("Failed to get prompting requests: %s", error->message);
+  } else {
+    process_requests(self, requests);
   }
-
-  process_requests(self, requests);
 
   schedule_poll(self);
 }
