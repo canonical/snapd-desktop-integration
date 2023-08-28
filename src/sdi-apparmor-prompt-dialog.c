@@ -127,7 +127,7 @@ sdi_apparmor_prompt_dialog_new(SnapdClient *client,
   self->request = g_object_ref(request);
 
   // FIXME
-  const gchar *icon = NULL, *label = NULL, *permission = NULL;
+  const gchar *icon = NULL, *permission = NULL;
 
   const gchar *snap_name = snapd_prompting_request_get_snap(request);
   const gchar *path = snapd_prompting_request_get_path(request);
@@ -135,7 +135,7 @@ sdi_apparmor_prompt_dialog_new(SnapdClient *client,
   gtk_image_set_from_icon_name(self->image, icon);
 
   g_autofree gchar *header_text = g_strdup_printf(
-      _("Do you want to allow %s to have %s access to your %s?"), label,
+      _("Do you want to allow %s to have %s access to your %s?"), snap_name,
       permission, path);
   gtk_label_set_markup(self->header_label, header_text);
   g_autofree gchar *details_text =
