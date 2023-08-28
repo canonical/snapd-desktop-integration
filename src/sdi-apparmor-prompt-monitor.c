@@ -123,7 +123,9 @@ static gboolean poll_timeout_cb(SdiApparmorPromptMonitor *self) {
 }
 
 static void schedule_poll(SdiApparmorPromptMonitor *self) {
-  g_source_remove(self->poll_timeout_id);
+  if (self->poll_timeout_id != 0) {
+    g_source_remove(self->poll_timeout_id);
+  }
   self->poll_timeout_id =
       g_timeout_add_seconds(CHECK_PROMPTING_REQUESTS_TIMEOUT_SECONDS,
                             G_SOURCE_FUNC(poll_timeout_cb), self);
