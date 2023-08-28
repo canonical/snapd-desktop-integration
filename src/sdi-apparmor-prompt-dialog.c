@@ -156,20 +156,20 @@ static void update_metadata(SdiApparmorPromptDialog *self) {
   g_autoptr(GPtrArray) more_info_lines = g_ptr_array_new_with_free_func(g_free);
 
   // Information about the publisher.
-  const gchar *publisher_id =
-      self->snap != NULL ? snapd_snap_get_publisher_id(self->snap) : NULL;
+  const gchar *publisher_username =
+      self->snap != NULL ? snapd_snap_get_publisher_username(self->snap) : NULL;
   const gchar *publisher_name =
       self->snap != NULL ? snapd_snap_get_publisher_display_name(self->snap)
                          : NULL;
-  if (publisher_id != NULL) {
-    g_autofree gchar *publisher_url =
-        g_strdup_printf("https://snapcraft.io/publisher/%s", publisher_id);
-    g_ptr_array_add(
-        more_info_lines,
-        g_strdup_printf("%s: <a href=\"%s\">%s (%s)</a>", _("Publisher"),
-                        publisher_url,
-                        publisher_name != NULL ? publisher_name : publisher_id,
-                        publisher_id));
+  if (publisher_username != NULL) {
+    g_autofree gchar *publisher_url = g_strdup_printf(
+        "https://snapcraft.io/publisher/%s", publisher_username);
+    g_ptr_array_add(more_info_lines,
+                    g_strdup_printf("%s: <a href=\"%s\">%s (%s)</a>",
+                                    _("Publisher"), publisher_url,
+                                    publisher_name != NULL ? publisher_name
+                                                           : publisher_username,
+                                    publisher_username));
   }
 
   // Information about when last updated.
