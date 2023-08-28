@@ -31,6 +31,7 @@ apps:
     restart-delay: 2s
     plugs:
       - snap-themes-control
+      - snap-prompting-control
       - login-session-observe
       - snap
 
