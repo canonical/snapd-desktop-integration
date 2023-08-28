@@ -88,6 +88,8 @@ static void report_metrics(SdiApparmorPromptDialog *self) {}
 
 static void response_cb(GObject *object, GAsyncResult *result,
                         gpointer user_data) {
+  SdiApparmorPromptDialog *self = user_data;
+
   g_autoptr(GError) error = NULL;
   if (!snapd_client_prompting_respond_finish(SNAPD_CLIENT(object), result,
                                              &error)) {
@@ -95,8 +97,11 @@ static void response_cb(GObject *object, GAsyncResult *result,
       return;
     }
     g_warning("Failed to respond to prompting request: %s", error->message);
+    gtk_widget_set_sensitive(GTK_WIDGET(self), TRUE);
     return;
   }
+
+  gtk_window_destroy(GTK_WINDOW(self));
 }
 
 static void respond(SdiApparmorPromptDialog *self,
@@ -110,8 +115,7 @@ static void respond(SdiApparmorPromptDialog *self,
 
   report_metrics(self);
 
-  // FIXME: Make inactivate and wait to be destroyed
-  gtk_window_destroy(GTK_WINDOW(self));
+  gtk_widget_set_sensitive(GTK_WIDGET(self), FALSE);
 }
 
 static void always_allow_cb(SdiApparmorPromptDialog *self) {
