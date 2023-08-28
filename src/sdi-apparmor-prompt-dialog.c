@@ -32,6 +32,10 @@ struct _SdiApparmorPromptDialog {
   SnapdClient *client;
   SnapdPromptingRequest *request;
 
+  // Snap metadata.
+  SnapdSnap *snap;
+  SnapdSnap *store_snap;
+
   // Metrics recorded on usage of dialog.
   GDateTime *create_time;
 
@@ -132,6 +136,117 @@ static void more_info_cb(SdiApparmorPromptDialog *self, const gchar *uri) {
       !gtk_widget_get_visible(GTK_WIDGET(self->more_information_label)));
 }
 
+static void update_metadata(SdiApparmorPromptDialog *self) {
+  const gchar *snap_name = snapd_prompting_request_get_snap(self->request);
+  SnapdPromptingPermissionFlags permissions =
+      snapd_prompting_request_get_permissions(self->request);
+  const gchar *path = snapd_prompting_request_get_path(self->request);
+
+  // gtk_image_set_from_icon_name(self->image, icon);
+
+  const gchar *title =
+      self->snap != NULL ? snapd_snap_get_title(self->snap) : NULL;
+  g_autofree gchar *permissions_label = permissions_to_label(permissions);
+  const gchar *label = title != NULL ? title : snap_name;
+  g_autofree gchar *header_text = g_strdup_printf(
+      _("Do you want to allow %s to have %s access to your %s?"), label,
+      permissions_label, path);
+  gtk_label_set_markup(self->header_label, header_text);
+
+  g_autoptr(GPtrArray) more_info_lines = g_ptr_array_new_with_free_func(g_free);
+
+  // Information about the publisher.
+  const gchar *publisher_id =
+      self->snap != NULL ? snapd_snap_get_publisher_id(self->snap) : NULL;
+  const gchar *publisher_name =
+      self->snap != NULL ? snapd_snap_get_publisher_display_name(self->snap)
+                         : NULL;
+  if (publisher_id != NULL) {
+    g_autofree gchar *publisher_url =
+        g_strdup_printf("https://snapcraft.io/publisher/%s", publisher_id);
+    g_ptr_array_add(
+        more_info_lines,
+        g_strdup_printf("%s: <a href=\"%s\">%s (%s)</a>", _("Publisher"),
+                        publisher_url,
+                        publisher_name != NULL ? publisher_name : publisher_id,
+                        publisher_id));
+  }
+
+  // Information about when last updated.
+  const gchar *channel_name =
+      self->snap != NULL ? snapd_snap_get_channel(self->snap) : NULL;
+  SnapdChannel *channel =
+      self->store_snap != NULL && channel_name != NULL
+          ? snapd_snap_match_channel(self->store_snap, channel_name)
+          : NULL;
+  if (channel != NULL) {
+    g_autofree gchar *last_updated_date =
+        g_date_time_format(snapd_channel_get_released_at(channel), "%e %B %Y");
+    g_ptr_array_add(
+        more_info_lines,
+        g_strdup_printf("%s: %s", _("Last updated"), last_updated_date));
+  }
+
+  // Link to store.
+  g_autofree gchar *store_url =
+      g_strdup_printf("https://snapcraft.io/%s", snap_name);
+  g_autofree gchar *more_information_text = g_strdup_printf(
+      "<a href=\"%s\">%s</a>", store_url, _("Find out more on the store"));
+
+  // Form into a bullet list.
+  g_autoptr(GString) more_info_text = g_string_new("");
+  for (guint i = 0; i < more_info_lines->len; i++) {
+    const gchar *line = g_ptr_array_index(more_info_lines, i);
+    if (i != 0) {
+      g_string_append(more_info_text, "\n");
+    }
+    g_string_append(more_info_text, " • ");
+    g_string_append(more_info_text, line);
+  }
+  gtk_label_set_markup(self->more_information_label, more_info_text->str);
+}
+
+static void get_snap_cb(GObject *object, GAsyncResult *result,
+                        gpointer user_data) {
+  SdiApparmorPromptDialog *self = user_data;
+
+  g_autoptr(GError) error = NULL;
+  g_autoptr(SnapdSnap) snap =
+      snapd_client_get_snap_finish(SNAPD_CLIENT(object), result, &error);
+  if (snap == NULL) {
+    if (!g_error_matches(error, G_IO_ERROR, G_IO_ERROR_CANCELLED)) {
+      g_warning("Failed to get snap metadata: %s", error->message);
+    }
+    return;
+  }
+
+  self->snap = g_object_ref(snap);
+  update_metadata(self);
+}
+
+static void get_store_snap_cb(GObject *object, GAsyncResult *result,
+                              gpointer user_data) {
+  SdiApparmorPromptDialog *self = user_data;
+
+  g_autoptr(GError) error = NULL;
+  g_autoptr(GPtrArray) snaps =
+      snapd_client_find_finish(SNAPD_CLIENT(object), result, NULL, &error);
+  if (snaps == NULL) {
+    if (!g_error_matches(error, G_IO_ERROR, G_IO_ERROR_CANCELLED)) {
+      g_warning("Failed to get store snap metadata: %s", error->message);
+    }
+    return;
+  }
+
+  if (snaps->len != 1) {
+    g_warning("Invalid number of snaps returned for store snap search");
+    return;
+  }
+
+  self->store_snap = g_object_ref(g_ptr_array_index(snaps, 0));
+  update_metadata(self);
+}
+
 static void sdi_apparmor_prompt_dialog_dispose(GObject *object) {
   SdiApparmorPromptDialog *self = SDI_APPARMOR_PROMPT_DIALOG(object);
 
@@ -139,6 +254,8 @@ static void sdi_apparmor_prompt_dialog_dispose(GObject *object) {
 
   g_clear_object(&self->client);
   g_clear_object(&self->request);
+  g_clear_object(&self->snap);
+  g_clear_object(&self->store_snap);
   g_clear_pointer(&self->create_time, g_date_time_unref);
   g_clear_object(&self->cancellable);
 
@@ -191,18 +308,6 @@ sdi_apparmor_prompt_dialog_new(SnapdClient *client,
   self->client = g_object_ref(client);
   self->request = g_object_ref(request);
 
-  const gchar *snap_name = snapd_prompting_request_get_snap(request);
-  SnapdPromptingPermissionFlags permissions =
-      snapd_prompting_request_get_permissions(request);
-  g_autofree gchar *permissions_label = permissions_to_label(permissions);
-  const gchar *path = snapd_prompting_request_get_path(request);
-
-  // gtk_image_set_from_icon_name(self->image, icon);
-
-  g_autofree gchar *header_text = g_strdup_printf(
-      _("Do you want to allow %s to have %s access to your %s?"), snap_name,
-      permissions_label, path);
-  gtk_label_set_markup(self->header_label, header_text);
   g_autofree gchar *details_text =
       g_strdup_printf(_("Denying access would affect non-essential features "
                         "from working properly"));
@@ -213,19 +318,13 @@ sdi_apparmor_prompt_dialog_new(SnapdClient *client,
   gtk_label_set_markup(self->more_information_link_label,
                        more_information_link_text);
 
-  const gchar *publisher_id = "mozilla";
-  const gchar *publisher_name = "Mozilla";
-  g_autofree gchar *publisher_url =
-      g_strdup_printf("https://snapcraft.io/publisher/%s", publisher_id);
-  const gchar *last_updated_date = "16 December 2022";
-  g_autofree gchar *store_url =
-      g_strdup_printf("https://snapcraft.io/%s", snap_name);
-  g_autofree gchar *more_information_text = g_strdup_printf(
-      " • %s: <a href=\"%s\">%s (%s)</a>\n • %s: %s\n • <a href=\"%s\">%s</a>",
-      _("Publisher"), publisher_url, publisher_name, publisher_id,
-      ("Last updated"), last_updated_date, store_url,
-      _("Find out more on the store"));
-  gtk_label_set_markup(self->more_information_label, more_information_text);
+  // Look up metadata for this snap.
+  const gchar *snap_name = snapd_prompting_request_get_snap(self->request);
+  snapd_client_get_snap_async(client, snap_name, self->cancellable, get_snap_cb,
+                              self);
+  snapd_client_find_async(client, SNAPD_FIND_FLAGS_MATCH_NAME, snap_name,
+                          self->cancellable, get_store_snap_cb, self);
+  update_metadata(self);
 
   return self;
 }
