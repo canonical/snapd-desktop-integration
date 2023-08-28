@@ -136,18 +136,6 @@ static void more_info_cb(SdiApparmorPromptDialog *self, const gchar *uri) {
       !gtk_widget_get_visible(GTK_WIDGET(self->more_information_label)));
 }
 
-static const gchar *get_icon_url(SnapdSnap *snap) {
-  GPtrArray *media = snapd_snap_get_media(snap);
-  for (guint i = 0; i < media->len; i++) {
-    SnapdMedia *m = g_ptr_array_index(media, i);
-    if (g_strcmp0(snapd_media_get_media_type(m), "icon")) {
-      return snapd_media_get_url(m);
-    }
-  }
-
-  return NULL;
-}
-
 static void update_metadata(SdiApparmorPromptDialog *self) {
   const gchar *snap_name = snapd_prompting_request_get_snap(self->request);
   SnapdPromptingPermissionFlags permissions =
@@ -164,14 +152,6 @@ static void update_metadata(SdiApparmorPromptDialog *self) {
       _("Do you want to allow %s to have %s access to your %s?"), label,
       permissions_label, path);
   gtk_label_set_markup(self->header_label, header_text);
-
-  // Icon.
-  const gchar *icon_url = snap != NULL ? get_icon_url(snap) : NULL;
-  if (icon_url != NULL) {
-    g_autoptr(GFile) file = g_file_new_for_uri(icon_url);
-    g_autoptr(GIcon) icon = g_file_icon_new(file);
-    gtk_image_set_from_gicon(self->image, icon);
-  }
 
   g_autoptr(GPtrArray) more_info_lines = g_ptr_array_new_with_free_func(g_free);
 
@@ -267,6 +247,30 @@ static void get_store_snap_cb(GObject *object, GAsyncResult *result,
   update_metadata(self);
 }
 
+static void get_icon_cb(GObject *object, GAsyncResult *result,
+                        gpointer user_data) {
+  SdiApparmorPromptDialog *self = user_data;
+
+  g_autoptr(GError) error = NULL;
+  g_autoptr(SnapdIcon) icon =
+      snapd_client_get_icon_finish(SNAPD_CLIENT(object), result, &error);
+  if (icon == NULL) {
+    if (!g_error_matches(error, G_IO_ERROR, G_IO_ERROR_CANCELLED)) {
+      g_warning("Failed to get snap icon: %s", error->message);
+    }
+    return;
+  }
+
+  g_autoptr(GdkTexture) texture =
+      gdk_texture_new_from_bytes(snapd_icon_get_data(icon), &error);
+  if (texture == NULL) {
+    g_warning("Failed to decode snap icon: %s", error->message);
+    return;
+  }
+
+  gtk_image_set_from_paintable(self->image, GDK_PAINTABLE(texture));
+}
+
 static void sdi_apparmor_prompt_dialog_dispose(GObject *object) {
   SdiApparmorPromptDialog *self = SDI_APPARMOR_PROMPT_DIALOG(object);
 
@@ -344,6 +348,8 @@ sdi_apparmor_prompt_dialog_new(SnapdClient *client,
                               self);
   snapd_client_find_async(client, SNAPD_FIND_FLAGS_MATCH_NAME, snap_name,
                           self->cancellable, get_store_snap_cb, self);
+  snapd_client_get_icon_async(client, snap_name, self->cancellable, get_icon_cb,
+                              self);
   update_metadata(self);
 
   return self;
