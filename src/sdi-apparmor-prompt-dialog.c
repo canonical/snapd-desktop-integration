@@ -39,6 +39,23 @@ struct _SdiApparmorPromptDialog {
 G_DEFINE_TYPE(SdiApparmorPromptDialog, sdi_apparmor_prompt_dialog,
               GTK_TYPE_WINDOW)
 
+static gchar *permissions_to_label(SnapdPromptingPermissionFlags permissions)
+{
+  struct { SnapdPromptingPermissionFlags flag; const char *name; } flags_to_name[] = {
+     { SNAPD_PROMPTING_PERMISSION_FLAGS_EXECUTE, "execute" },
+     { SNAPD_PROMPTING_PERMISSION_FLAGS_NONE, NULL }
+  };
+
+  g_autoptr(GPtrArray) permission_names = g_ptr_array_new();
+  for (size_t i = 0; flags_to_name[i].flag != SNAPD_PROMPTING_PERMISSION_FLAGS_NONE; i++) {
+    if ((permissions & flags_to_name[i].flag) != 0) {
+      g_ptr_array_add(permission_names, (gpointer) flags_to_name[i].name);
+    }
+  }
+  g_ptr_array_add(permission_names, NULL);
+  return g_strjoinv(", ", (GStrv) permission_names->pdata);
+}
+
 static void report_metrics(SdiApparmorPromptDialog *self) {}
 
 static void respond(SdiApparmorPromptDialog *self, gboolean allow,
@@ -126,17 +143,16 @@ sdi_apparmor_prompt_dialog_new(SnapdClient *client,
   self->client = g_object_ref(client);
   self->request = g_object_ref(request);
 
-  // FIXME
-  const gchar *icon = NULL, *permission = NULL;
-
   const gchar *snap_name = snapd_prompting_request_get_snap(request);
+  SnapdPromptingPermissionFlags permissions = snapd_prompting_request_get_permissions(request);
+  g_autofree gchar *permissions_label = permissions_to_label(permissions);
   const gchar *path = snapd_prompting_request_get_path(request);
 
-  gtk_image_set_from_icon_name(self->image, icon);
+  //gtk_image_set_from_icon_name(self->image, icon);
 
   g_autofree gchar *header_text = g_strdup_printf(
       _("Do you want to allow %s to have %s access to your %s?"), snap_name,
-      permission, path);
+      permissions_label, path);
   gtk_label_set_markup(self->header_label, header_text);
   g_autofree gchar *details_text =
       g_strdup_printf(_("Denying access would affect non-essential features "
