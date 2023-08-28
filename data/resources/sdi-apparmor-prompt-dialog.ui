@@ -14,7 +14,7 @@
         <child>
           <object class="GtkImage" id="image">
             <property name="valign">start</property>
-            <property name="icon-size">large</property>
+            <property name="pixel-size">48</property>
           </object>
         </child>
         <child>
