@@ -101,6 +101,8 @@ static void response_cb(GObject *object, GAsyncResult *result,
     return;
   }
 
+  report_metrics(self);
+
   gtk_window_destroy(GTK_WINDOW(self));
 }
 
@@ -112,8 +114,6 @@ static void respond(SdiApparmorPromptDialog *self,
       lifespan, 0, snapd_prompting_request_get_path(self->request),
       snapd_prompting_request_get_permissions(self->request), self->cancellable,
       response_cb, self);
-
-  report_metrics(self);
 
   gtk_widget_set_sensitive(GTK_WIDGET(self), FALSE);
 }
