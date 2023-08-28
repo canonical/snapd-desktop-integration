@@ -136,16 +136,28 @@ static void more_info_cb(SdiApparmorPromptDialog *self, const gchar *uri) {
       !gtk_widget_get_visible(GTK_WIDGET(self->more_information_label)));
 }
 
+static const gchar *get_icon_url(SnapdSnap *snap) {
+  GPtrArray *media = snapd_snap_get_media(snap);
+  for (guint i = 0; i < media->len; i++) {
+    SnapdMedia *m = g_ptr_array_index(media, i);
+    if (g_strcmp0(snapd_media_get_media_type(m), "icon")) {
+      return snapd_media_get_url(m);
+    }
+  }
+
+  return NULL;
+}
+
 static void update_metadata(SdiApparmorPromptDialog *self) {
   const gchar *snap_name = snapd_prompting_request_get_snap(self->request);
   SnapdPromptingPermissionFlags permissions =
       snapd_prompting_request_get_permissions(self->request);
   const gchar *path = snapd_prompting_request_get_path(self->request);
 
-  // gtk_image_set_from_icon_name(self->image, icon);
+  // Use the most up to date metadata.
+  SnapdSnap *snap = self->store_snap != NULL ? self->store_snap : self->snap;
 
-  const gchar *title =
-      self->snap != NULL ? snapd_snap_get_title(self->snap) : NULL;
+  const gchar *title = snap != NULL ? snapd_snap_get_title(snap) : NULL;
   g_autofree gchar *permissions_label = permissions_to_label(permissions);
   const gchar *label = title != NULL ? title : snap_name;
   g_autofree gchar *header_text = g_strdup_printf(
@@ -153,14 +165,21 @@ static void update_metadata(SdiApparmorPromptDialog *self) {
       permissions_label, path);
   gtk_label_set_markup(self->header_label, header_text);
 
+  // Icon.
+  const gchar *icon_url = snap != NULL ? get_icon_url(snap) : NULL;
+  if (icon_url != NULL) {
+    g_autoptr(GFile) file = g_file_new_for_uri(icon_url);
+    g_autoptr(GIcon) icon = g_file_icon_new(file);
+    gtk_image_set_from_gicon(self->image, icon);
+  }
+
   g_autoptr(GPtrArray) more_info_lines = g_ptr_array_new_with_free_func(g_free);
 
   // Information about the publisher.
   const gchar *publisher_username =
-      self->snap != NULL ? snapd_snap_get_publisher_username(self->snap) : NULL;
+      snap != NULL ? snapd_snap_get_publisher_username(snap) : NULL;
   const gchar *publisher_name =
-      self->snap != NULL ? snapd_snap_get_publisher_display_name(self->snap)
-                         : NULL;
+      snap != NULL ? snapd_snap_get_publisher_display_name(snap) : NULL;
   if (publisher_username != NULL) {
     g_autofree gchar *publisher_url = g_strdup_printf(
         "https://snapcraft.io/publisher/%s", publisher_username);
