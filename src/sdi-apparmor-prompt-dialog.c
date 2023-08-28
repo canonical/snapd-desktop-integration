@@ -190,8 +190,9 @@ static void update_metadata(SdiApparmorPromptDialog *self) {
   // Link to store.
   g_autofree gchar *store_url =
       g_strdup_printf("https://snapcraft.io/%s", snap_name);
-  g_autofree gchar *more_information_text = g_strdup_printf(
-      "<a href=\"%s\">%s</a>", store_url, _("Find out more on the store"));
+  g_ptr_array_add(more_info_lines,
+                  g_strdup_printf("<a href=\"%s\">%s</a>", store_url,
+                                  _("Find out more on the store")));
 
   // Form into a bullet list.
   g_autoptr(GString) more_info_text = g_string_new("");
