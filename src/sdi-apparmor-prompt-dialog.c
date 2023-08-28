@@ -34,70 +34,95 @@ struct _SdiApparmorPromptDialog {
 
   // Metrics recorded on usage of dialog.
   GDateTime *create_time;
+
+  GCancellable *cancellable;
 };
 
 G_DEFINE_TYPE(SdiApparmorPromptDialog, sdi_apparmor_prompt_dialog,
               GTK_TYPE_WINDOW)
 
-static gchar *permissions_to_label(SnapdPromptingPermissionFlags permissions)
-{
-  struct { SnapdPromptingPermissionFlags flag; const char *name; } flags_to_name[] = {
-     { SNAPD_PROMPTING_PERMISSION_FLAGS_EXECUTE, "execute" },
-     { SNAPD_PROMPTING_PERMISSION_FLAGS_WRITE, "write" },
-     { SNAPD_PROMPTING_PERMISSION_FLAGS_READ, "read" },
-     { SNAPD_PROMPTING_PERMISSION_FLAGS_APPEND, "append" },
-     { SNAPD_PROMPTING_PERMISSION_FLAGS_CREATE, "create" },
-     { SNAPD_PROMPTING_PERMISSION_FLAGS_DELETE, "delete" },
-     { SNAPD_PROMPTING_PERMISSION_FLAGS_OPEN, "open" },
-     { SNAPD_PROMPTING_PERMISSION_FLAGS_RENAME, "rename" },
-     { SNAPD_PROMPTING_PERMISSION_FLAGS_SET_ATTR, "set-attr" },
-     { SNAPD_PROMPTING_PERMISSION_FLAGS_GET_ATTR, "get-attr" },
-     { SNAPD_PROMPTING_PERMISSION_FLAGS_SET_CRED, "set-cred" },
-     { SNAPD_PROMPTING_PERMISSION_FLAGS_GET_CRED, "get-cred" },
-     { SNAPD_PROMPTING_PERMISSION_FLAGS_CHANGE_MODE, "change-mode" },
-     { SNAPD_PROMPTING_PERMISSION_FLAGS_CHANGE_OWNER, "change-owner" },
-     { SNAPD_PROMPTING_PERMISSION_FLAGS_CHANGE_GROUP, "change-group" },
-     { SNAPD_PROMPTING_PERMISSION_FLAGS_LOCK, "lock" },
-     { SNAPD_PROMPTING_PERMISSION_FLAGS_EXECUTE_MAP, "execute-map" },
-     { SNAPD_PROMPTING_PERMISSION_FLAGS_LINK, "link" },
-     { SNAPD_PROMPTING_PERMISSION_FLAGS_CHANGE_PROFILE, "change-profile" },
-     { SNAPD_PROMPTING_PERMISSION_FLAGS_CHANGE_PROFILE_ON_EXEC, "change-profile-on-exec" },
-     { SNAPD_PROMPTING_PERMISSION_FLAGS_NONE, NULL }
-  };
+static gchar *permissions_to_label(SnapdPromptingPermissionFlags permissions) {
+  struct {
+    SnapdPromptingPermissionFlags flag;
+    const char *name;
+  } flags_to_name[] = {
+      {SNAPD_PROMPTING_PERMISSION_FLAGS_EXECUTE, "execute"},
+      {SNAPD_PROMPTING_PERMISSION_FLAGS_WRITE, "write"},
+      {SNAPD_PROMPTING_PERMISSION_FLAGS_READ, "read"},
+      {SNAPD_PROMPTING_PERMISSION_FLAGS_APPEND, "append"},
+      {SNAPD_PROMPTING_PERMISSION_FLAGS_CREATE, "create"},
+      {SNAPD_PROMPTING_PERMISSION_FLAGS_DELETE, "delete"},
+      {SNAPD_PROMPTING_PERMISSION_FLAGS_OPEN, "open"},
+      {SNAPD_PROMPTING_PERMISSION_FLAGS_RENAME, "rename"},
+      {SNAPD_PROMPTING_PERMISSION_FLAGS_SET_ATTR, "set-attr"},
+      {SNAPD_PROMPTING_PERMISSION_FLAGS_GET_ATTR, "get-attr"},
+      {SNAPD_PROMPTING_PERMISSION_FLAGS_SET_CRED, "set-cred"},
+      {SNAPD_PROMPTING_PERMISSION_FLAGS_GET_CRED, "get-cred"},
+      {SNAPD_PROMPTING_PERMISSION_FLAGS_CHANGE_MODE, "change-mode"},
+      {SNAPD_PROMPTING_PERMISSION_FLAGS_CHANGE_OWNER, "change-owner"},
+      {SNAPD_PROMPTING_PERMISSION_FLAGS_CHANGE_GROUP, "change-group"},
+      {SNAPD_PROMPTING_PERMISSION_FLAGS_LOCK, "lock"},
+      {SNAPD_PROMPTING_PERMISSION_FLAGS_EXECUTE_MAP, "execute-map"},
+      {SNAPD_PROMPTING_PERMISSION_FLAGS_LINK, "link"},
+      {SNAPD_PROMPTING_PERMISSION_FLAGS_CHANGE_PROFILE, "change-profile"},
+      {SNAPD_PROMPTING_PERMISSION_FLAGS_CHANGE_PROFILE_ON_EXEC,
+       "change-profile-on-exec"},
+      {SNAPD_PROMPTING_PERMISSION_FLAGS_NONE, NULL}};
 
   g_autoptr(GPtrArray) permission_names = g_ptr_array_new();
-  for (size_t i = 0; flags_to_name[i].flag != SNAPD_PROMPTING_PERMISSION_FLAGS_NONE; i++) {
+  for (size_t i = 0;
+       flags_to_name[i].flag != SNAPD_PROMPTING_PERMISSION_FLAGS_NONE; i++) {
     if ((permissions & flags_to_name[i].flag) != 0) {
-      g_ptr_array_add(permission_names, (gpointer) flags_to_name[i].name);
+      g_ptr_array_add(permission_names, (gpointer)flags_to_name[i].name);
     }
   }
   g_ptr_array_add(permission_names, NULL);
-  return g_strjoinv(", ", (GStrv) permission_names->pdata);
+  return g_strjoinv(", ", (GStrv)permission_names->pdata);
 }
 
 static void report_metrics(SdiApparmorPromptDialog *self) {}
 
-static void respond(SdiApparmorPromptDialog *self, gboolean allow,
-                    gboolean allow_directory, gboolean always_prompt) {
-  // FIXME
+static void response_cb(GObject *object, GAsyncResult *result,
+                        gpointer user_data) {
+  g_autoptr(GError) error = NULL;
+  if (!snapd_client_prompting_respond_finish(SNAPD_CLIENT(object), result,
+                                             &error)) {
+    if (g_error_matches(error, G_IO_ERROR, G_IO_ERROR_CANCELLED)) {
+      return;
+    }
+    g_warning("Failed to respond to prompting request: %s", error->message);
+    return;
+  }
+}
+
+static void respond(SdiApparmorPromptDialog *self,
+                    SnapdPromptingOutcome outcome,
+                    SnapdPromptingLifespan lifespan) {
+  snapd_client_prompting_respond_async(
+      self->client, snapd_prompting_request_get_id(self->request), outcome,
+      lifespan, 0, snapd_prompting_request_get_path(self->request),
+      snapd_prompting_request_get_permissions(self->request), self->cancellable,
+      response_cb, self);
 
   report_metrics(self);
 
+  // FIXME: Make inactivate and wait to be destroyed
   gtk_window_destroy(GTK_WINDOW(self));
 }
 
 static void always_allow_cb(SdiApparmorPromptDialog *self) {
-  respond(self, TRUE, FALSE, FALSE);
+  respond(self, SNAPD_PROMPTING_OUTCOME_ALLOW,
+          SNAPD_PROMPTING_LIFESPAN_FOREVER);
 }
 
 static void deny_once_cb(SdiApparmorPromptDialog *self) {
-  respond(self, FALSE, FALSE, FALSE);
+  respond(self, SNAPD_PROMPTING_OUTCOME_DENY, SNAPD_PROMPTING_LIFESPAN_SINGLE);
 }
 
 static void more_options_cb(SdiApparmorPromptDialog *self) {}
 
 static gboolean close_request_cb(SdiApparmorPromptDialog *self) {
-  respond(self, FALSE, FALSE, FALSE);
+  respond(self, SNAPD_PROMPTING_OUTCOME_DENY, SNAPD_PROMPTING_LIFESPAN_SINGLE);
   return FALSE;
 }
 
@@ -110,15 +135,19 @@ static void more_info_cb(SdiApparmorPromptDialog *self, const gchar *uri) {
 static void sdi_apparmor_prompt_dialog_dispose(GObject *object) {
   SdiApparmorPromptDialog *self = SDI_APPARMOR_PROMPT_DIALOG(object);
 
+  g_cancellable_cancel(self->cancellable);
+
   g_clear_object(&self->client);
   g_clear_object(&self->request);
   g_clear_pointer(&self->create_time, g_date_time_unref);
+  g_clear_object(&self->cancellable);
 
   G_OBJECT_CLASS(sdi_apparmor_prompt_dialog_parent_class)->dispose(object);
 }
 
 void sdi_apparmor_prompt_dialog_init(SdiApparmorPromptDialog *self) {
   self->create_time = g_date_time_new_now_utc();
+  self->cancellable = g_cancellable_new();
   gtk_widget_init_template(GTK_WIDGET(self));
 }
 
@@ -163,11 +192,12 @@ sdi_apparmor_prompt_dialog_new(SnapdClient *client,
   self->request = g_object_ref(request);
 
   const gchar *snap_name = snapd_prompting_request_get_snap(request);
-  SnapdPromptingPermissionFlags permissions = snapd_prompting_request_get_permissions(request);
+  SnapdPromptingPermissionFlags permissions =
+      snapd_prompting_request_get_permissions(request);
   g_autofree gchar *permissions_label = permissions_to_label(permissions);
   const gchar *path = snapd_prompting_request_get_path(request);
 
-  //gtk_image_set_from_icon_name(self->image, icon);
+  // gtk_image_set_from_icon_name(self->image, icon);
 
   g_autofree gchar *header_text = g_strdup_printf(
       _("Do you want to allow %s to have %s access to your %s?"), snap_name,
