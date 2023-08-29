@@ -109,9 +109,18 @@ static void response_cb(GObject *object, GAsyncResult *result,
 static void respond(SdiApparmorPromptDialog *self,
                     SnapdPromptingOutcome outcome,
                     SnapdPromptingLifespan lifespan) {
+  // Allow everything in the requested directory.
+  const gchar *path = snapd_prompting_request_get_path(self->request);
+  g_autofree gchar *path_pattern;
+  if (g_str_has_suffix(path, "/")) {
+    path_pattern = g_strdup_printf("%s*", path);
+  } else {
+    path_pattern = g_strdup(path);
+  }
+
   snapd_client_prompting_respond_async(
       self->client, snapd_prompting_request_get_id(self->request), outcome,
-      lifespan, 0, snapd_prompting_request_get_path(self->request),
+      lifespan, 0, path_pattern,
       snapd_prompting_request_get_permissions(self->request), self->cancellable,
       response_cb, self);
 
