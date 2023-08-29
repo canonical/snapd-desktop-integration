@@ -52,11 +52,10 @@ parts:
       - -Dvala-bindings=false
       - -Dqt-bindings=false
       - -Dqml-bindings=false
-      - -Dsoup2=true
     build-packages:
       - libpolkit-gobject-1-dev
     prime:
-      - usr/lib/*/libsnapd-glib.so.*
+      - usr/lib/*/libsnapd-glib-2.so.*
 
   snapd-desktop-integration:
     after: [ snapd-glib ]
