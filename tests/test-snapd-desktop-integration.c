@@ -66,22 +66,22 @@ static void set_setting(const gchar *schema_name, const gchar *key_name,
   g_settings_set_string(settings, key_name, value);
 }
 
-static void send_snapd_response(SoupMessage *message, guint status_code,
+static void send_snapd_response(SoupServerMessage *message, guint status_code,
                                 const gchar *json) {
-  soup_message_set_status(message, status_code);
-  soup_message_headers_set_content_type(message->response_headers,
-                                        "application/json", NULL);
-  soup_message_headers_set_content_length(message->response_headers,
-                                          strlen(json));
-  soup_message_body_append(message->response_body, SOUP_MEMORY_COPY, json,
-                           strlen(json));
+  soup_server_message_set_status(message, status_code, "");
+  SoupMessageHeaders *headers =
+      soup_server_message_get_response_headers(message);
+  soup_message_headers_set_content_type(headers, "application/json", NULL);
+  soup_message_headers_set_content_length(headers, strlen(json));
+  soup_message_body_append(soup_server_message_get_response_body(message),
+                           SOUP_MEMORY_COPY, json, strlen(json));
 }
 
-static void handle_snapd_themes_request(SoupMessage *message) {
-  const gchar *query = soup_uri_get_query(soup_message_get_uri(message));
+static void handle_snapd_themes_request(SoupServerMessage *message) {
+  const gchar *query = g_uri_get_query(soup_server_message_get_uri(message));
   switch (state) {
   case STATE_GET_EXISTING_THEME_STATUS:
-    g_assert_cmpstr(message->method, ==, "GET");
+    g_assert_cmpstr(soup_server_message_get_method(message), ==, "GET");
     g_assert_cmpstr(query, ==,
                     "gtk-theme=GtkTheme1&icon-theme=IconTheme1&icon-theme="
                     "CursorTheme1&sound-theme=SoundTheme1");
@@ -101,7 +101,7 @@ static void handle_snapd_themes_request(SoupMessage *message) {
     state = STATE_GET_NEW_THEME_STATUS;
     break;
   case STATE_GET_NEW_THEME_STATUS:
-    g_assert_cmpstr(message->method, ==, "GET");
+    g_assert_cmpstr(soup_server_message_get_method(message), ==, "GET");
     g_assert_cmpstr(query, ==,
                     "gtk-theme=GtkTheme2&icon-theme=IconTheme2&icon-theme="
                     "CursorTheme2&sound-theme=SoundTheme2");
@@ -114,11 +114,12 @@ static void handle_snapd_themes_request(SoupMessage *message) {
     state = STATE_PROMPT_INSTALL;
     break;
   case STATE_INSTALL_THEMES:
-    g_assert_cmpstr(message->method, ==, "POST");
-    g_assert_cmpstr(
-        soup_message_headers_get_content_type(message->request_headers, NULL),
-        ==, "application/json");
-    g_autofree gchar *json = get_json(message->request_body);
+    g_assert_cmpstr(soup_server_message_get_method(message), ==, "POST");
+    g_assert_cmpstr(soup_message_headers_get_content_type(
+                        soup_server_message_get_request_headers(message), NULL),
+                    ==, "application/json");
+    g_autofree gchar *json =
+        get_json(soup_server_message_get_request_body(message));
     g_assert_cmpstr(json, ==,
                     "{\"gtk-themes\":[\"GtkTheme2\"],\"icon-themes\":[],"
                     "\"sound-themes\":[\"SoundTheme2\"]}");
@@ -131,20 +132,19 @@ static void handle_snapd_themes_request(SoupMessage *message) {
   }
 }
 
-static void handle_snapd_get_changes_request(SoupMessage *message) {
+static void handle_snapd_get_changes_request(SoupServerMessage *message) {
   send_snapd_response(message, 200,
                       "{\"type\":\"sync\",\"status-code\":200,\"status\":"
                       "\"OK\",\"result\":{\"id\":\"1234\",\"ready\":true}}");
 }
 
-static void handle_snapd_request(SoupServer *server, SoupMessage *message,
+static void handle_snapd_request(SoupServer *server, SoupServerMessage *message,
                                  const char *path, GHashTable *query,
-                                 SoupClientContext *client,
                                  gpointer user_data) {
   if (strcmp(path, "/v2/accessories/themes") == 0) {
     handle_snapd_themes_request(message);
   } else if (strcmp(path, "/v2/changes/1234") == 0 &&
-             strcmp(message->method, "GET") == 0) {
+             strcmp(soup_server_message_get_method(message), "GET") == 0) {
     handle_snapd_get_changes_request(message);
   } else {
     send_snapd_response(
@@ -175,8 +175,7 @@ static gboolean setup_mock_snapd(GError **error) {
     return FALSE;
   }
 
-  snapd_server =
-      soup_server_new(SOUP_SERVER_SERVER_HEADER, "MockSnapd/1.0", NULL);
+  snapd_server = soup_server_new("server-header", "MockSnapd/1.0", NULL);
   soup_server_add_handler(snapd_server, NULL, handle_snapd_request, NULL, NULL);
   if (!soup_server_listen_socket(snapd_server, socket, 0, error)) {
     g_prefix_error(error, "Failed to listen for HTTP requests: ");

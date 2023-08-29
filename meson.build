@@ -8,7 +8,7 @@ if not snapd_glib_dep.found()
     snapd_glib_dep = dependency('snapd-glib', version: '>= 1.60')
 endif
 libnotify_dep = dependency('libnotify', version: '>= 0.7.7')
-libsoup_dep = dependency ('libsoup-2.4', version: '>= 2.32')
+libsoup_dep = dependency ('libsoup-3.0')
 json_glib_dep = dependency ('json-glib-1.0')
 
 add_global_arguments('-DGETTEXT_PACKAGE="@0@"'.format (meson.project_name()), language:'c')
