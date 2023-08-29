@@ -245,7 +245,7 @@ static const gchar *get_icon_url(SnapdSnap *snap) {
   GPtrArray *media = snapd_snap_get_media(snap);
   for (guint i = 0; i < media->len; i++) {
     SnapdMedia *m = g_ptr_array_index(media, i);
-    if (g_strcmp0(snapd_media_get_media_type(m), "icon")) {
+    if (g_strcmp0(snapd_media_get_media_type(m), "icon") == 0) {
       return snapd_media_get_url(m);
     }
   }
