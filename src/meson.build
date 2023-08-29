@@ -7,7 +7,7 @@ snapd_desktop_integration = executable(
   'snapd-desktop-integration',
   'main.c', 'sdi-apparmor-prompt-monitor.c', 'sdi-apparmor-prompt-dialog.c', 'sdi-refresh-dialog.c', 'sdi-refresh-monitor.c', 'sdi-theme-monitor.c',
   resources, gdbus_src,login_src, login_session_src,
-  dependencies: [gtk_dep, snapd_glib_dep, libnotify_dep],
+  dependencies: [gtk_dep, snapd_glib_dep, libnotify_dep, libsoup_dep],
   install: true,
   link_args: ['-rdynamic'],
 )

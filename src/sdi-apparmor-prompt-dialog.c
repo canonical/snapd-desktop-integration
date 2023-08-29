@@ -16,6 +16,7 @@
  */
 
 #include <glib/gi18n.h>
+#include <libsoup/soup.h>
 
 #include "sdi-apparmor-prompt-dialog.h"
 
@@ -35,6 +36,9 @@ struct _SdiApparmorPromptDialog {
   // Snap metadata.
   SnapdSnap *snap;
   SnapdSnap *store_snap;
+
+  // TRUE if we are showing a remote icon.
+  bool have_remote_icon;
 
   // Metrics recorded on usage of dialog.
   GDateTime *create_time;
@@ -237,6 +241,42 @@ static void get_snap_cb(GObject *object, GAsyncResult *result,
   update_metadata(self);
 }
 
+static const gchar *get_icon_url(SnapdSnap *snap) {
+  GPtrArray *media = snapd_snap_get_media(snap);
+  for (guint i = 0; i < media->len; i++) {
+    SnapdMedia *m = g_ptr_array_index(media, i);
+    if (g_strcmp0(snapd_media_get_media_type(m), "icon")) {
+      return snapd_media_get_url(m);
+    }
+  }
+
+  return NULL;
+}
+
+static void remote_icon_cb(GObject *object, GAsyncResult *result,
+                           gpointer user_data) {
+  SdiApparmorPromptDialog *self = user_data;
+
+  g_autoptr(GError) error = NULL;
+  g_autoptr(GBytes) data =
+      soup_session_send_and_read_finish(SOUP_SESSION(object), result, &error);
+  if (data == NULL) {
+    if (!g_error_matches(error, G_IO_ERROR, G_IO_ERROR_CANCELLED)) {
+      g_warning("Failed to get store snap remote icon: %s", error->message);
+    }
+    return;
+  }
+
+  g_autoptr(GdkTexture) texture = gdk_texture_new_from_bytes(data, &error);
+  if (texture == NULL) {
+    g_warning("Failed to decode remote snap icon: %s", error->message);
+    return;
+  }
+
+  self->have_remote_icon = TRUE;
+  gtk_image_set_from_paintable(self->image, GDK_PAINTABLE(texture));
+}
+
 static void get_store_snap_cb(GObject *object, GAsyncResult *result,
                               gpointer user_data) {
   SdiApparmorPromptDialog *self = user_data;
@@ -258,6 +298,14 @@ static void get_store_snap_cb(GObject *object, GAsyncResult *result,
 
   self->store_snap = g_object_ref(g_ptr_array_index(snaps, 0));
   update_metadata(self);
+
+  const gchar *icon_url = get_icon_url(self->store_snap);
+  if (icon_url != NULL) {
+    g_autoptr(SoupSession) session = soup_session_new();
+    g_autoptr(SoupMessage) message = soup_message_new("GET", icon_url);
+    soup_session_send_and_read_async(session, message, G_PRIORITY_DEFAULT,
+                                     self->cancellable, remote_icon_cb, self);
+  }
 }
 
 static void get_icon_cb(GObject *object, GAsyncResult *result,
@@ -269,15 +317,20 @@ static void get_icon_cb(GObject *object, GAsyncResult *result,
       snapd_client_get_icon_finish(SNAPD_CLIENT(object), result, &error);
   if (icon == NULL) {
     if (!g_error_matches(error, G_IO_ERROR, G_IO_ERROR_CANCELLED)) {
-      g_warning("Failed to get snap icon: %s", error->message);
+      g_warning("Failed to get local snap icon: %s", error->message);
     }
+    return;
+  }
+
+  // Remote icon is better than local.
+  if (self->have_remote_icon) {
     return;
   }
 
   g_autoptr(GdkTexture) texture =
       gdk_texture_new_from_bytes(snapd_icon_get_data(icon), &error);
   if (texture == NULL) {
-    g_warning("Failed to decode snap icon: %s", error->message);
+    g_warning("Failed to decode local snap icon: %s", error->message);
     return;
   }
 
