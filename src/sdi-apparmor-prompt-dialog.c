@@ -404,6 +404,8 @@ void sdi_apparmor_prompt_dialog_class_init(
                                        more_information_link_label);
   gtk_widget_class_bind_template_child(
       GTK_WIDGET_CLASS(klass), SdiApparmorPromptDialog, more_information_label);
+  gtk_widget_class_bind_template_child(
+      GTK_WIDGET_CLASS(klass), SdiApparmorPromptDialog, more_options_button);
 
   gtk_widget_class_bind_template_callback(GTK_WIDGET_CLASS(klass),
                                           always_allow_cb);
