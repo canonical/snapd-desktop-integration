@@ -127,10 +127,38 @@ static void respond(SdiApparmorPromptDialog *self,
     path_pattern = g_strdup(path);
   }
 
+  SnapdPromptingPermissionFlags permissions =
+      snapd_prompting_request_get_permissions(self->request);
+  SnapdPromptingPermissionFlags response_permissions = permissions;
+
+  // If writing a file, then give additional read permissions.
+  if ((permissions & (SNAPD_PROMPTING_PERMISSION_FLAGS_READ |
+                      SNAPD_PROMPTING_PERMISSION_FLAGS_OPEN)) != 0) {
+    response_permissions |= SNAPD_PROMPTING_PERMISSION_FLAGS_READ |
+                            SNAPD_PROMPTING_PERMISSION_FLAGS_OPEN |
+                            SNAPD_PROMPTING_PERMISSION_FLAGS_GET_ATTR |
+                            SNAPD_PROMPTING_PERMISSION_FLAGS_GET_CRED;
+  }
+
+  // If writing a file, then give appropriate permissions to modify it.
+  if ((permissions & (SNAPD_PROMPTING_PERMISSION_FLAGS_CREATE |
+                      SNAPD_PROMPTING_PERMISSION_FLAGS_WRITE)) != 0) {
+    response_permissions |= SNAPD_PROMPTING_PERMISSION_FLAGS_WRITE |
+                            SNAPD_PROMPTING_PERMISSION_FLAGS_READ |
+                            SNAPD_PROMPTING_PERMISSION_FLAGS_APPEND |
+                            SNAPD_PROMPTING_PERMISSION_FLAGS_CREATE |
+                            SNAPD_PROMPTING_PERMISSION_FLAGS_DELETE |
+                            SNAPD_PROMPTING_PERMISSION_FLAGS_OPEN |
+                            SNAPD_PROMPTING_PERMISSION_FLAGS_SET_ATTR |
+                            SNAPD_PROMPTING_PERMISSION_FLAGS_GET_ATTR |
+                            SNAPD_PROMPTING_PERMISSION_FLAGS_CHANGE_MODE |
+                            SNAPD_PROMPTING_PERMISSION_FLAGS_CHANGE_OWNER |
+                            SNAPD_PROMPTING_PERMISSION_FLAGS_CHANGE_GROUP;
+  }
+
   snapd_client_prompting_respond_async(
       self->client, snapd_prompting_request_get_id(self->request), outcome,
-      lifespan, 0, path_pattern,
-      snapd_prompting_request_get_permissions(self->request), self->cancellable,
+      lifespan, 0, path_pattern, response_permissions, self->cancellable,
       response_cb, self);
 
   gtk_widget_set_sensitive(GTK_WIDGET(self), FALSE);
