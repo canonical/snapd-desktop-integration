@@ -197,11 +197,19 @@ static gboolean close_request_cb(SdiApparmorPromptDialog *self) {
 static void update_more_info_label(SdiApparmorPromptDialog *self) {
   gboolean showing_info =
       gtk_widget_get_visible(GTK_WIDGET(self->more_information_label));
-  g_autofree gchar *more_information_link_text = g_strdup_printf(
-      "<a href=\"toggle_info\">%s</a>",
-      showing_info ? _("Less information") : _("More information"));
+  const gchar *label =
+      showing_info ? _("Less information") : _("More information");
+  g_autofree gchar *more_information_link_text =
+      g_strdup_printf("<a href=\"toggle_info\">%s</a>", label);
   gtk_label_set_markup(self->more_information_link_label,
                        more_information_link_text);
+}
+
+static gboolean update_more_info_label_idle_cb(gpointer user_data) {
+  SdiApparmorPromptDialog *self = user_data;
+  update_more_info_label(self);
+  g_object_unref(self);
+  return G_SOURCE_REMOVE;
 }
 
 static void more_info_cb(SdiApparmorPromptDialog *self, const gchar *uri) {
@@ -209,7 +217,8 @@ static void more_info_cb(SdiApparmorPromptDialog *self, const gchar *uri) {
       gtk_widget_get_visible(GTK_WIDGET(self->more_information_label));
   gtk_widget_set_visible(GTK_WIDGET(self->more_information_label),
                          !showing_info);
-  update_more_info_label(self);
+  // Workaround for segfault if update label when handling link.
+  g_idle_add(update_more_info_label_idle_cb, g_object_ref(self));
 }
 
 static void update_metadata(SdiApparmorPromptDialog *self) {
