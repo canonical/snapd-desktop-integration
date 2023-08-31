@@ -166,10 +166,22 @@ static gboolean close_request_cb(SdiApparmorPromptDialog *self) {
   return FALSE;
 }
 
+static void update_more_info_label(SdiApparmorPromptDialog *self) {
+  gboolean showing_info =
+      gtk_widget_get_visible(GTK_WIDGET(self->more_information_label));
+  g_autofree gchar *more_information_link_text = g_strdup_printf(
+      "<a href=\"toggle_info\">%s</a>",
+      showing_info ? _("Less information") : _("More information"));
+  gtk_label_set_markup(self->more_information_link_label,
+                       more_information_link_text);
+}
+
 static void more_info_cb(SdiApparmorPromptDialog *self, const gchar *uri) {
-  gtk_widget_set_visible(
-      GTK_WIDGET(self->more_information_label),
-      !gtk_widget_get_visible(GTK_WIDGET(self->more_information_label)));
+  gboolean showing_info =
+      gtk_widget_get_visible(GTK_WIDGET(self->more_information_label));
+  gtk_widget_set_visible(GTK_WIDGET(self->more_information_label),
+                         !showing_info);
+  update_more_info_label(self);
 }
 
 static void update_metadata(SdiApparmorPromptDialog *self) {
@@ -437,10 +449,7 @@ sdi_apparmor_prompt_dialog_new(SnapdClient *client,
                         "from working properly"));
   gtk_label_set_markup(self->details_label, details_text);
 
-  g_autofree gchar *more_information_link_text =
-      g_strdup_printf("<a href=\"toggle_info\">%s</a>", _("More information"));
-  gtk_label_set_markup(self->more_information_link_label,
-                       more_information_link_text);
+  update_more_info_label(self);
 
   // Show options by default.
   gtk_widget_set_visible(GTK_WIDGET(self->allow_once_button), FALSE);
