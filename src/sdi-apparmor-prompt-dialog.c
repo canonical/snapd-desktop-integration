@@ -218,6 +218,7 @@ static void more_info_cb(SdiApparmorPromptDialog *self, const gchar *uri) {
   gtk_widget_set_visible(GTK_WIDGET(self->more_information_label),
                          !showing_info);
   // Workaround for segfault if update label when handling link.
+  // Is broken in 4.10.4 but works in latest upstream.
   g_idle_add(update_more_info_label_idle_cb, g_object_ref(self));
 }
 
