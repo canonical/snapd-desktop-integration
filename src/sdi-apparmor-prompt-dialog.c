@@ -208,15 +208,31 @@ static void update_metadata(SdiApparmorPromptDialog *self) {
       snap != NULL ? snapd_snap_get_publisher_username(snap) : NULL;
   const gchar *publisher_name =
       snap != NULL ? snapd_snap_get_publisher_display_name(snap) : NULL;
+  SnapdPublisherValidation publisher_validation =
+      snap != NULL ? snapd_snap_get_publisher_validation(snap)
+                   : SNAPD_PUBLISHER_VALIDATION_UNKNOWN;
   if (publisher_username != NULL) {
     g_autofree gchar *publisher_url = g_strdup_printf(
         "https://snapcraft.io/publisher/%s", publisher_username);
+    const gchar *validation_label;
+    switch (publisher_validation) {
+    case SNAPD_PUBLISHER_VALIDATION_VERIFIED:
+      validation_label = " ✓";
+      break;
+    case SNAPD_PUBLISHER_VALIDATION_STARRED:
+      validation_label = " ✪";
+      break;
+    default:
+      validation_label = "";
+      break;
+    }
+    g_autofree gchar *publisher_label = g_strdup_printf(
+        "%s (%s)%s",
+        publisher_name != NULL ? publisher_name : publisher_username,
+        publisher_username, validation_label);
     g_ptr_array_add(more_info_lines,
-                    g_strdup_printf("%s: <a href=\"%s\">%s (%s)</a>",
-                                    _("Publisher"), publisher_url,
-                                    publisher_name != NULL ? publisher_name
-                                                           : publisher_username,
-                                    publisher_username));
+                    g_strdup_printf("%s: <a href=\"%s\">%s</a>", _("Publisher"),
+                                    publisher_url, publisher_label));
   }
 
   // Information about when last updated.
