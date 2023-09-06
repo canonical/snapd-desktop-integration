@@ -45,9 +45,6 @@ struct _SdiApparmorPromptDialog {
   // TRUE if we are showing a remote icon.
   bool have_remote_icon;
 
-  // Metrics recorded on usage of dialog.
-  GDateTime *create_time;
-
   GCancellable *cancellable;
 };
 
@@ -93,8 +90,6 @@ static gchar *permissions_to_label(SnapdPromptingPermissionFlags permissions) {
   return g_strjoinv(", ", (GStrv)permission_names->pdata);
 }
 
-static void report_metrics(SdiApparmorPromptDialog *self) {}
-
 static void response_cb(GObject *object, GAsyncResult *result,
                         gpointer user_data) {
   SdiApparmorPromptDialog *self = user_data;
@@ -109,8 +104,6 @@ static void response_cb(GObject *object, GAsyncResult *result,
     gtk_widget_set_sensitive(GTK_WIDGET(self), TRUE);
     return;
   }
-
-  report_metrics(self);
 
   gtk_window_destroy(GTK_WINDOW(self));
 }
@@ -431,14 +424,12 @@ static void sdi_apparmor_prompt_dialog_dispose(GObject *object) {
   g_clear_object(&self->request);
   g_clear_object(&self->snap);
   g_clear_object(&self->store_snap);
-  g_clear_pointer(&self->create_time, g_date_time_unref);
   g_clear_object(&self->cancellable);
 
   G_OBJECT_CLASS(sdi_apparmor_prompt_dialog_parent_class)->dispose(object);
 }
 
 void sdi_apparmor_prompt_dialog_init(SdiApparmorPromptDialog *self) {
-  self->create_time = g_date_time_new_now_utc();
   self->cancellable = g_cancellable_new();
   gtk_widget_init_template(GTK_WIDGET(self));
 }
