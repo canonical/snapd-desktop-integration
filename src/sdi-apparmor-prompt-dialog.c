@@ -151,7 +151,7 @@ static void respond(SdiApparmorPromptDialog *self,
 
   snapd_client_prompting_respond_async(
       self->client, snapd_prompting_request_get_id(self->request), outcome,
-      lifespan, 0, path_pattern, response_permissions, self->cancellable,
+      lifespan, NULL, path_pattern, response_permissions, self->cancellable,
       response_cb, self);
 
   gtk_widget_set_sensitive(GTK_WIDGET(self), FALSE);
