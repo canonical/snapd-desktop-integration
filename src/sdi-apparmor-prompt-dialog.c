@@ -86,7 +86,7 @@ static gchar *permissions_to_label(SnapdPromptingPermissionFlags permissions) {
   for (guint i = 0; i < permission_names->len; i++) {
     const gchar *name = g_ptr_array_index(permission_names, i);
     if (i > 0) {
-      if (i == permission_names->len) {
+      if (i == permission_names->len - 1) {
         g_string_append(label, " and ");
       } else {
         g_string_append(label, ", ");
