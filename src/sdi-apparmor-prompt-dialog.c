@@ -91,8 +91,8 @@ static gchar *permissions_to_label(SnapdPromptingPermissionFlags permissions) {
       } else {
         g_string_append(label, ", ");
       }
-      g_string_append_printf(label, "<b>%s</b>", name);
     }
+    g_string_append_printf(label, "<b>%s</b>", name);
   }
 
   return g_strdup(label->str);
