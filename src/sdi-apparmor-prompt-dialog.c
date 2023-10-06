@@ -96,7 +96,7 @@ static gchar *permissions_to_label(SnapdPromptingPermissionFlags permissions) {
     }
   }
 
-  return g_string_free(label, FALSE);
+  return g_strdup(label->str);
 }
 
 static void response_cb(GObject *object, GAsyncResult *result,
