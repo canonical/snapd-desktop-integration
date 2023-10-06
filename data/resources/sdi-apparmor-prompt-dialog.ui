@@ -67,7 +67,10 @@
             </child>
             <child>
               <object class="GtkCheckButton" id="remember_check_button">
-                <property name="label" translatable="yes">Remember my decision</property>
+                <child>
+                  <object class="GtkLabel" id="remember_check_button_label">
+                  </object>
+                </child>
               </object>
             </child>
           </object>

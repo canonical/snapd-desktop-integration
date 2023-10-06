@@ -28,6 +28,7 @@ struct _SdiApparmorPromptDialog {
   GtkLabel *more_information_link_label;
   GtkLabel *more_information_label;
   GtkCheckButton *remember_check_button;
+  GtkLabel *remember_check_button_label;
 
   // The request this dialog is responding to.
   SnapdClient *client;
@@ -263,8 +264,9 @@ static void update_metadata(SdiApparmorPromptDialog *self) {
         publisher_name != NULL ? publisher_name : publisher_username,
         publisher_username, validation_label);
     g_ptr_array_add(more_info_lines,
-                    g_strdup_printf("%s: <a href=\"%s\">%s</a>", _("Publisher"),
-                                    publisher_url, publisher_label));
+                    g_markup_printf_escaped("%s: <a href=\"%s\">%s</a>",
+                                            _("Publisher"), publisher_url,
+                                            publisher_label));
   }
 
   // Information about when last updated.
@@ -286,8 +288,8 @@ static void update_metadata(SdiApparmorPromptDialog *self) {
   g_autofree gchar *store_url =
       g_strdup_printf("https://snapcraft.io/%s", snap_name);
   g_ptr_array_add(more_info_lines,
-                  g_strdup_printf("<a href=\"%s\">%s</a>", store_url,
-                                  _("Find out more on the store")));
+                  g_markup_printf_escaped("<a href=\"%s\">%s</a>", store_url,
+                                          _("Find out more on the store")));
 
   // Form into a bullet list.
   g_autoptr(GString) more_info_text = g_string_new("");
@@ -300,6 +302,10 @@ static void update_metadata(SdiApparmorPromptDialog *self) {
     g_string_append(more_info_text, line);
   }
   gtk_label_set_markup(self->more_information_label, more_info_text->str);
+
+  g_autofree gchar *remember_label =
+      g_markup_printf_escaped("<b>%s</b>", _("Remember my decision"));
+  gtk_label_set_markup(self->remember_check_button_label, remember_label);
 }
 
 static void get_snap_cb(GObject *object, GAsyncResult *result,
@@ -454,6 +460,9 @@ void sdi_apparmor_prompt_dialog_class_init(
       GTK_WIDGET_CLASS(klass), SdiApparmorPromptDialog, more_information_label);
   gtk_widget_class_bind_template_child(
       GTK_WIDGET_CLASS(klass), SdiApparmorPromptDialog, remember_check_button);
+  gtk_widget_class_bind_template_child(GTK_WIDGET_CLASS(klass),
+                                       SdiApparmorPromptDialog,
+                                       remember_check_button_label);
 
   gtk_widget_class_bind_template_callback(GTK_WIDGET_CLASS(klass), allow_cb);
   gtk_widget_class_bind_template_callback(GTK_WIDGET_CLASS(klass), deny_cb);
