@@ -82,8 +82,21 @@ static gchar *permissions_to_label(SnapdPromptingPermissionFlags permissions) {
       g_ptr_array_add(permission_names, (gpointer)flags_to_name[i].name);
     }
   }
-  g_ptr_array_add(permission_names, NULL);
-  return g_strjoinv(", ", (GStrv)permission_names->pdata);
+
+  g_autoptr(GString) label = g_string_new("");
+  for (guint i = 0; i < permission_names->len; i++) {
+    const gchar *name = g_ptr_array_index(permission_names, i);
+    if (i > 0) {
+      if (i == permission_names->len) {
+        g_string_append(label, " and ");
+      } else {
+        g_string_append(label, ", ");
+      }
+      g_string_append_printf(label, "<b>%s</b>", name);
+    }
+  }
+
+  return g_string_free(label, FALSE);
 }
 
 static void response_cb(GObject *object, GAsyncResult *result,
@@ -214,9 +227,8 @@ static void update_metadata(SdiApparmorPromptDialog *self) {
   const gchar *title = snap != NULL ? snapd_snap_get_title(snap) : NULL;
   g_autofree gchar *permissions_label = permissions_to_label(permissions);
   const gchar *label = title != NULL ? title : snap_name;
-  g_autofree gchar *header_text = g_strdup_printf(
-      _("Do you want to allow %s to have %s access to your %s?"), label,
-      permissions_label, path);
+  g_autofree gchar *header_text = g_markup_printf_escaped(
+      _("%s needs %s access to <b>%s</b>"), label, permissions_label, path);
   gtk_label_set_markup(self->header_label, header_text);
 
   g_autoptr(GPtrArray) more_info_lines = g_ptr_array_new_with_free_func(g_free);
