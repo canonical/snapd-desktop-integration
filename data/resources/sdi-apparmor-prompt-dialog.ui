@@ -1,7 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <interface>
   <template class="SdiApparmorPromptDialog" parent="GtkWindow">
-    <property name="title" translatable="yes">Security notification</property>
     <property name="resizable">False</property>
     <signal name="close-request" handler="close_request_cb" object="SdiApparmorPromptDialog" swapped="yes"/>
     <child>
