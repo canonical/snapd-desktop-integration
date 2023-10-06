@@ -23,7 +23,6 @@
 struct _SdiApparmorPromptDialog {
   GtkWindow parent_instance;
 
-  GtkLabel *details_label;
   GtkLabel *header_label;
   GtkImage *image;
   GtkLabel *more_information_link_label;
@@ -227,8 +226,11 @@ static void update_metadata(SdiApparmorPromptDialog *self) {
   const gchar *title = snap != NULL ? snapd_snap_get_title(snap) : NULL;
   g_autofree gchar *permissions_label = permissions_to_label(permissions);
   const gchar *label = title != NULL ? title : snap_name;
-  g_autofree gchar *header_text = g_markup_printf_escaped(
-      _("%s needs %s access to <b>%s</b>"), label, permissions_label, path);
+  g_autofree gchar *escaped_label = g_markup_escape_text(label, -1);
+  g_autofree gchar *escaped_path = g_markup_escape_text(path, -1);
+  g_autofree gchar *header_text =
+      g_strdup_printf(_("%s needs %s access to <b>%s</b>"), escaped_label,
+                      permissions_label, escaped_path);
   gtk_label_set_markup(self->header_label, header_text);
 
   g_autoptr(GPtrArray) more_info_lines = g_ptr_array_new_with_free_func(g_free);
@@ -442,8 +444,6 @@ void sdi_apparmor_prompt_dialog_class_init(
       "/io/snapcraft/SnapDesktopIntegration/sdi-apparmor-prompt-dialog.ui");
 
   gtk_widget_class_bind_template_child(GTK_WIDGET_CLASS(klass),
-                                       SdiApparmorPromptDialog, details_label);
-  gtk_widget_class_bind_template_child(GTK_WIDGET_CLASS(klass),
                                        SdiApparmorPromptDialog, header_label);
   gtk_widget_class_bind_template_child(GTK_WIDGET_CLASS(klass),
                                        SdiApparmorPromptDialog, image);
@@ -471,11 +471,6 @@ sdi_apparmor_prompt_dialog_new(SnapdClient *client,
 
   self->client = g_object_ref(client);
   self->request = g_object_ref(request);
-
-  g_autofree gchar *details_text =
-      g_strdup_printf(_("Denying access would affect non-essential features "
-                        "from working properly"));
-  gtk_label_set_markup(self->details_label, details_text);
 
   update_more_info_label(self);
 

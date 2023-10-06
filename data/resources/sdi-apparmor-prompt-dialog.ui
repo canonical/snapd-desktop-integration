@@ -28,12 +28,6 @@
               </object>
             </child>
             <child>
-              <object class="GtkLabel" id="details_label">
-                <property name="xalign">0.0</property>
-                <property name="wrap">True</property>
-              </object>
-            </child>
-            <child>
               <object class="GtkLabel" id="more_information_link_label">
                 <property name="xalign">0.0</property>
                 <signal name="activate-link" handler="more_info_cb" object="SdiApparmorPromptDialog" swapped="yes"/>
