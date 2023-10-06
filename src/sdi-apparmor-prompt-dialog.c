@@ -23,16 +23,12 @@
 struct _SdiApparmorPromptDialog {
   GtkWindow parent_instance;
 
-  GtkButton *allow_once_button;
-  GtkButton *always_allow_button;
-  GtkButton *always_deny_button;
-  GtkButton *deny_once_button;
   GtkLabel *details_label;
   GtkLabel *header_label;
   GtkImage *image;
   GtkLabel *more_information_link_label;
   GtkLabel *more_information_label;
-  GtkButton *more_options_button;
+  GtkCheckButton *remember_check_button;
 
   // The request this dialog is responding to.
   SnapdClient *client;
@@ -157,29 +153,20 @@ static void respond(SdiApparmorPromptDialog *self,
   gtk_widget_set_sensitive(GTK_WIDGET(self), FALSE);
 }
 
-static void always_allow_cb(SdiApparmorPromptDialog *self) {
-  respond(self, SNAPD_PROMPTING_OUTCOME_ALLOW,
-          SNAPD_PROMPTING_LIFESPAN_FOREVER);
+static SnapdPromptingLifespan get_lifespan(SdiApparmorPromptDialog *self) {
+  if (gtk_check_button_get_active(self->remember_check_button)) {
+    return SNAPD_PROMPTING_LIFESPAN_FOREVER;
+  } else {
+    return SNAPD_PROMPTING_LIFESPAN_SINGLE;
+  }
 }
 
-static void allow_once_cb(SdiApparmorPromptDialog *self) {
-  respond(self, SNAPD_PROMPTING_OUTCOME_ALLOW, SNAPD_PROMPTING_LIFESPAN_SINGLE);
+static void allow_cb(SdiApparmorPromptDialog *self) {
+  respond(self, SNAPD_PROMPTING_OUTCOME_ALLOW, get_lifespan(self));
 }
 
-static void always_deny_cb(SdiApparmorPromptDialog *self) {
-  respond(self, SNAPD_PROMPTING_OUTCOME_DENY, SNAPD_PROMPTING_LIFESPAN_FOREVER);
-}
-
-static void deny_once_cb(SdiApparmorPromptDialog *self) {
-  respond(self, SNAPD_PROMPTING_OUTCOME_DENY, SNAPD_PROMPTING_LIFESPAN_SINGLE);
-}
-
-static void more_options_cb(SdiApparmorPromptDialog *self) {
-  gtk_widget_set_visible(GTK_WIDGET(self->always_allow_button), TRUE);
-  gtk_widget_set_visible(GTK_WIDGET(self->allow_once_button), TRUE);
-  gtk_widget_set_visible(GTK_WIDGET(self->always_deny_button), TRUE);
-  gtk_widget_set_visible(GTK_WIDGET(self->deny_once_button), TRUE);
-  gtk_widget_set_visible(GTK_WIDGET(self->more_options_button), FALSE);
+static void deny_cb(SdiApparmorPromptDialog *self) {
+  respond(self, SNAPD_PROMPTING_OUTCOME_DENY, get_lifespan(self));
 }
 
 static gboolean close_request_cb(SdiApparmorPromptDialog *self) {
@@ -442,14 +429,6 @@ void sdi_apparmor_prompt_dialog_class_init(
       GTK_WIDGET_CLASS(klass),
       "/io/snapcraft/SnapDesktopIntegration/sdi-apparmor-prompt-dialog.ui");
 
-  gtk_widget_class_bind_template_child(
-      GTK_WIDGET_CLASS(klass), SdiApparmorPromptDialog, allow_once_button);
-  gtk_widget_class_bind_template_child(
-      GTK_WIDGET_CLASS(klass), SdiApparmorPromptDialog, always_allow_button);
-  gtk_widget_class_bind_template_child(
-      GTK_WIDGET_CLASS(klass), SdiApparmorPromptDialog, always_deny_button);
-  gtk_widget_class_bind_template_child(
-      GTK_WIDGET_CLASS(klass), SdiApparmorPromptDialog, deny_once_button);
   gtk_widget_class_bind_template_child(GTK_WIDGET_CLASS(klass),
                                        SdiApparmorPromptDialog, details_label);
   gtk_widget_class_bind_template_child(GTK_WIDGET_CLASS(klass),
@@ -462,18 +441,10 @@ void sdi_apparmor_prompt_dialog_class_init(
   gtk_widget_class_bind_template_child(
       GTK_WIDGET_CLASS(klass), SdiApparmorPromptDialog, more_information_label);
   gtk_widget_class_bind_template_child(
-      GTK_WIDGET_CLASS(klass), SdiApparmorPromptDialog, more_options_button);
+      GTK_WIDGET_CLASS(klass), SdiApparmorPromptDialog, remember_check_button);
 
-  gtk_widget_class_bind_template_callback(GTK_WIDGET_CLASS(klass),
-                                          always_allow_cb);
-  gtk_widget_class_bind_template_callback(GTK_WIDGET_CLASS(klass),
-                                          allow_once_cb);
-  gtk_widget_class_bind_template_callback(GTK_WIDGET_CLASS(klass),
-                                          always_deny_cb);
-  gtk_widget_class_bind_template_callback(GTK_WIDGET_CLASS(klass),
-                                          deny_once_cb);
-  gtk_widget_class_bind_template_callback(GTK_WIDGET_CLASS(klass),
-                                          more_options_cb);
+  gtk_widget_class_bind_template_callback(GTK_WIDGET_CLASS(klass), allow_cb);
+  gtk_widget_class_bind_template_callback(GTK_WIDGET_CLASS(klass), deny_cb);
   gtk_widget_class_bind_template_callback(GTK_WIDGET_CLASS(klass),
                                           close_request_cb);
   gtk_widget_class_bind_template_callback(GTK_WIDGET_CLASS(klass),
@@ -495,12 +466,6 @@ sdi_apparmor_prompt_dialog_new(SnapdClient *client,
   gtk_label_set_markup(self->details_label, details_text);
 
   update_more_info_label(self);
-
-  // Show options by default.
-  gtk_widget_set_visible(GTK_WIDGET(self->allow_once_button), FALSE);
-  gtk_widget_set_visible(GTK_WIDGET(self->always_allow_button), TRUE);
-  gtk_widget_set_visible(GTK_WIDGET(self->deny_once_button), TRUE);
-  gtk_widget_set_visible(GTK_WIDGET(self->always_deny_button), FALSE);
 
   // Look up metadata for this snap.
   const gchar *snap_name = snapd_prompting_request_get_snap(self->request);

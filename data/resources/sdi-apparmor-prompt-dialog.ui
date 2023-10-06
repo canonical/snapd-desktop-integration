@@ -50,55 +50,30 @@
                 <property name="spacing">8</property>
                 <property name="margin-top">8</property>
                 <child>
-                  <object class="GtkButton" id="always_allow_button">
-                    <signal name="clicked" handler="always_allow_cb" object="SdiApparmorPromptDialog" swapped="yes"/>
+                  <object class="GtkButton" id="allow_button">
+                    <signal name="clicked" handler="allow_cb" object="SdiApparmorPromptDialog" swapped="yes"/>
                     <child>
                       <object class="GtkLabel">
-                        <property name="label" translatable="yes">Always allow</property>
+                        <property name="label" translatable="yes">Allow</property>
                       </object>
                     </child>
                   </object>
                 </child>
                 <child>
-                  <object class="GtkButton" id="allow_once_button">
-                    <signal name="clicked" handler="allow_once_cb" object="SdiApparmorPromptDialog" swapped="yes"/>
+                  <object class="GtkButton" id="deny_button">
+                    <signal name="clicked" handler="deny_cb" object="SdiApparmorPromptDialog" swapped="yes"/>
                     <child>
                       <object class="GtkLabel">
-                        <property name="label" translatable="yes">Allow once</property>
+                        <property name="label" translatable="yes">Deny</property>
                       </object>
                     </child>
                   </object>
                 </child>
-                <child>
-                  <object class="GtkButton" id="always_deny_button">
-                    <signal name="clicked" handler="always_deny_cb" object="SdiApparmorPromptDialog" swapped="yes"/>
-                    <child>
-                      <object class="GtkLabel">
-                        <property name="label" translatable="yes">Always deny</property>
-                      </object>
-                    </child>
-                  </object>
-                </child>
-                <child>
-                  <object class="GtkButton" id="deny_once_button">
-                    <signal name="clicked" handler="deny_once_cb" object="SdiApparmorPromptDialog" swapped="yes"/>
-                    <child>
-                      <object class="GtkLabel">
-                        <property name="label" translatable="yes">Deny once</property>
-                      </object>
-                    </child>
-                  </object>
-                </child>
-                <child>
-                  <object class="GtkButton" id="more_options_button">
-                    <signal name="clicked" handler="more_options_cb" object="SdiApparmorPromptDialog" swapped="yes"/>
-                    <child>
-                      <object class="GtkLabel">
-                        <property name="label" translatable="yes">More options</property>
-                      </object>
-                    </child>
-                  </object>
-                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkCheckButton" id="remember_check_button">
+                <property name="label" translatable="yes">Remember my decision</property>
               </object>
             </child>
           </object>
