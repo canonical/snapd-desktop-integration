@@ -27,13 +27,13 @@
               </object>
             </child>
             <child>
-              <object class="GtkLabel" id="more_information_link_label">
+              <object class="GtkLabel" id="app_details_link_label">
                 <property name="xalign">0.0</property>
                 <signal name="activate-link" handler="more_info_cb" object="SdiApparmorPromptDialog" swapped="yes"/>
               </object>
             </child>
             <child>
-              <object class="GtkLabel" id="more_information_label">
+              <object class="GtkLabel" id="app_details_label">
                 <property name="visible">False</property>
                 <property name="xalign">0.0</property>
               </object>

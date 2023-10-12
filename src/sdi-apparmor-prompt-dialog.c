@@ -25,8 +25,8 @@ struct _SdiApparmorPromptDialog {
 
   GtkLabel *header_label;
   GtkImage *image;
-  GtkLabel *more_information_link_label;
-  GtkLabel *more_information_label;
+  GtkLabel *app_details_link_label;
+  GtkLabel *app_details_label;
   GtkCheckButton *remember_check_button;
   GtkLabel *remember_check_button_label;
 
@@ -187,32 +187,10 @@ static gboolean close_request_cb(SdiApparmorPromptDialog *self) {
   return FALSE;
 }
 
-static void update_more_info_label(SdiApparmorPromptDialog *self) {
-  gboolean showing_info =
-      gtk_widget_get_visible(GTK_WIDGET(self->more_information_label));
-  const gchar *label =
-      showing_info ? _("Less information") : _("More information");
-  g_autofree gchar *more_information_link_text =
-      g_strdup_printf("<a href=\"toggle_info\">%s</a>", label);
-  gtk_label_set_markup(self->more_information_link_label,
-                       more_information_link_text);
-}
-
-static gboolean update_more_info_label_idle_cb(gpointer user_data) {
-  SdiApparmorPromptDialog *self = user_data;
-  update_more_info_label(self);
-  g_object_unref(self);
-  return G_SOURCE_REMOVE;
-}
-
 static void more_info_cb(SdiApparmorPromptDialog *self, const gchar *uri) {
   gboolean showing_info =
-      gtk_widget_get_visible(GTK_WIDGET(self->more_information_label));
-  gtk_widget_set_visible(GTK_WIDGET(self->more_information_label),
-                         !showing_info);
-  // Workaround for segfault if update label when handling link.
-  // Is broken in 4.10.4 but works in latest upstream.
-  g_idle_add(update_more_info_label_idle_cb, g_object_ref(self));
+      gtk_widget_get_visible(GTK_WIDGET(self->app_details_label));
+  gtk_widget_set_visible(GTK_WIDGET(self->app_details_label), !showing_info);
 }
 
 static void update_metadata(SdiApparmorPromptDialog *self) {
@@ -306,7 +284,7 @@ static void update_metadata(SdiApparmorPromptDialog *self) {
     g_string_append(more_info_text, " • ");
     g_string_append(more_info_text, line);
   }
-  gtk_label_set_markup(self->more_information_label, more_info_text->str);
+  gtk_label_set_markup(self->app_details_label, more_info_text->str);
 
   g_autofree gchar *remember_label =
       g_markup_printf_escaped("<b>%s</b>", _("Remember my decision"));
@@ -458,11 +436,10 @@ void sdi_apparmor_prompt_dialog_class_init(
                                        SdiApparmorPromptDialog, header_label);
   gtk_widget_class_bind_template_child(GTK_WIDGET_CLASS(klass),
                                        SdiApparmorPromptDialog, image);
-  gtk_widget_class_bind_template_child(GTK_WIDGET_CLASS(klass),
-                                       SdiApparmorPromptDialog,
-                                       more_information_link_label);
   gtk_widget_class_bind_template_child(
-      GTK_WIDGET_CLASS(klass), SdiApparmorPromptDialog, more_information_label);
+      GTK_WIDGET_CLASS(klass), SdiApparmorPromptDialog, app_details_link_label);
+  gtk_widget_class_bind_template_child(
+      GTK_WIDGET_CLASS(klass), SdiApparmorPromptDialog, app_details_label);
   gtk_widget_class_bind_template_child(
       GTK_WIDGET_CLASS(klass), SdiApparmorPromptDialog, remember_check_button);
   gtk_widget_class_bind_template_child(GTK_WIDGET_CLASS(klass),
@@ -486,7 +463,9 @@ sdi_apparmor_prompt_dialog_new(SnapdClient *client,
   self->client = g_object_ref(client);
   self->request = g_object_ref(request);
 
-  update_more_info_label(self);
+  g_autofree gchar *app_details_link_text = g_strdup_printf(
+      "<a href=\"toggle_info\">%s</a>", _("Application details"));
+  gtk_label_set_markup(self->app_details_link_label, app_details_link_text);
 
   // Look up metadata for this snap.
   const gchar *snap_name = snapd_prompting_request_get_snap(self->request);
