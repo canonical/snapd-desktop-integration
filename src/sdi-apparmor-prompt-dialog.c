@@ -207,14 +207,17 @@ static void update_metadata(SdiApparmorPromptDialog *self) {
   const gchar *label = title != NULL ? title : snap_name;
   g_autofree gchar *escaped_label = g_markup_escape_text(label, -1);
 
-  g_autofree gchar *path_with_suffix = NULL;
-  if (g_file_test(path, G_FILE_TEST_IS_DIR) && !g_str_has_suffix(path, "/")) {
-    path_with_suffix = g_strdup_printf("%s/", path);
+  g_autofree gchar *dirname = NULL;
+  g_autofree gchar *basename = NULL;
+  if (g_str_has_suffix(path, "/")) {
+    g_autofree gchar *dir = g_path_get_dirname(path);
+    dirname = g_path_get_dirname(dir);
+    g_autofree gchar *basename_ = g_path_get_basename(path);
+    basename = g_strdup_printf("%s/", basename);
   } else {
-    path_with_suffix = g_strdup(path);
+    dirname = g_path_get_dirname(path);
+    basename = g_path_get_basename(path);
   }
-  g_autofree gchar *dirname = g_path_get_dirname(path_with_suffix);
-  g_autofree gchar *basename = g_path_get_basename(path_with_suffix);
 
   // Split directory off if necessary and replace home directory with "~".
   const gchar *home_dir = g_get_home_dir();
