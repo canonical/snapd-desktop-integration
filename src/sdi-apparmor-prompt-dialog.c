@@ -208,10 +208,43 @@ static void update_metadata(SdiApparmorPromptDialog *self) {
   g_autofree gchar *permissions_label = permissions_to_label(permissions);
   const gchar *label = title != NULL ? title : snap_name;
   g_autofree gchar *escaped_label = g_markup_escape_text(label, -1);
-  g_autofree gchar *escaped_path = g_markup_escape_text(path, -1);
-  g_autofree gchar *header_text =
-      g_strdup_printf(_("%s needs %s access to <b>%s</b>"), escaped_label,
-                      permissions_label, escaped_path);
+
+  g_autofree gchar *path_with_suffix = NULL;
+  if (g_file_test(path, G_FILE_TEST_IS_DIR) && !g_str_has_suffix(path, "/")) {
+    path_with_suffix = g_strdup_printf("%s/", path);
+  } else {
+    path_with_suffix = g_strdup(path);
+  }
+  g_autofree gchar *dirname = g_path_get_dirname(path_with_suffix);
+  g_autofree gchar *basename = g_path_get_basename(path_with_suffix);
+
+  // Split directory off if necessary and replace home directory with "~".
+  const gchar *home_dir = g_get_home_dir();
+  g_autofree gchar *home_dir_prefix = g_strdup_printf("%s/", home_dir);
+  g_autofree gchar *directory = NULL;
+  g_autofree gchar *filename = NULL;
+  if (g_strcmp0(dirname, home_dir) == 0) {
+    filename = g_strdup_printf("~/%s", basename);
+  } else if (g_str_has_prefix(dirname, home_dir_prefix)) {
+    directory = g_strdup_printf("~/%s/", dirname + strlen(home_dir_prefix));
+    filename = g_strdup(basename);
+  } else {
+    directory = g_strdup_printf("%s/", dirname);
+    filename = g_strdup(basename);
+  }
+
+  g_autofree gchar *escaped_filename = g_markup_escape_text(filename, -1);
+  g_autofree gchar *header_text = NULL;
+  if (directory != NULL) {
+    g_autofree gchar *escaped_directory = g_markup_escape_text(directory, -1);
+    header_text = g_strdup_printf(
+        _("%s needs %s access to <b>%s</b> in <b>%s</b>"), escaped_label,
+        permissions_label, escaped_filename, escaped_directory);
+  } else {
+    header_text =
+        g_strdup_printf(_("%s needs %s access to <b>%s</b>"), escaped_label,
+                        permissions_label, escaped_filename);
+  }
   gtk_label_set_markup(self->header_label, header_text);
 
   g_autoptr(GPtrArray) more_info_lines = g_ptr_array_new_with_free_func(g_free);
