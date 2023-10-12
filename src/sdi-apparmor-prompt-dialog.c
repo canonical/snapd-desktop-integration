@@ -27,8 +27,6 @@ struct _SdiApparmorPromptDialog {
   GtkImage *image;
   GtkLabel *app_details_link_label;
   GtkLabel *app_details_label;
-  GtkCheckButton *remember_check_button;
-  GtkLabel *remember_check_button_label;
 
   // The request this dialog is responding to.
   SnapdClient *client;
@@ -315,10 +313,6 @@ static void update_metadata(SdiApparmorPromptDialog *self) {
     g_string_append(more_info_text, line);
   }
   gtk_label_set_markup(self->app_details_label, more_info_text->str);
-
-  g_autofree gchar *remember_label =
-      g_markup_printf_escaped("<b>%s</b>", _("Remember my decision"));
-  gtk_label_set_markup(self->remember_check_button_label, remember_label);
 }
 
 static void get_snap_cb(GObject *object, GAsyncResult *result,
@@ -470,11 +464,6 @@ void sdi_apparmor_prompt_dialog_class_init(
       GTK_WIDGET_CLASS(klass), SdiApparmorPromptDialog, app_details_link_label);
   gtk_widget_class_bind_template_child(
       GTK_WIDGET_CLASS(klass), SdiApparmorPromptDialog, app_details_label);
-  gtk_widget_class_bind_template_child(
-      GTK_WIDGET_CLASS(klass), SdiApparmorPromptDialog, remember_check_button);
-  gtk_widget_class_bind_template_child(GTK_WIDGET_CLASS(klass),
-                                       SdiApparmorPromptDialog,
-                                       remember_check_button_label);
 
   gtk_widget_class_bind_template_callback(GTK_WIDGET_CLASS(klass),
                                           always_allow_cb);
