@@ -25,7 +25,7 @@ struct _SdiApparmorPromptDialog {
 
   GtkLabel *header_label;
   GtkImage *image;
-  GtkLabel *app_details_link_label;
+  GtkLabel *app_details_title_label;
   GtkLabel *app_details_label;
 
   // The request this dialog is responding to.
@@ -273,10 +273,10 @@ static void update_metadata(SdiApparmorPromptDialog *self) {
         "%s (%s)%s",
         publisher_name != NULL ? publisher_name : publisher_username,
         publisher_username, validation_label);
+    g_autofree gchar *publisher_link = g_markup_printf_escaped(
+        "<a href=\"%s\">%s</a>", publisher_url, publisher_label);
     g_ptr_array_add(more_info_lines,
-                    g_markup_printf_escaped("%s: <a href=\"%s\">%s</a>",
-                                            _("Publisher"), publisher_url,
-                                            publisher_label));
+                    g_strdup_printf(_("Published by %s"), publisher_link));
   }
 
   // Information about when last updated.
@@ -289,9 +289,10 @@ static void update_metadata(SdiApparmorPromptDialog *self) {
   if (channel != NULL) {
     g_autofree gchar *last_updated_date =
         g_date_time_format(snapd_channel_get_released_at(channel), "%e %B %Y");
-    g_ptr_array_add(
-        more_info_lines,
-        g_strdup_printf("%s: %s", _("Last updated"), last_updated_date));
+    g_autofree gchar *formatted_date =
+        g_markup_printf_escaped("<b>%s</b>", last_updated_date);
+    g_ptr_array_add(more_info_lines,
+                    g_strdup_printf(_("Last updated on %s"), formatted_date));
   }
 
   // Link to store.
@@ -299,7 +300,7 @@ static void update_metadata(SdiApparmorPromptDialog *self) {
       g_strdup_printf("https://snapcraft.io/%s", snap_name);
   g_ptr_array_add(more_info_lines,
                   g_markup_printf_escaped("<a href=\"%s\">%s</a>", store_url,
-                                          _("Find out more on the store")));
+                                          _("Visit App Center page")));
 
   // Form into a bullet list.
   g_autoptr(GString) more_info_text = g_string_new("");
@@ -308,7 +309,6 @@ static void update_metadata(SdiApparmorPromptDialog *self) {
     if (i != 0) {
       g_string_append(more_info_text, "\n");
     }
-    g_string_append(more_info_text, " • ");
     g_string_append(more_info_text, line);
   }
   gtk_label_set_markup(self->app_details_label, more_info_text->str);
@@ -459,8 +459,9 @@ void sdi_apparmor_prompt_dialog_class_init(
                                        SdiApparmorPromptDialog, header_label);
   gtk_widget_class_bind_template_child(GTK_WIDGET_CLASS(klass),
                                        SdiApparmorPromptDialog, image);
-  gtk_widget_class_bind_template_child(
-      GTK_WIDGET_CLASS(klass), SdiApparmorPromptDialog, app_details_link_label);
+  gtk_widget_class_bind_template_child(GTK_WIDGET_CLASS(klass),
+                                       SdiApparmorPromptDialog,
+                                       app_details_title_label);
   gtk_widget_class_bind_template_child(
       GTK_WIDGET_CLASS(klass), SdiApparmorPromptDialog, app_details_label);
 
@@ -485,9 +486,9 @@ sdi_apparmor_prompt_dialog_new(SnapdClient *client,
   self->client = g_object_ref(client);
   self->request = g_object_ref(request);
 
-  g_autofree gchar *app_details_link_text = g_strdup_printf(
-      "<a href=\"toggle_info\">%s</a>", _("Application details"));
-  gtk_label_set_markup(self->app_details_link_label, app_details_link_text);
+  g_autofree gchar *app_details_title_text =
+      g_strdup_printf("<b>%s</b>", _("Application details"));
+  gtk_label_set_markup(self->app_details_title_label, app_details_title_text);
 
   // Look up metadata for this snap.
   const gchar *snap_name = snapd_prompting_request_get_snap(self->request);
