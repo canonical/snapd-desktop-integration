@@ -235,8 +235,8 @@ static void update_metadata(SdiApparmorPromptDialog *self) {
   if (directory != NULL) {
     g_autofree gchar *escaped_directory = g_markup_escape_text(directory, -1);
     header_text = g_strdup_printf(
-        _("%s needs %s access to <b>%s</b> in <b>%s</b>"), escaped_label,
-        permissions_label, escaped_filename, escaped_directory);
+        _("Allow %s to have %s access for <b>%s</b> in <b>%s</b>"),
+        escaped_label, permissions_label, escaped_filename, escaped_directory);
   } else {
     header_text =
         g_strdup_printf(_("%s needs %s access to <b>%s</b>"), escaped_label,
