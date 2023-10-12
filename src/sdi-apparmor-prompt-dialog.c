@@ -209,7 +209,7 @@ static void update_metadata(SdiApparmorPromptDialog *self) {
     g_autofree gchar *dir = g_path_get_dirname(path);
     dirname = g_path_get_dirname(dir);
     g_autofree gchar *basename_ = g_path_get_basename(path);
-    basename = g_strdup_printf("%s/", basename);
+    basename = g_strdup_printf("%s/", basename_);
   } else {
     dirname = g_path_get_dirname(path);
     basename = g_path_get_basename(path);
