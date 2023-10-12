@@ -43,31 +43,33 @@
                 <property name="spacing">8</property>
                 <property name="margin-top">8</property>
                 <child>
-                  <object class="GtkButton" id="allow_button">
-                    <signal name="clicked" handler="allow_cb" object="SdiApparmorPromptDialog" swapped="yes"/>
+                  <object class="GtkButton">
+                    <signal name="clicked" handler="always_allow_cb" object="SdiApparmorPromptDialog" swapped="yes"/>
                     <child>
                       <object class="GtkLabel">
-                        <property name="label" translatable="yes">Allow</property>
+                        <property name="label" translatable="yes">Always allow</property>
                       </object>
                     </child>
                   </object>
                 </child>
                 <child>
-                  <object class="GtkButton" id="deny_button">
-                    <signal name="clicked" handler="deny_cb" object="SdiApparmorPromptDialog" swapped="yes"/>
+                  <object class="GtkButton">
+                    <signal name="clicked" handler="deny_once_cb" object="SdiApparmorPromptDialog" swapped="yes"/>
                     <child>
                       <object class="GtkLabel">
-                        <property name="label" translatable="yes">Deny</property>
+                        <property name="label" translatable="yes">Deny once</property>
                       </object>
                     </child>
                   </object>
                 </child>
-              </object>
-            </child>
-            <child>
-              <object class="GtkCheckButton" id="remember_check_button">
                 <child>
-                  <object class="GtkLabel" id="remember_check_button_label">
+                  <object class="GtkButton">
+                    <signal name="clicked" handler="more_options_cb" object="SdiApparmorPromptDialog" swapped="yes"/>
+                    <child>
+                      <object class="GtkLabel">
+                        <property name="label" translatable="yes">More options…</property>
+                      </object>
+                    </child>
                   </object>
                 </child>
               </object>

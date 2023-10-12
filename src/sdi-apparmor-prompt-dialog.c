@@ -166,20 +166,17 @@ static void respond(SdiApparmorPromptDialog *self,
   gtk_widget_set_sensitive(GTK_WIDGET(self), FALSE);
 }
 
-static SnapdPromptingLifespan get_lifespan(SdiApparmorPromptDialog *self) {
-  if (gtk_check_button_get_active(self->remember_check_button)) {
-    return SNAPD_PROMPTING_LIFESPAN_FOREVER;
-  } else {
-    return SNAPD_PROMPTING_LIFESPAN_SINGLE;
-  }
+static void always_allow_cb(SdiApparmorPromptDialog *self) {
+  respond(self, SNAPD_PROMPTING_OUTCOME_ALLOW,
+          SNAPD_PROMPTING_LIFESPAN_FOREVER);
 }
 
-static void allow_cb(SdiApparmorPromptDialog *self) {
-  respond(self, SNAPD_PROMPTING_OUTCOME_ALLOW, get_lifespan(self));
+static void deny_once_cb(SdiApparmorPromptDialog *self) {
+  respond(self, SNAPD_PROMPTING_OUTCOME_DENY, SNAPD_PROMPTING_LIFESPAN_SINGLE);
 }
 
-static void deny_cb(SdiApparmorPromptDialog *self) {
-  respond(self, SNAPD_PROMPTING_OUTCOME_DENY, get_lifespan(self));
+static void more_options_cb(SdiApparmorPromptDialog *self) {
+  // FIXME: TBD
 }
 
 static gboolean close_request_cb(SdiApparmorPromptDialog *self) {
@@ -446,8 +443,12 @@ void sdi_apparmor_prompt_dialog_class_init(
                                        SdiApparmorPromptDialog,
                                        remember_check_button_label);
 
-  gtk_widget_class_bind_template_callback(GTK_WIDGET_CLASS(klass), allow_cb);
-  gtk_widget_class_bind_template_callback(GTK_WIDGET_CLASS(klass), deny_cb);
+  gtk_widget_class_bind_template_callback(GTK_WIDGET_CLASS(klass),
+                                          always_allow_cb);
+  gtk_widget_class_bind_template_callback(GTK_WIDGET_CLASS(klass),
+                                          deny_once_cb);
+  gtk_widget_class_bind_template_callback(GTK_WIDGET_CLASS(klass),
+                                          more_options_cb);
   gtk_widget_class_bind_template_callback(GTK_WIDGET_CLASS(klass),
                                           close_request_cb);
   gtk_widget_class_bind_template_callback(GTK_WIDGET_CLASS(klass),
