@@ -199,10 +199,6 @@ static void update_metadata(SdiApparmorPromptDialog *self) {
 
   const gchar *title = snap != NULL ? snapd_snap_get_title(snap) : NULL;
 
-  g_autofree gchar *window_title =
-      g_strdup_printf("%s needs file access", title);
-  gtk_window_set_title(GTK_WINDOW(self), window_title);
-
   g_autofree gchar *permissions_label = permissions_to_label(permissions);
   const gchar *label = title != NULL ? title : snap_name;
   g_autofree gchar *escaped_label = g_markup_escape_text(label, -1);
