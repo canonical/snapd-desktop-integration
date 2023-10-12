@@ -40,6 +40,12 @@
               </object>
             </child>
             <child>
+              <object class="GtkLabel">
+                <property name="xalign">0.0</property>
+                <property name="label" translatable="yes">Denying access may disrupt some application features.</property>
+              </object>
+            </child>
+            <child>
               <object class="GtkBox">
                 <property name="spacing">8</property>
                 <property name="margin-top">8</property>
