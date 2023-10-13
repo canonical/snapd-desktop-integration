@@ -26,7 +26,9 @@ struct _SdiApparmorPromptDialog {
   GtkLabel *header_label;
   GtkImage *image;
   GtkLabel *app_details_title_label;
-  GtkLabel *app_details_label;
+  GtkLabel *app_publisher_label;
+  GtkLabel *app_updated_label;
+  GtkLabel *app_store_label;
 
   // The request this dialog is responding to.
   SnapdClient *client;
@@ -182,12 +184,6 @@ static gboolean close_request_cb(SdiApparmorPromptDialog *self) {
   return FALSE;
 }
 
-static void more_info_cb(SdiApparmorPromptDialog *self, const gchar *uri) {
-  gboolean showing_info =
-      gtk_widget_get_visible(GTK_WIDGET(self->app_details_label));
-  gtk_widget_set_visible(GTK_WIDGET(self->app_details_label), !showing_info);
-}
-
 static void update_metadata(SdiApparmorPromptDialog *self) {
   const gchar *snap_name = snapd_prompting_request_get_snap(self->request);
   SnapdPromptingPermissionFlags permissions =
@@ -244,8 +240,6 @@ static void update_metadata(SdiApparmorPromptDialog *self) {
   }
   gtk_label_set_markup(self->header_label, header_text);
 
-  g_autoptr(GPtrArray) more_info_lines = g_ptr_array_new_with_free_func(g_free);
-
   // Information about the publisher.
   const gchar *publisher_username =
       snap != NULL ? snapd_snap_get_publisher_username(snap) : NULL;
@@ -254,6 +248,7 @@ static void update_metadata(SdiApparmorPromptDialog *self) {
   SnapdPublisherValidation publisher_validation =
       snap != NULL ? snapd_snap_get_publisher_validation(snap)
                    : SNAPD_PUBLISHER_VALIDATION_UNKNOWN;
+  g_autofree gchar *publisher_label = NULL;
   if (publisher_username != NULL) {
     g_autofree gchar *publisher_url = g_strdup_printf(
         "https://snapcraft.io/publisher/%s", publisher_username);
@@ -269,15 +264,17 @@ static void update_metadata(SdiApparmorPromptDialog *self) {
       validation_label = "";
       break;
     }
-    g_autofree gchar *publisher_label = g_strdup_printf(
+    g_autofree gchar *publisher_name_text = g_strdup_printf(
         "%s (%s)%s",
         publisher_name != NULL ? publisher_name : publisher_username,
         publisher_username, validation_label);
     g_autofree gchar *publisher_link = g_markup_printf_escaped(
-        "<a href=\"%s\">%s</a>", publisher_url, publisher_label);
-    g_ptr_array_add(more_info_lines,
-                    g_strdup_printf(_("Published by %s"), publisher_link));
+        "<a href=\"%s\">%s</a>", publisher_url, publisher_name_text);
+    publisher_label = g_strdup_printf(_("Published by %s"), publisher_link);
   }
+  gtk_widget_set_visible(GTK_WIDGET(self->app_publisher_label),
+                         publisher_label != NULL);
+  gtk_label_set_markup(self->app_publisher_label, publisher_label);
 
   // Information about when last updated.
   const gchar *channel_name =
@@ -286,32 +283,24 @@ static void update_metadata(SdiApparmorPromptDialog *self) {
       self->store_snap != NULL && channel_name != NULL
           ? snapd_snap_match_channel(self->store_snap, channel_name)
           : NULL;
+  g_autofree gchar *updated_label = NULL;
   if (channel != NULL) {
     g_autofree gchar *last_updated_date =
         g_date_time_format(snapd_channel_get_released_at(channel), "%e %B %Y");
     g_autofree gchar *formatted_date =
         g_markup_printf_escaped("<b>%s</b>", last_updated_date);
-    g_ptr_array_add(more_info_lines,
-                    g_strdup_printf(_("Last updated on %s"), formatted_date));
+    updated_label = g_strdup_printf(_("Last updated on %s"), formatted_date);
   }
+  gtk_widget_set_visible(GTK_WIDGET(self->app_updated_label),
+                         updated_label != NULL);
+  gtk_label_set_markup(self->app_updated_label, updated_label);
 
   // Link to store.
   g_autofree gchar *store_url =
       g_strdup_printf("https://snapcraft.io/%s", snap_name);
-  g_ptr_array_add(more_info_lines,
-                  g_markup_printf_escaped("<a href=\"%s\">%s</a>", store_url,
-                                          _("Visit App Center page")));
-
-  // Form into a bullet list.
-  g_autoptr(GString) more_info_text = g_string_new("");
-  for (guint i = 0; i < more_info_lines->len; i++) {
-    const gchar *line = g_ptr_array_index(more_info_lines, i);
-    if (i != 0) {
-      g_string_append(more_info_text, "\n");
-    }
-    g_string_append(more_info_text, line);
-  }
-  gtk_label_set_markup(self->app_details_label, more_info_text->str);
+  g_autofree gchar *store_label = g_markup_printf_escaped(
+      "<a href=\"%s\">%s</a>", store_url, _("Visit App Center page"));
+  gtk_label_set_markup(self->app_store_label, store_label);
 }
 
 static void get_snap_cb(GObject *object, GAsyncResult *result,
@@ -463,7 +452,11 @@ void sdi_apparmor_prompt_dialog_class_init(
                                        SdiApparmorPromptDialog,
                                        app_details_title_label);
   gtk_widget_class_bind_template_child(
-      GTK_WIDGET_CLASS(klass), SdiApparmorPromptDialog, app_details_label);
+      GTK_WIDGET_CLASS(klass), SdiApparmorPromptDialog, app_publisher_label);
+  gtk_widget_class_bind_template_child(
+      GTK_WIDGET_CLASS(klass), SdiApparmorPromptDialog, app_updated_label);
+  gtk_widget_class_bind_template_child(
+      GTK_WIDGET_CLASS(klass), SdiApparmorPromptDialog, app_store_label);
 
   gtk_widget_class_bind_template_callback(GTK_WIDGET_CLASS(klass),
                                           always_allow_cb);
@@ -473,8 +466,6 @@ void sdi_apparmor_prompt_dialog_class_init(
                                           more_options_cb);
   gtk_widget_class_bind_template_callback(GTK_WIDGET_CLASS(klass),
                                           close_request_cb);
-  gtk_widget_class_bind_template_callback(GTK_WIDGET_CLASS(klass),
-                                          more_info_cb);
 }
 
 SdiApparmorPromptDialog *
