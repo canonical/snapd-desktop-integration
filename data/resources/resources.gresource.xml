@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <gresources>
   <gresource prefix="/io/snapcraft/SnapDesktopIntegration">
+    <file>style.css</file>
     <file compressed="true">sdi-refresh-dialog.ui</file>
     <file compressed="true">sdi-apparmor-prompt-dialog.ui</file>
   </gresource>

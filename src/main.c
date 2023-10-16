@@ -136,8 +136,14 @@ static gboolean check_graphical_sessions(gpointer data) {
   }
   return G_SOURCE_REMOVE;
 }
+
 static void do_startup(GObject *object, gpointer data) {
   notify_init("snapd-desktop-integration");
+
+  g_autoptr(GtkCssProvider) provider = gtk_css_provider_new();
+  gtk_css_provider_load_from_resource(provider, "/io/snapcraft/SnapDesktopIntegration/style.css");
+  gtk_style_context_add_provider_for_display(gdk_display_get_default(), GTK_STYLE_PROVIDER(provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+
   client = snapd_client_new();
   refresh_monitor = sdi_refresh_monitor_new();
   if (!sdi_refresh_monitor_start(
