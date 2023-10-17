@@ -59,8 +59,9 @@
                       </object>
                     </child>
                     <child>
-                      <object class="GtkLabel" id="app_store_label">
+                      <object class="GtkLabel" id="app_center_label">
                         <property name="xalign">0.0</property>
+                        <signal name="activate-link" handler="app_center_link_cb" object="SdiApparmorPromptDialog" swapped="yes"/>
                       </object>
                     </child>
                   </object>

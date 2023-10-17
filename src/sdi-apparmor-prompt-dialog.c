@@ -28,7 +28,7 @@ struct _SdiApparmorPromptDialog {
   GtkLabel *app_details_title_label;
   GtkLabel *app_publisher_label;
   GtkLabel *app_updated_label;
-  GtkLabel *app_store_label;
+  GtkLabel *app_center_label;
 
   // The request this dialog is responding to.
   SnapdClient *client;
@@ -184,6 +184,15 @@ static gboolean close_request_cb(SdiApparmorPromptDialog *self) {
   return FALSE;
 }
 
+static gboolean app_center_link_cb(SdiApparmorPromptDialog *self,
+                                   const gchar *uri) {
+  g_autoptr(GError) error = NULL;
+  if (!g_app_info_launch_default_for_uri(uri, NULL, &error)) {
+    g_warning("Failed to show snap: %s", error->message);
+  }
+  return TRUE;
+}
+
 static void update_metadata(SdiApparmorPromptDialog *self) {
   const gchar *snap_name = snapd_prompting_request_get_snap(self->request);
   SnapdPromptingPermissionFlags permissions =
@@ -296,11 +305,10 @@ static void update_metadata(SdiApparmorPromptDialog *self) {
   gtk_label_set_markup(self->app_updated_label, updated_label);
 
   // Link to store.
-  g_autofree gchar *store_url =
-      g_strdup_printf("https://snapcraft.io/%s", snap_name);
-  g_autofree gchar *store_label = g_markup_printf_escaped(
-      "<a href=\"%s\">%s</a>", store_url, _("Visit App Center page"));
-  gtk_label_set_markup(self->app_store_label, store_label);
+  g_autofree gchar *snap_url = g_strdup_printf("snap://%s", snap_name);
+  g_autofree gchar *snap_label = g_markup_printf_escaped(
+      "<a href=\"%s\">%s</a>", snap_url, _("Visit App Center page"));
+  gtk_label_set_markup(self->app_center_label, snap_label);
 }
 
 static void get_snap_cb(GObject *object, GAsyncResult *result,
@@ -456,7 +464,7 @@ void sdi_apparmor_prompt_dialog_class_init(
   gtk_widget_class_bind_template_child(
       GTK_WIDGET_CLASS(klass), SdiApparmorPromptDialog, app_updated_label);
   gtk_widget_class_bind_template_child(
-      GTK_WIDGET_CLASS(klass), SdiApparmorPromptDialog, app_store_label);
+      GTK_WIDGET_CLASS(klass), SdiApparmorPromptDialog, app_center_label);
 
   gtk_widget_class_bind_template_callback(GTK_WIDGET_CLASS(klass),
                                           always_allow_cb);
@@ -466,6 +474,8 @@ void sdi_apparmor_prompt_dialog_class_init(
                                           more_options_cb);
   gtk_widget_class_bind_template_callback(GTK_WIDGET_CLASS(klass),
                                           close_request_cb);
+  gtk_widget_class_bind_template_callback(GTK_WIDGET_CLASS(klass),
+                                          app_center_link_cb);
 }
 
 SdiApparmorPromptDialog *
