@@ -21,7 +21,7 @@
 #include "sdi-apparmor-prompt-dialog.h"
 
 // Number of seconds to wait for store snap metadata.
-#define STORE_SNAP_TIMEOUT_SECONDS 1
+#define METADATA_TIMEOUT_SECONDS 1
 
 struct _SdiApparmorPromptDialog {
   GtkWindow parent_instance;
@@ -44,11 +44,15 @@ struct _SdiApparmorPromptDialog {
   // TRUE if we are showing a remote icon.
   bool have_remote_icon;
 
-  // Timer to wait for store snap metadata.
-  guint store_snap_timeout_id;
+  // Timer to wait for snap metadata.
+  guint metadata_timeout_id;
 
-  // TRUE to show when store snap is obtained (or timed out).
-  gboolean show_when_have_store_snap;
+  // TRUE to show when snap metadata is obtained (or timed out).
+  gboolean show_when_have_metadata;
+
+  gboolean have_store_metadata;
+  gboolean have_remote_icon_metadata;
+  gboolean have_local_icon_metadata;
 
   GCancellable *cancellable;
 };
@@ -350,6 +354,18 @@ static const gchar *get_icon_url(SnapdSnap *snap) {
   return NULL;
 }
 
+static void show_dialog(SdiApparmorPromptDialog *self) {
+  self->show_when_have_metadata = FALSE;
+  gtk_window_present(GTK_WINDOW(self));
+}
+
+static void show_dialog_if_ready(SdiApparmorPromptDialog *self) {
+  if (self->show_when_have_metadata && self->have_store_metadata &&
+      self->have_local_icon_metadata && self->have_remote_icon_metadata) {
+    show_dialog(self);
+  }
+}
+
 static void remote_icon_cb(GObject *object, GAsyncResult *result,
                            gpointer user_data) {
   SdiApparmorPromptDialog *self = user_data;
@@ -358,9 +374,16 @@ static void remote_icon_cb(GObject *object, GAsyncResult *result,
   g_autoptr(GBytes) data =
       soup_session_send_and_read_finish(SOUP_SESSION(object), result, &error);
   if (data == NULL) {
-    if (!g_error_matches(error, G_IO_ERROR, G_IO_ERROR_CANCELLED)) {
-      g_warning("Failed to get store snap remote icon: %s", error->message);
+    if (g_error_matches(error, G_IO_ERROR, G_IO_ERROR_CANCELLED)) {
+      return;
     }
+    g_warning("Failed to get store snap remote icon: %s", error->message);
+  }
+
+  self->have_remote_icon_metadata = TRUE;
+  show_dialog_if_ready(self);
+
+  if (data == NULL) {
     return;
   }
 
@@ -374,48 +397,44 @@ static void remote_icon_cb(GObject *object, GAsyncResult *result,
   gtk_image_set_from_paintable(self->image, GDK_PAINTABLE(texture));
 }
 
-static void show_dialog(SdiApparmorPromptDialog *self) {
-  self->show_when_have_store_snap = FALSE;
-  gtk_window_present(GTK_WINDOW(self));
-}
-
 static void get_store_snap_cb(GObject *object, GAsyncResult *result,
                               gpointer user_data) {
   SdiApparmorPromptDialog *self = user_data;
-
-  if (self->store_snap_timeout_id != 0) {
-    g_source_remove(self->store_snap_timeout_id);
-    self->store_snap_timeout_id = 0;
-  }
-  if (self->show_when_have_store_snap) {
-    g_debug("Have store snap, showing dialog");
-    show_dialog(self);
-  }
 
   g_autoptr(GError) error = NULL;
   g_autoptr(GPtrArray) snaps =
       snapd_client_find_finish(SNAPD_CLIENT(object), result, NULL, &error);
   if (snaps == NULL) {
-    if (!g_error_matches(error, G_IO_ERROR, G_IO_ERROR_CANCELLED)) {
-      g_warning("Failed to get store snap metadata: %s", error->message);
+    if (g_error_matches(error, G_IO_ERROR, G_IO_ERROR_CANCELLED)) {
+      return;
     }
-    return;
-  }
-
-  if (snaps->len != 1) {
+    g_warning("Failed to get store snap metadata: %s", error->message);
+  } else if (snaps->len != 1) {
     g_warning("Invalid number of snaps returned for store snap search");
-    return;
+  } else {
+    self->store_snap = g_object_ref(g_ptr_array_index(snaps, 0));
   }
 
-  self->store_snap = g_object_ref(g_ptr_array_index(snaps, 0));
+  self->have_store_metadata = TRUE;
+  show_dialog_if_ready(self);
+
+  if (self->metadata_timeout_id != 0) {
+    g_source_remove(self->metadata_timeout_id);
+    self->metadata_timeout_id = 0;
+  }
+
   update_metadata(self);
 
-  const gchar *icon_url = get_icon_url(self->store_snap);
+  const gchar *icon_url =
+      self->store_snap != NULL ? get_icon_url(self->store_snap) : NULL;
   if (icon_url != NULL) {
     g_autoptr(SoupSession) session = soup_session_new();
     g_autoptr(SoupMessage) message = soup_message_new("GET", icon_url);
     soup_session_send_and_read_async(session, message, G_PRIORITY_DEFAULT,
                                      self->cancellable, remote_icon_cb, self);
+  } else {
+    self->have_remote_icon_metadata = TRUE;
+    show_dialog_if_ready(self);
   }
 }
 
@@ -427,14 +446,18 @@ static void get_icon_cb(GObject *object, GAsyncResult *result,
   g_autoptr(SnapdIcon) icon =
       snapd_client_get_icon_finish(SNAPD_CLIENT(object), result, &error);
   if (icon == NULL) {
-    if (!g_error_matches(error, G_IO_ERROR, G_IO_ERROR_CANCELLED)) {
-      g_warning("Failed to get local snap icon: %s", error->message);
+    if (g_error_matches(error, G_IO_ERROR, G_IO_ERROR_CANCELLED)) {
+      return;
     }
-    return;
+
+    g_warning("Failed to get local snap icon: %s", error->message);
   }
 
+  self->have_local_icon_metadata = TRUE;
+  show_dialog_if_ready(self);
+
   // Remote icon is better than local.
-  if (self->have_remote_icon) {
+  if (self->have_remote_icon || icon == NULL) {
     return;
   }
 
@@ -448,11 +471,11 @@ static void get_icon_cb(GObject *object, GAsyncResult *result,
   gtk_image_set_from_paintable(self->image, GDK_PAINTABLE(texture));
 }
 
-static gboolean store_snap_timeout_cb(SdiApparmorPromptDialog *self) {
-  self->store_snap_timeout_id = 0;
+static gboolean metadata_timeout_cb(SdiApparmorPromptDialog *self) {
+  self->metadata_timeout_id = 0;
 
   // Give up waiting and show anyway.
-  if (self->show_when_have_store_snap) {
+  if (self->show_when_have_metadata) {
     g_debug("Timeout waiting for store snap, showing dialog");
     show_dialog(self);
   }
@@ -469,7 +492,7 @@ static void sdi_apparmor_prompt_dialog_dispose(GObject *object) {
   g_clear_object(&self->request);
   g_clear_object(&self->snap);
   g_clear_object(&self->store_snap);
-  g_clear_handle_id(&self->store_snap_timeout_id, g_source_remove);
+  g_clear_handle_id(&self->metadata_timeout_id, g_source_remove);
   g_clear_object(&self->cancellable);
 
   G_OBJECT_CLASS(sdi_apparmor_prompt_dialog_parent_class)->dispose(object);
@@ -537,8 +560,8 @@ sdi_apparmor_prompt_dialog_new(SnapdClient *client,
                               self);
   update_metadata(self);
 
-  self->store_snap_timeout_id = g_timeout_add_seconds(
-      STORE_SNAP_TIMEOUT_SECONDS, G_SOURCE_FUNC(store_snap_timeout_cb), self);
+  self->metadata_timeout_id = g_timeout_add_seconds(
+      METADATA_TIMEOUT_SECONDS, G_SOURCE_FUNC(metadata_timeout_cb), self);
 
   return self;
 }
@@ -552,8 +575,8 @@ sdi_apparmor_prompt_dialog_get_request(SdiApparmorPromptDialog *self) {
 void sdi_apparmor_prompt_dialog_show(SdiApparmorPromptDialog *self) {
   g_return_if_fail(SDI_IS_APPARMOR_PROMPT_DIALOG(self));
 
-  if (self->store_snap_timeout_id != 0) {
-    self->show_when_have_store_snap = TRUE;
+  if (self->metadata_timeout_id != 0) {
+    self->show_when_have_metadata = TRUE;
   } else {
     g_debug("Already have store snap, showing dialog");
     show_dialog(self);
