@@ -46,7 +46,7 @@ static void show_dialog(SdiApparmorPromptMonitor *self,
                         SnapdPromptingRequest *request) {
   SdiApparmorPromptDialog *dialog =
       sdi_apparmor_prompt_dialog_new(self->client, request);
-  gtk_window_present(GTK_WINDOW(dialog));
+  sdi_apparmor_prompt_dialog_show(dialog);
 
   g_ptr_array_add(self->dialogs, g_object_ref(dialog));
 }

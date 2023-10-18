@@ -29,3 +29,5 @@ sdi_apparmor_prompt_dialog_new(SnapdClient *client,
 
 SnapdPromptingRequest *
 sdi_apparmor_prompt_dialog_get_request(SdiApparmorPromptDialog *dialog);
+
+void sdi_apparmor_prompt_dialog_show(SdiApparmorPromptDialog *dialog);

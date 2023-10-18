@@ -20,6 +20,9 @@
 
 #include "sdi-apparmor-prompt-dialog.h"
 
+// Number of seconds to wait for store snap metadata.
+#define STORE_SNAP_TIMEOUT_SECONDS 1
+
 struct _SdiApparmorPromptDialog {
   GtkWindow parent_instance;
 
@@ -40,6 +43,12 @@ struct _SdiApparmorPromptDialog {
 
   // TRUE if we are showing a remote icon.
   bool have_remote_icon;
+
+  // Timer to wait for store snap metadata.
+  guint store_snap_timeout_id;
+
+  // TRUE to show when store snap is obtained (or timed out).
+  gboolean show_when_have_store_snap;
 
   GCancellable *cancellable;
 };
@@ -365,9 +374,23 @@ static void remote_icon_cb(GObject *object, GAsyncResult *result,
   gtk_image_set_from_paintable(self->image, GDK_PAINTABLE(texture));
 }
 
+static void show_dialog(SdiApparmorPromptDialog *self) {
+  self->show_when_have_store_snap = FALSE;
+  gtk_window_present(GTK_WINDOW(self));
+}
+
 static void get_store_snap_cb(GObject *object, GAsyncResult *result,
                               gpointer user_data) {
   SdiApparmorPromptDialog *self = user_data;
+
+  if (self->store_snap_timeout_id != 0) {
+    g_source_remove(self->store_snap_timeout_id);
+    self->store_snap_timeout_id = 0;
+  }
+  if (self->show_when_have_store_snap) {
+    g_debug("Have store snap, showing dialog");
+    show_dialog(self);
+  }
 
   g_autoptr(GError) error = NULL;
   g_autoptr(GPtrArray) snaps =
@@ -425,6 +448,18 @@ static void get_icon_cb(GObject *object, GAsyncResult *result,
   gtk_image_set_from_paintable(self->image, GDK_PAINTABLE(texture));
 }
 
+static gboolean store_snap_timeout_cb(SdiApparmorPromptDialog *self) {
+  self->store_snap_timeout_id = 0;
+
+  // Give up waiting and show anyway.
+  if (self->show_when_have_store_snap) {
+    g_debug("Timeout waiting for store snap, showing dialog");
+    show_dialog(self);
+  }
+
+  return G_SOURCE_REMOVE;
+}
+
 static void sdi_apparmor_prompt_dialog_dispose(GObject *object) {
   SdiApparmorPromptDialog *self = SDI_APPARMOR_PROMPT_DIALOG(object);
 
@@ -434,6 +469,7 @@ static void sdi_apparmor_prompt_dialog_dispose(GObject *object) {
   g_clear_object(&self->request);
   g_clear_object(&self->snap);
   g_clear_object(&self->store_snap);
+  g_clear_handle_id(&self->store_snap_timeout_id, g_source_remove);
   g_clear_object(&self->cancellable);
 
   G_OBJECT_CLASS(sdi_apparmor_prompt_dialog_parent_class)->dispose(object);
@@ -501,10 +537,25 @@ sdi_apparmor_prompt_dialog_new(SnapdClient *client,
                               self);
   update_metadata(self);
 
+  self->store_snap_timeout_id = g_timeout_add_seconds(
+      STORE_SNAP_TIMEOUT_SECONDS, G_SOURCE_FUNC(store_snap_timeout_cb), self);
+
   return self;
 }
 
 SnapdPromptingRequest *
 sdi_apparmor_prompt_dialog_get_request(SdiApparmorPromptDialog *self) {
+  g_return_val_if_fail(SDI_IS_APPARMOR_PROMPT_DIALOG(self), NULL);
   return self->request;
+}
+
+void sdi_apparmor_prompt_dialog_show(SdiApparmorPromptDialog *self) {
+  g_return_if_fail(SDI_IS_APPARMOR_PROMPT_DIALOG(self));
+
+  if (self->store_snap_timeout_id != 0) {
+    self->show_when_have_store_snap = TRUE;
+  } else {
+    g_debug("Already have store snap, showing dialog");
+    show_dialog(self);
+  }
 }
