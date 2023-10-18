@@ -21,7 +21,7 @@
 #include "sdi-apparmor-prompt-dialog.h"
 
 // Number of seconds to wait for store snap metadata.
-#define METADATA_TIMEOUT_SECONDS 1
+#define METADATA_TIMEOUT_SECONDS 2
 
 struct _SdiApparmorPromptDialog {
   GtkWindow parent_instance;
