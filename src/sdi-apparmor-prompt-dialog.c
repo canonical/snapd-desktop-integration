@@ -32,6 +32,29 @@ struct _SdiApparmorPromptDialog {
   GtkLabel *app_publisher_label;
   GtkLabel *app_updated_label;
   GtkLabel *app_center_label;
+  GtkBox *more_options_box;
+  GtkEntry *path_pattern_entry;
+  GtkCheckButton *execute_check_button;
+  GtkCheckButton *write_check_button;
+  GtkCheckButton *read_check_button;
+  GtkCheckButton *append_check_button;
+  GtkCheckButton *create_check_button;
+  GtkCheckButton *delete_check_button;
+  GtkCheckButton *open_check_button;
+  GtkCheckButton *rename_check_button;
+  GtkCheckButton *set_attribute_check_button;
+  GtkCheckButton *get_attribute_check_button;
+  GtkCheckButton *change_mode_check_button;
+  GtkCheckButton *change_owner_check_button;
+  GtkCheckButton *change_group_check_button;
+  GtkCheckButton *lock_check_button;
+  GtkCheckButton *execute_map_check_button;
+  GtkCheckButton *link_check_button;
+  GtkCheckButton *change_profile_check_button;
+  GtkCheckButton *change_profile_on_exec_check_button;
+  GtkButton *allow_once_button;
+  GtkButton *always_deny_button;
+  GtkButton *more_options_button;
 
   // The request this dialog is responding to.
   SnapdClient *client;
@@ -130,51 +153,80 @@ static void response_cb(GObject *object, GAsyncResult *result,
   gtk_window_destroy(GTK_WINDOW(self));
 }
 
+static const gchar *get_path_pattern(SdiApparmorPromptDialog *self) {
+  return gtk_editable_get_text(GTK_EDITABLE(self->path_pattern_entry));
+}
+
+static SnapdPromptingPermissionFlags
+get_response_permissions(SdiApparmorPromptDialog *self) {
+  SnapdPromptingPermissionFlags permissions =
+      SNAPD_PROMPTING_PERMISSION_FLAGS_NONE;
+
+  if (gtk_check_button_get_active(self->execute_check_button)) {
+    permissions |= SNAPD_PROMPTING_PERMISSION_FLAGS_EXECUTE;
+  }
+  if (gtk_check_button_get_active(self->write_check_button)) {
+    permissions |= SNAPD_PROMPTING_PERMISSION_FLAGS_WRITE;
+  }
+  if (gtk_check_button_get_active(self->read_check_button)) {
+    permissions |= SNAPD_PROMPTING_PERMISSION_FLAGS_READ;
+  }
+  if (gtk_check_button_get_active(self->append_check_button)) {
+    permissions |= SNAPD_PROMPTING_PERMISSION_FLAGS_APPEND;
+  }
+  if (gtk_check_button_get_active(self->create_check_button)) {
+    permissions |= SNAPD_PROMPTING_PERMISSION_FLAGS_CREATE;
+  }
+  if (gtk_check_button_get_active(self->delete_check_button)) {
+    permissions |= SNAPD_PROMPTING_PERMISSION_FLAGS_DELETE;
+  }
+  if (gtk_check_button_get_active(self->open_check_button)) {
+    permissions |= SNAPD_PROMPTING_PERMISSION_FLAGS_OPEN;
+  }
+  if (gtk_check_button_get_active(self->rename_check_button)) {
+    permissions |= SNAPD_PROMPTING_PERMISSION_FLAGS_RENAME;
+  }
+  if (gtk_check_button_get_active(self->set_attribute_check_button)) {
+    permissions |= SNAPD_PROMPTING_PERMISSION_FLAGS_SET_ATTR;
+  }
+  if (gtk_check_button_get_active(self->get_attribute_check_button)) {
+    permissions |= SNAPD_PROMPTING_PERMISSION_FLAGS_GET_ATTR;
+  }
+  if (gtk_check_button_get_active(self->change_mode_check_button)) {
+    permissions |= SNAPD_PROMPTING_PERMISSION_FLAGS_CHANGE_MODE;
+  }
+  if (gtk_check_button_get_active(self->change_owner_check_button)) {
+    permissions |= SNAPD_PROMPTING_PERMISSION_FLAGS_CHANGE_OWNER;
+  }
+  if (gtk_check_button_get_active(self->change_group_check_button)) {
+    permissions |= SNAPD_PROMPTING_PERMISSION_FLAGS_CHANGE_GROUP;
+  }
+  if (gtk_check_button_get_active(self->lock_check_button)) {
+    permissions |= SNAPD_PROMPTING_PERMISSION_FLAGS_LOCK;
+  }
+  if (gtk_check_button_get_active(self->execute_map_check_button)) {
+    permissions |= SNAPD_PROMPTING_PERMISSION_FLAGS_EXECUTE_MAP;
+  }
+  if (gtk_check_button_get_active(self->link_check_button)) {
+    permissions |= SNAPD_PROMPTING_PERMISSION_FLAGS_LINK;
+  }
+  if (gtk_check_button_get_active(self->change_profile_check_button)) {
+    permissions |= SNAPD_PROMPTING_PERMISSION_FLAGS_CHANGE_PROFILE;
+  }
+  if (gtk_check_button_get_active(self->change_profile_on_exec_check_button)) {
+    permissions |= SNAPD_PROMPTING_PERMISSION_FLAGS_CHANGE_PROFILE_ON_EXEC;
+  }
+
+  return permissions;
+}
+
 static void respond(SdiApparmorPromptDialog *self,
                     SnapdPromptingOutcome outcome,
                     SnapdPromptingLifespan lifespan) {
-  // Allow everything in the requested directory.
-  const gchar *path = snapd_prompting_request_get_path(self->request);
-  g_autofree gchar *path_pattern;
-  if (g_str_has_suffix(path, "/")) {
-    path_pattern = g_strdup_printf("%s*", path);
-  } else {
-    path_pattern = g_strdup(path);
-  }
-
-  SnapdPromptingPermissionFlags permissions =
-      snapd_prompting_request_get_permissions(self->request);
-  SnapdPromptingPermissionFlags response_permissions = permissions;
-
-  // If writing a file, then give additional read permissions.
-  if ((permissions & (SNAPD_PROMPTING_PERMISSION_FLAGS_READ |
-                      SNAPD_PROMPTING_PERMISSION_FLAGS_OPEN)) != 0) {
-    response_permissions |= SNAPD_PROMPTING_PERMISSION_FLAGS_READ |
-                            SNAPD_PROMPTING_PERMISSION_FLAGS_OPEN |
-                            SNAPD_PROMPTING_PERMISSION_FLAGS_GET_ATTR |
-                            SNAPD_PROMPTING_PERMISSION_FLAGS_GET_CRED;
-  }
-
-  // If writing a file, then give appropriate permissions to modify it.
-  if ((permissions & (SNAPD_PROMPTING_PERMISSION_FLAGS_CREATE |
-                      SNAPD_PROMPTING_PERMISSION_FLAGS_WRITE)) != 0) {
-    response_permissions |= SNAPD_PROMPTING_PERMISSION_FLAGS_WRITE |
-                            SNAPD_PROMPTING_PERMISSION_FLAGS_READ |
-                            SNAPD_PROMPTING_PERMISSION_FLAGS_APPEND |
-                            SNAPD_PROMPTING_PERMISSION_FLAGS_CREATE |
-                            SNAPD_PROMPTING_PERMISSION_FLAGS_DELETE |
-                            SNAPD_PROMPTING_PERMISSION_FLAGS_OPEN |
-                            SNAPD_PROMPTING_PERMISSION_FLAGS_SET_ATTR |
-                            SNAPD_PROMPTING_PERMISSION_FLAGS_GET_ATTR |
-                            SNAPD_PROMPTING_PERMISSION_FLAGS_CHANGE_MODE |
-                            SNAPD_PROMPTING_PERMISSION_FLAGS_CHANGE_OWNER |
-                            SNAPD_PROMPTING_PERMISSION_FLAGS_CHANGE_GROUP;
-  }
-
   snapd_client_prompting_respond_async(
       self->client, snapd_prompting_request_get_id(self->request), outcome,
-      lifespan, NULL, path_pattern, response_permissions, self->cancellable,
-      response_cb, self);
+      lifespan, NULL, get_path_pattern(self), get_response_permissions(self),
+      self->cancellable, response_cb, self);
 
   gtk_widget_set_sensitive(GTK_WIDGET(self), FALSE);
 }
@@ -184,12 +236,23 @@ static void always_allow_cb(SdiApparmorPromptDialog *self) {
           SNAPD_PROMPTING_LIFESPAN_FOREVER);
 }
 
+static void allow_once_cb(SdiApparmorPromptDialog *self) {
+  respond(self, SNAPD_PROMPTING_OUTCOME_ALLOW, SNAPD_PROMPTING_LIFESPAN_SINGLE);
+}
+
+static void always_deny_cb(SdiApparmorPromptDialog *self) {
+  respond(self, SNAPD_PROMPTING_OUTCOME_DENY, SNAPD_PROMPTING_LIFESPAN_FOREVER);
+}
+
 static void deny_once_cb(SdiApparmorPromptDialog *self) {
   respond(self, SNAPD_PROMPTING_OUTCOME_DENY, SNAPD_PROMPTING_LIFESPAN_SINGLE);
 }
 
 static void more_options_cb(SdiApparmorPromptDialog *self) {
-  // FIXME: TBD
+  gtk_widget_set_visible(GTK_WIDGET(self->more_options_box), TRUE);
+  gtk_widget_set_visible(GTK_WIDGET(self->more_options_button), FALSE);
+  gtk_widget_set_visible(GTK_WIDGET(self->allow_once_button), TRUE);
+  gtk_widget_set_visible(GTK_WIDGET(self->always_deny_button), TRUE);
 }
 
 static gboolean close_request_cb(SdiApparmorPromptDialog *self) {
@@ -524,9 +587,67 @@ void sdi_apparmor_prompt_dialog_class_init(
       GTK_WIDGET_CLASS(klass), SdiApparmorPromptDialog, app_updated_label);
   gtk_widget_class_bind_template_child(
       GTK_WIDGET_CLASS(klass), SdiApparmorPromptDialog, app_center_label);
+  gtk_widget_class_bind_template_child(
+      GTK_WIDGET_CLASS(klass), SdiApparmorPromptDialog, more_options_box);
+  gtk_widget_class_bind_template_child(
+      GTK_WIDGET_CLASS(klass), SdiApparmorPromptDialog, path_pattern_entry);
+  gtk_widget_class_bind_template_child(
+      GTK_WIDGET_CLASS(klass), SdiApparmorPromptDialog, execute_check_button);
+  gtk_widget_class_bind_template_child(
+      GTK_WIDGET_CLASS(klass), SdiApparmorPromptDialog, write_check_button);
+  gtk_widget_class_bind_template_child(
+      GTK_WIDGET_CLASS(klass), SdiApparmorPromptDialog, read_check_button);
+  gtk_widget_class_bind_template_child(
+      GTK_WIDGET_CLASS(klass), SdiApparmorPromptDialog, append_check_button);
+  gtk_widget_class_bind_template_child(
+      GTK_WIDGET_CLASS(klass), SdiApparmorPromptDialog, create_check_button);
+  gtk_widget_class_bind_template_child(
+      GTK_WIDGET_CLASS(klass), SdiApparmorPromptDialog, delete_check_button);
+  gtk_widget_class_bind_template_child(
+      GTK_WIDGET_CLASS(klass), SdiApparmorPromptDialog, open_check_button);
+  gtk_widget_class_bind_template_child(
+      GTK_WIDGET_CLASS(klass), SdiApparmorPromptDialog, rename_check_button);
+  gtk_widget_class_bind_template_child(GTK_WIDGET_CLASS(klass),
+                                       SdiApparmorPromptDialog,
+                                       set_attribute_check_button);
+  gtk_widget_class_bind_template_child(GTK_WIDGET_CLASS(klass),
+                                       SdiApparmorPromptDialog,
+                                       get_attribute_check_button);
+  gtk_widget_class_bind_template_child(GTK_WIDGET_CLASS(klass),
+                                       SdiApparmorPromptDialog,
+                                       change_mode_check_button);
+  gtk_widget_class_bind_template_child(GTK_WIDGET_CLASS(klass),
+                                       SdiApparmorPromptDialog,
+                                       change_owner_check_button);
+  gtk_widget_class_bind_template_child(GTK_WIDGET_CLASS(klass),
+                                       SdiApparmorPromptDialog,
+                                       change_group_check_button);
+  gtk_widget_class_bind_template_child(
+      GTK_WIDGET_CLASS(klass), SdiApparmorPromptDialog, lock_check_button);
+  gtk_widget_class_bind_template_child(GTK_WIDGET_CLASS(klass),
+                                       SdiApparmorPromptDialog,
+                                       execute_map_check_button);
+  gtk_widget_class_bind_template_child(
+      GTK_WIDGET_CLASS(klass), SdiApparmorPromptDialog, link_check_button);
+  gtk_widget_class_bind_template_child(GTK_WIDGET_CLASS(klass),
+                                       SdiApparmorPromptDialog,
+                                       change_profile_check_button);
+  gtk_widget_class_bind_template_child(GTK_WIDGET_CLASS(klass),
+                                       SdiApparmorPromptDialog,
+                                       change_profile_on_exec_check_button);
+  gtk_widget_class_bind_template_child(
+      GTK_WIDGET_CLASS(klass), SdiApparmorPromptDialog, allow_once_button);
+  gtk_widget_class_bind_template_child(
+      GTK_WIDGET_CLASS(klass), SdiApparmorPromptDialog, always_deny_button);
+  gtk_widget_class_bind_template_child(
+      GTK_WIDGET_CLASS(klass), SdiApparmorPromptDialog, more_options_button);
 
   gtk_widget_class_bind_template_callback(GTK_WIDGET_CLASS(klass),
                                           always_allow_cb);
+  gtk_widget_class_bind_template_callback(GTK_WIDGET_CLASS(klass),
+                                          allow_once_cb);
+  gtk_widget_class_bind_template_callback(GTK_WIDGET_CLASS(klass),
+                                          always_deny_cb);
   gtk_widget_class_bind_template_callback(GTK_WIDGET_CLASS(klass),
                                           deny_once_cb);
   gtk_widget_class_bind_template_callback(GTK_WIDGET_CLASS(klass),
@@ -545,6 +666,106 @@ sdi_apparmor_prompt_dialog_new(SnapdClient *client,
 
   self->client = g_object_ref(client);
   self->request = g_object_ref(request);
+
+  // Allow everything in the requested directory.
+  const gchar *path = snapd_prompting_request_get_path(self->request);
+  g_autofree gchar *path_pattern = NULL;
+  if (g_str_has_suffix(path, "/")) {
+    path_pattern = g_strdup_printf("%s*", path);
+  } else {
+    path_pattern = g_strdup(path);
+  }
+  gtk_editable_set_text(GTK_EDITABLE(self->path_pattern_entry), path_pattern);
+
+  SnapdPromptingPermissionFlags permissions =
+      snapd_prompting_request_get_permissions(request);
+  SnapdPromptingPermissionFlags response_permissions = permissions;
+
+  // If writing a file, then give additional read permissions.
+  if ((permissions & (SNAPD_PROMPTING_PERMISSION_FLAGS_READ |
+                      SNAPD_PROMPTING_PERMISSION_FLAGS_OPEN)) != 0) {
+    response_permissions |= SNAPD_PROMPTING_PERMISSION_FLAGS_READ |
+                            SNAPD_PROMPTING_PERMISSION_FLAGS_OPEN |
+                            SNAPD_PROMPTING_PERMISSION_FLAGS_GET_ATTR |
+                            SNAPD_PROMPTING_PERMISSION_FLAGS_GET_CRED;
+  }
+
+  // If writing a file, then give appropriate permissions to modify it.
+  if ((permissions & (SNAPD_PROMPTING_PERMISSION_FLAGS_CREATE |
+                      SNAPD_PROMPTING_PERMISSION_FLAGS_WRITE)) != 0) {
+    response_permissions |= SNAPD_PROMPTING_PERMISSION_FLAGS_WRITE |
+                            SNAPD_PROMPTING_PERMISSION_FLAGS_READ |
+                            SNAPD_PROMPTING_PERMISSION_FLAGS_APPEND |
+                            SNAPD_PROMPTING_PERMISSION_FLAGS_CREATE |
+                            SNAPD_PROMPTING_PERMISSION_FLAGS_DELETE |
+                            SNAPD_PROMPTING_PERMISSION_FLAGS_OPEN |
+                            SNAPD_PROMPTING_PERMISSION_FLAGS_SET_ATTR |
+                            SNAPD_PROMPTING_PERMISSION_FLAGS_GET_ATTR |
+                            SNAPD_PROMPTING_PERMISSION_FLAGS_CHANGE_MODE |
+                            SNAPD_PROMPTING_PERMISSION_FLAGS_CHANGE_OWNER |
+                            SNAPD_PROMPTING_PERMISSION_FLAGS_CHANGE_GROUP;
+  }
+
+  gtk_check_button_set_active(
+      self->execute_check_button,
+      (response_permissions & SNAPD_PROMPTING_PERMISSION_FLAGS_EXECUTE) != 0);
+  gtk_check_button_set_active(
+      self->write_check_button,
+      (response_permissions & SNAPD_PROMPTING_PERMISSION_FLAGS_WRITE) != 0);
+  gtk_check_button_set_active(
+      self->read_check_button,
+      (response_permissions & SNAPD_PROMPTING_PERMISSION_FLAGS_READ) != 0);
+  gtk_check_button_set_active(
+      self->append_check_button,
+      (response_permissions & SNAPD_PROMPTING_PERMISSION_FLAGS_APPEND) != 0);
+  gtk_check_button_set_active(
+      self->create_check_button,
+      (response_permissions & SNAPD_PROMPTING_PERMISSION_FLAGS_CREATE) != 0);
+  gtk_check_button_set_active(
+      self->delete_check_button,
+      (response_permissions & SNAPD_PROMPTING_PERMISSION_FLAGS_DELETE) != 0);
+  gtk_check_button_set_active(
+      self->open_check_button,
+      (response_permissions & SNAPD_PROMPTING_PERMISSION_FLAGS_OPEN) != 0);
+  gtk_check_button_set_active(
+      self->rename_check_button,
+      (response_permissions & SNAPD_PROMPTING_PERMISSION_FLAGS_RENAME) != 0);
+  gtk_check_button_set_active(
+      self->set_attribute_check_button,
+      (response_permissions & SNAPD_PROMPTING_PERMISSION_FLAGS_SET_ATTR) != 0);
+  gtk_check_button_set_active(
+      self->get_attribute_check_button,
+      (response_permissions & SNAPD_PROMPTING_PERMISSION_FLAGS_GET_ATTR) != 0);
+  gtk_check_button_set_active(
+      self->change_mode_check_button,
+      (response_permissions & SNAPD_PROMPTING_PERMISSION_FLAGS_CHANGE_MODE) !=
+          0);
+  gtk_check_button_set_active(
+      self->change_owner_check_button,
+      (response_permissions & SNAPD_PROMPTING_PERMISSION_FLAGS_CHANGE_OWNER) !=
+          0);
+  gtk_check_button_set_active(
+      self->change_group_check_button,
+      (response_permissions & SNAPD_PROMPTING_PERMISSION_FLAGS_CHANGE_GROUP) !=
+          0);
+  gtk_check_button_set_active(
+      self->lock_check_button,
+      (response_permissions & SNAPD_PROMPTING_PERMISSION_FLAGS_LOCK) != 0);
+  gtk_check_button_set_active(
+      self->execute_map_check_button,
+      (response_permissions & SNAPD_PROMPTING_PERMISSION_FLAGS_EXECUTE_MAP) !=
+          0);
+  gtk_check_button_set_active(
+      self->link_check_button,
+      (response_permissions & SNAPD_PROMPTING_PERMISSION_FLAGS_LINK) != 0);
+  gtk_check_button_set_active(
+      self->change_profile_check_button,
+      (response_permissions &
+       SNAPD_PROMPTING_PERMISSION_FLAGS_CHANGE_PROFILE) != 0);
+  gtk_check_button_set_active(
+      self->change_profile_on_exec_check_button,
+      (response_permissions &
+       SNAPD_PROMPTING_PERMISSION_FLAGS_CHANGE_PROFILE_ON_EXEC) != 0);
 
   g_autofree gchar *app_details_title_text =
       g_strdup_printf("<b>%s</b>", _("Application details"));
