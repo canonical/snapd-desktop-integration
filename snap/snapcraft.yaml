@@ -34,6 +34,7 @@ apps:
       - snap-prompting-control
       - login-session-observe
       - snap
+      - network
 
 slots:
   snapd-desktop-integration:
