@@ -35,6 +35,7 @@ apps:
       - login-session-observe
       - snap
       - network
+      - network-status
 
 slots:
   snapd-desktop-integration:
