@@ -19,7 +19,7 @@
 #include "sdi-apparmor-prompt-dialog.h"
 
 // How often to wait between checks for prompting requests.
-#define CHECK_PROMPTING_REQUESTS_TIMEOUT_SECONDS 1
+#define CHECK_PROMPTING_REQUESTS_TIMEOUT_MILLISECONDS 100
 
 struct _SdiApparmorPromptMonitor {
   GObject parent_instance;
@@ -127,8 +127,8 @@ static void schedule_poll(SdiApparmorPromptMonitor *self) {
     g_source_remove(self->poll_timeout_id);
   }
   self->poll_timeout_id =
-      g_timeout_add_seconds(CHECK_PROMPTING_REQUESTS_TIMEOUT_SECONDS,
-                            G_SOURCE_FUNC(poll_timeout_cb), self);
+      g_timeout_add(CHECK_PROMPTING_REQUESTS_TIMEOUT_MILLISECONDS,
+                    G_SOURCE_FUNC(poll_timeout_cb), self);
 }
 
 static void get_prompting_requests_cb(GObject *object, GAsyncResult *result,
