@@ -50,8 +50,6 @@ struct _SdiApparmorPromptDialog {
   GtkCheckButton *lock_check_button;
   GtkCheckButton *execute_map_check_button;
   GtkCheckButton *link_check_button;
-  GtkCheckButton *change_profile_check_button;
-  GtkCheckButton *change_profile_on_exec_check_button;
   GtkButton *allow_once_button;
   GtkButton *always_deny_button;
   GtkButton *more_options_button;
@@ -106,9 +104,6 @@ static gchar *permissions_to_label(SnapdPromptingPermissionFlags permissions) {
       {SNAPD_PROMPTING_PERMISSION_FLAGS_LOCK, "lock"},
       {SNAPD_PROMPTING_PERMISSION_FLAGS_EXECUTE_MAP, "execute-map"},
       {SNAPD_PROMPTING_PERMISSION_FLAGS_LINK, "link"},
-      {SNAPD_PROMPTING_PERMISSION_FLAGS_CHANGE_PROFILE, "change-profile"},
-      {SNAPD_PROMPTING_PERMISSION_FLAGS_CHANGE_PROFILE_ON_EXEC,
-       "change-profile-on-exec"},
       {SNAPD_PROMPTING_PERMISSION_FLAGS_NONE, NULL}};
 
   g_autoptr(GPtrArray) permission_names = g_ptr_array_new();
@@ -209,12 +204,6 @@ get_response_permissions(SdiApparmorPromptDialog *self) {
   }
   if (gtk_check_button_get_active(self->link_check_button)) {
     permissions |= SNAPD_PROMPTING_PERMISSION_FLAGS_LINK;
-  }
-  if (gtk_check_button_get_active(self->change_profile_check_button)) {
-    permissions |= SNAPD_PROMPTING_PERMISSION_FLAGS_CHANGE_PROFILE;
-  }
-  if (gtk_check_button_get_active(self->change_profile_on_exec_check_button)) {
-    permissions |= SNAPD_PROMPTING_PERMISSION_FLAGS_CHANGE_PROFILE_ON_EXEC;
   }
 
   return permissions;
@@ -629,12 +618,6 @@ void sdi_apparmor_prompt_dialog_class_init(
                                        execute_map_check_button);
   gtk_widget_class_bind_template_child(
       GTK_WIDGET_CLASS(klass), SdiApparmorPromptDialog, link_check_button);
-  gtk_widget_class_bind_template_child(GTK_WIDGET_CLASS(klass),
-                                       SdiApparmorPromptDialog,
-                                       change_profile_check_button);
-  gtk_widget_class_bind_template_child(GTK_WIDGET_CLASS(klass),
-                                       SdiApparmorPromptDialog,
-                                       change_profile_on_exec_check_button);
   gtk_widget_class_bind_template_child(
       GTK_WIDGET_CLASS(klass), SdiApparmorPromptDialog, allow_once_button);
   gtk_widget_class_bind_template_child(
@@ -758,14 +741,6 @@ sdi_apparmor_prompt_dialog_new(SnapdClient *client,
   gtk_check_button_set_active(
       self->link_check_button,
       (response_permissions & SNAPD_PROMPTING_PERMISSION_FLAGS_LINK) != 0);
-  gtk_check_button_set_active(
-      self->change_profile_check_button,
-      (response_permissions &
-       SNAPD_PROMPTING_PERMISSION_FLAGS_CHANGE_PROFILE) != 0);
-  gtk_check_button_set_active(
-      self->change_profile_on_exec_check_button,
-      (response_permissions &
-       SNAPD_PROMPTING_PERMISSION_FLAGS_CHANGE_PROFILE_ON_EXEC) != 0);
 
   g_autofree gchar *app_details_title_text =
       g_strdup_printf("<b>%s</b>", _("Application details"));

@@ -236,24 +236,6 @@
                         </layout>
                       </object>
                     </child>
-                    <child>
-                      <object class="GtkCheckButton" id="change_profile_check_button">
-                        <property name="label" translatable="yes">Change profile</property>
-                        <layout>
-                          <property name="row">4</property>
-                          <property name="column">2</property>
-                        </layout>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkCheckButton" id="change_profile_on_exec_check_button">
-                        <property name="label" translatable="yes">Change profile on exec</property>
-                        <layout>
-                          <property name="row">5</property>
-                          <property name="column">2</property>
-                        </layout>
-                      </object>
-                    </child>
                   </object>
                 </child>
               </object>
