@@ -13,8 +13,4 @@ login_session_src = gnome.gdbus_codegen('org.freedesktop.login1.Session',
   interface_prefix : 'org.freedesktop.login1.session'
 )
 
-gdbus_src = gnome.gdbus_codegen('io.snapcraft.SnapDesktopIntegration',
-  sources: 'io.snapcraft.SnapDesktopIntegration.dbus.xml',
-  interface_prefix : 'io.snapcraft.',
-  docbook : 'SnapDesktopIntegration-interface-doc'
-)
+install_data('io.snapcraft.SnapDesktopIntegration.desktop', install_dir: 'share/applications')

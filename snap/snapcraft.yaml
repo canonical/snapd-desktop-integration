@@ -33,6 +33,8 @@ apps:
       - snap-themes-control
       - login-session-observe
       - snap
+      - desktop-launch
+      - snap-refresh-observe
 
 slots:
   snapd-desktop-integration:
@@ -50,8 +52,11 @@ parts:
       - -Ddocs=false
       - -Dintrospection=false
       - -Dvala-bindings=false
+      - -Dqt5=false
       - -Dqt6=false
       - -Dqml-bindings=false
+      - -Dtests=false
+      - -Dexamples=false
     build-packages:
       - libpolkit-gobject-1-dev
     prime:

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Canonical Ltd
+ * Copyright (C) 2024 Canonical Ltd
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as
@@ -17,18 +17,24 @@
 
 #pragma once
 
-#include <glib-object.h>
+#include <gtk/gtk.h>
 #include <snapd-glib/snapd-glib.h>
 
 G_BEGIN_DECLS
 
-#define SDI_TYPE_THEME_MONITOR sdi_theme_monitor_get_type()
+#define SDI_TYPE_NOTIFY sdi_notify_get_type()
 
-G_DECLARE_FINAL_TYPE(SdiThemeMonitor, sdi_theme_monitor, SDI, THEME_MONITOR,
-                     GObject)
+G_DECLARE_FINAL_TYPE(SdiNotify, sdi_notify, SDI, NOTIFY, GObject)
 
-SdiThemeMonitor *sdi_theme_monitor_new(SnapdClient *client);
+SdiNotify *sdi_notify_new(GApplication *application);
 
-void sdi_theme_monitor_start(SdiThemeMonitor *monitor);
+GApplication *sdi_notify_get_application(SdiNotify *notify);
+
+void sdi_notify_pending_refresh_one(SdiNotify *notify, SnapdSnap *snap);
+
+void sdi_notify_pending_refresh_multiple(SdiNotify *notify, GSList *snaps);
+
+void sdi_notify_refresh_complete(SdiNotify *notify, SnapdSnap *snap,
+                                 const gchar *snap_name);
 
 G_END_DECLS
