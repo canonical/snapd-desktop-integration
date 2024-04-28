@@ -50,7 +50,7 @@ parts:
       - -Ddocs=false
       - -Dintrospection=false
       - -Dvala-bindings=false
-      - -Dqt-bindings=false
+      - -Dqt6=false
       - -Dqml-bindings=false
     build-packages:
       - libpolkit-gobject-1-dev
