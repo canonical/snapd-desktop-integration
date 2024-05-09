@@ -14,3 +14,4 @@ login_session_src = gnome.gdbus_codegen('org.freedesktop.login1.Session',
 )
 
 install_data('io.snapcraft.SnapDesktopIntegration.desktop', install_dir: 'share/applications')
+install_data('snapd-desktop-integration.svg', install_dir: 'share/icons/hicolor/scalable/apps')
