@@ -43,7 +43,7 @@ struct _SdiRefreshDialog {
 
   gchar *app_name;
   gchar *message;
-  gdouble percentage;
+  gdouble current_percentage;
   guint timeout_id;
   gboolean pulsed;
   gint inactivity_timeout;
@@ -118,7 +118,7 @@ SdiRefreshDialog *sdi_refresh_dialog_new(const gchar *app_name,
 
   self->app_name = g_strdup(app_name);
   self->pulsed = TRUE;
-  self->percentage = -1;
+  self->current_percentage = -1;
   label_text =
       g_strdup_printf(_("Updating %s to the latest version."), visible_name);
   sdi_refresh_dialog_set_message(self, label_text);
@@ -144,12 +144,12 @@ void sdi_refresh_dialog_set_percentage_progress(SdiRefreshDialog *self,
                                                 const gchar *bar_text,
                                                 gdouble percent) {
   if ((self->message != NULL) && (g_str_equal(self->message, bar_text)) &&
-      (percent == self->percentage)) {
+      (percent == self->current_percentage)) {
     return;
   }
   self->pulsed = FALSE;
   self->inactivity_timeout = INACTIVITY_TIMEOUT;
-  self->percentage = percent;
+  self->current_percentage = percent;
   g_free(self->message);
   self->message = g_strdup(bar_text);
   gtk_progress_bar_set_fraction(self->progress_bar, percent);

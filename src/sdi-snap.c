@@ -22,12 +22,20 @@ enum { PROP_NAME = 1, PROP_DIALOG, PROP_LAST };
 struct _SdiSnap {
   GObject parent_instance;
 
+  //* the snap name used as identifier
   gchar *name;
+  //* if this snap is being refreshed, this is the Gtk widget that contains the
+  // icon, progress bar, refresh message and "Hide" button
   SdiRefreshDialog *dialog;
+  //* This is set to TRUE if the user clicked the "Ignore" button in a notification, to avoid new notifications to be shown
   gboolean ignored;
+  //* If a snap is marked as "inhibited", it means that it is waiting for the user to close the instance to continue the refresh. Non-inhibited snaps must NOT show a progress bar.
   gboolean inhibited;
+  //* If a dialog is destroyed for whatever reason (for example, because the top window containing it is closed) this is set to TRUE to avoid creating again a progress bar for this snap in the next loop.
   gboolean hidden;
+  //* If the user pressed the "Hide" button in a dialog, it is destroyed and this is set to TRUE to avoid creating again that dialog in the next loop.
   gboolean manually_hidden;
+  //* The id for the "destroy" signal connection, to allow to disconnect it when the object is disposed, or if the dialog is replaced by another one.
   gint destroy_id;
 };
 
