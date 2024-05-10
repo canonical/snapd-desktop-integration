@@ -26,8 +26,8 @@ struct _SdiSnap {
   SdiRefreshDialog *dialog;
   gboolean ignored;
   gboolean inhibited;
-  gboolean hiden;
-  gboolean manually_hiden;
+  gboolean hidden;
+  gboolean manually_hidden;
   gint destroy_id;
 };
 
@@ -44,7 +44,7 @@ SdiRefreshDialog *sdi_snap_get_dialog(SdiSnap *self) {
 
 static void dialog_destroyed(GtkWindow *window, SdiSnap *self) {
   self->dialog = NULL;
-  self->hiden = TRUE;
+  self->hidden = TRUE;
 }
 
 void sdi_snap_set_dialog(SdiSnap *self, SdiRefreshDialog *dialog) {
@@ -64,24 +64,24 @@ void sdi_snap_set_dialog(SdiSnap *self, SdiRefreshDialog *dialog) {
   }
 }
 
-gboolean sdi_snap_get_hiden(SdiSnap *self) {
+gboolean sdi_snap_get_hidden(SdiSnap *self) {
   g_return_val_if_fail(SDI_IS_SNAP(self), FALSE);
-  return self->hiden;
+  return self->hidden;
 }
 
-void sdi_snap_set_hiden(SdiSnap *self, gboolean hiden) {
+void sdi_snap_set_hidden(SdiSnap *self, gboolean hidden) {
   g_return_if_fail(SDI_IS_SNAP(self));
-  self->hiden = hiden;
+  self->hidden = hidden;
 }
 
-gboolean sdi_snap_get_manually_hiden(SdiSnap *self) {
+gboolean sdi_snap_get_manually_hidden(SdiSnap *self) {
   g_return_val_if_fail(SDI_IS_SNAP(self), FALSE);
-  return self->manually_hiden;
+  return self->manually_hidden;
 }
 
-void sdi_snap_set_manually_hiden(SdiSnap *self, gboolean hiden) {
+void sdi_snap_set_manually_hidden(SdiSnap *self, gboolean hidden) {
   g_return_if_fail(SDI_IS_SNAP(self));
-  self->manually_hiden = hiden;
+  self->manually_hidden = hidden;
 }
 
 gboolean sdi_snap_get_inhibited(SdiSnap *self) {

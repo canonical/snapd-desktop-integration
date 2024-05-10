@@ -34,7 +34,6 @@ apps:
       - snap-themes-control
       - login-session-observe
       - snap
-      - desktop-launch
       - snap-refresh-observe
 
 slots:

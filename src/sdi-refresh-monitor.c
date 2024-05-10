@@ -122,7 +122,7 @@ void close_dialog_cb(SdiRefreshDialog *dialog, SdiRefreshMonitor *self) {
   g_autofree gchar *snap_name =
       g_strdup(sdi_refresh_dialog_get_app_name(dialog));
   g_autoptr(SdiSnap) snap = find_snap(self, snap_name);
-  sdi_snap_set_manually_hiden(snap, TRUE);
+  sdi_snap_set_manually_hidden(snap, TRUE);
   remove_dialog(self, dialog);
   sdi_snap_set_dialog(snap, NULL);
 }
@@ -267,7 +267,7 @@ static void manage_change_update(SnapdClient *source, GAsyncResult *res,
         snapd_client_get_snap_async(self->client, *p, NULL, show_snap_completed,
                                     data);
       } else {
-        if (!sdi_snap_get_hiden(snap) && !sdi_snap_get_manually_hiden(snap)) {
+        if (!sdi_snap_get_hidden(snap) && !sdi_snap_get_manually_hidden(snap)) {
           // if there's already a dialog for this snap, just refresh the
           // progress bar
           g_autoptr(SdiRefreshDialog) dialog = sdi_snap_get_dialog(snap);

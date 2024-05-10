@@ -32,13 +32,13 @@ SdiRefreshDialog *sdi_snap_get_dialog(SdiSnap *self);
 
 void sdi_snap_set_dialog(SdiSnap *self, SdiRefreshDialog *dialog);
 
-gboolean sdi_snap_get_hiden(SdiSnap *snap);
+gboolean sdi_snap_get_hidden(SdiSnap *snap);
 
-void sdi_snap_set_hiden(SdiSnap *snap, gboolean hiden);
+void sdi_snap_set_hidden(SdiSnap *snap, gboolean hidden);
 
-gboolean sdi_snap_get_manually_hiden(SdiSnap *self);
+gboolean sdi_snap_get_manually_hidden(SdiSnap *self);
 
-void sdi_snap_set_manually_hiden(SdiSnap *self, gboolean hiden);
+void sdi_snap_set_manually_hidden(SdiSnap *self, gboolean hidden);
 
 gboolean sdi_snap_get_inhibited(SdiSnap *snap);
 
