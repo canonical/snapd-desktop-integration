@@ -270,5 +270,5 @@ void sdi_notify_class_init(SdiNotifyClass *klass) {
 SdiNotify *sdi_notify_new(GApplication *application) {
   g_return_val_if_fail(application != NULL, NULL);
 
-  return g_object_new(sdi_notify_get_type(), "application", application, NULL);
+  return g_object_new(SDI_TYPE_NOTIFY, "application", application, NULL);
 }

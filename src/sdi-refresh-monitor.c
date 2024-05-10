@@ -171,7 +171,7 @@ static void begin_application_refresh(GObject *source, GAsyncResult *res,
     // this twice. It would be rare, because the timer is 1/3 of a second,
     // but... just in case.
     if (dialog == NULL) {
-      dialog = g_object_ref_sink(
+      dialog = g_object_ref(
           sdi_refresh_dialog_new(data->snap_name, data->snap_name));
       add_dialog_to_main_window(self, dialog);
       sdi_snap_set_dialog(sdi_snap, dialog);
@@ -194,7 +194,7 @@ static void begin_application_refresh(GObject *source, GAsyncResult *res,
     }
     if (visible_name == NULL)
       visible_name = snap_name;
-    dialog = g_object_ref_sink(sdi_refresh_dialog_new(snap_name, visible_name));
+    dialog = g_object_ref(sdi_refresh_dialog_new(snap_name, visible_name));
     if (icon != NULL)
       sdi_refresh_dialog_set_icon_image(dialog, icon);
     add_dialog_to_main_window(self, dialog);
@@ -523,7 +523,7 @@ SdiRefreshMonitor *sdi_refresh_monitor_new(GApplication *application) {
 
   g_autoptr(SdiNotify) notify = sdi_notify_new(application);
   SdiRefreshMonitor *self =
-      g_object_new(sdi_refresh_monitor_get_type(), "notify", notify, NULL);
+      g_object_new(SDI_TYPE_REFRESH_MONITOR, "notify", notify, NULL);
   self->application = g_object_ref(application);
   return self;
 }

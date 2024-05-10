@@ -112,7 +112,8 @@ static void sdi_refresh_dialog_class_init(SdiRefreshDialogClass *klass) {
 
 SdiRefreshDialog *sdi_refresh_dialog_new(const gchar *app_name,
                                          const gchar *visible_name) {
-  SdiRefreshDialog *self = g_object_new(sdi_refresh_dialog_get_type(), NULL);
+  SdiRefreshDialog *self =
+      g_object_ref_sink(g_object_new(SDI_TYPE_REFRESH_DIALOG, NULL));
   g_autofree gchar *label_text = NULL;
 
   self->app_name = g_strdup(app_name);

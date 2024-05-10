@@ -39,7 +39,7 @@ SdiRefreshDialog *sdi_snap_get_dialog(SdiSnap *self) {
   if (self->dialog == NULL)
     return NULL;
   else
-    return g_object_ref_sink(self->dialog);
+    return g_object_ref(self->dialog);
 }
 
 static void dialog_destroyed(GtkWindow *window, SdiSnap *self) {
@@ -53,12 +53,10 @@ void sdi_snap_set_dialog(SdiSnap *self, SdiRefreshDialog *dialog) {
   if (self->dialog != NULL) {
     g_signal_handler_disconnect(self->dialog, self->destroy_id);
     self->destroy_id = 0;
-    g_object_unref(G_OBJECT(self->dialog));
+    g_clear_object(&self->dialog);
   }
-  if (dialog == NULL)
-    self->dialog = NULL;
-  else {
-    self->dialog = g_object_ref_sink(dialog);
+  if (dialog != NULL) {
+    self->dialog = g_object_ref(dialog);
     self->destroy_id = g_signal_connect(G_OBJECT(self->dialog), "destroy",
                                         (GCallback)dialog_destroyed, self);
   }
@@ -96,7 +94,6 @@ void sdi_snap_set_inhibited(SdiSnap *self, gboolean inhibited) {
 
 gboolean sdi_snap_get_ignored(SdiSnap *self) {
   g_return_val_if_fail(SDI_IS_SNAP(self), FALSE);
-
   return self->ignored;
 }
 
@@ -107,7 +104,6 @@ const gchar *sdi_snap_get_name(SdiSnap *self) {
 
 void sdi_snap_set_ignored(SdiSnap *self, gboolean ignore) {
   g_return_if_fail(SDI_IS_SNAP(self));
-
   self->ignored = ignore;
 }
 
@@ -124,7 +120,7 @@ static void sdi_snap_set_property(GObject *object, guint prop_id,
   case PROP_DIALOG:
     g_clear_object(&self->dialog);
     p = g_value_get_object(value);
-    self->dialog = p == NULL ? NULL : g_object_ref_sink(p);
+    self->dialog = p == NULL ? NULL : g_object_ref(p);
     break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -156,7 +152,7 @@ static void sdi_snap_dispose(GObject *object) {
   if (self->dialog != NULL) {
     g_signal_handler_disconnect(self->dialog, self->destroy_id);
     self->destroy_id = 0;
-    g_object_unref(G_OBJECT(self->dialog));
+    g_clear_object(&self->dialog);
     self->dialog = NULL;
   }
 
@@ -182,5 +178,5 @@ void sdi_snap_class_init(SdiSnapClass *klass) {
 }
 
 SdiSnap *sdi_snap_new(const gchar *name) {
-  return g_object_new(sdi_snap_get_type(), "name", name, NULL);
+  return g_object_new(SDI_TYPE_SNAP, "name", name, NULL);
 }
