@@ -150,13 +150,17 @@ void sdi_notify_refresh_complete(SdiNotify *self, SnapdSnap *snap,
   g_return_if_fail((snap != NULL) || (snap_name != NULL));
 
   GIcon *icon = NULL;
+  g_autoptr(GAppInfo) app_info = NULL;
   const gchar *name = NULL;
+
   if (snap != NULL) {
-    g_autoptr(GAppInfo) app_info = sdi_get_desktop_file_from_snap(snap);
+    app_info = sdi_get_desktop_file_from_snap(snap);
     if (app_info != NULL) {
       name = g_app_info_get_display_name(app_info);
       icon = g_app_info_get_icon(app_info);
     }
+    if (name == NULL)
+      name = snapd_snap_get_name(snap);
   }
   if (name == NULL)
     name = snap_name;

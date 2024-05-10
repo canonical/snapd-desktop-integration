@@ -49,15 +49,13 @@ struct _SdiRefreshMonitor {
 
 G_DEFINE_TYPE(SdiRefreshMonitor, sdi_refresh_monitor, G_TYPE_OBJECT)
 
-struct _SnapRefreshData {
+typedef struct {
   gchar *change_id;
   gchar *snap_name;
   SdiRefreshMonitor *self;
-};
+} SnapRefreshData;
 
-typedef struct _SnapRefreshData SnapRefreshData;
-
-void clean_change_refresh_data(SnapRefreshData *data) {
+static void clean_change_refresh_data(SnapRefreshData *data) {
   g_free(data->change_id);
   g_free(data->snap_name);
   g_clear_object(&data->self);
@@ -73,7 +71,6 @@ static SdiSnap *find_snap(SdiRefreshMonitor *self, const gchar *snap_name) {
 }
 
 static SdiSnap *add_snap(SdiRefreshMonitor *self, const gchar *snap_name) {
-
   g_autoptr(SdiSnap) snap = find_snap(self, snap_name);
   if (snap == NULL) {
     snap = sdi_snap_new(snap_name);
@@ -389,7 +386,7 @@ static void notice_cb(GObject *object, SnapdNotice *notice, gboolean first_run,
     }
     break;
   case SNAPD_NOTICE_TYPE_SNAP_RUN_INHIBIT:
-    // TODO
+    // TODO. At this moment, no notice of this kind is emmited.
     break;
   default:
     break;
