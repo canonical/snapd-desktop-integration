@@ -141,7 +141,8 @@ static void do_startup(GObject *object, gpointer data) {
   client = snapd_client_new();
   refresh_monitor = sdi_refresh_monitor_new(G_APPLICATION(object));
   if (!sdi_refresh_monitor_start(refresh_monitor, &error)) {
-    g_message("Failed to export the DBus Desktop Integration API %s", error->message);
+    g_message("Failed to export the DBus Desktop Integration API %s",
+              error->message);
   }
 }
 
