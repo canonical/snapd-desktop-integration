@@ -15,6 +15,10 @@
  *
  */
 
+#define SECONDS_IN_A_DAY 86400
+#define SECONDS_IN_AN_HOUR 3600
+#define SECONDS_IN_A_MINUTE 60
+
 #include <gio/gdesktopappinfo.h>
 #include <glib/gi18n.h>
 
@@ -66,21 +70,19 @@ static void show_pending_update_notification(SdiNotify *self,
 
 static void show_simple_notification(SdiNotify *self, const gchar *title,
                                      const gchar *body, GIcon *icon,
-                                     const gchar *ID) {
+                                     const gchar *id) {
   g_autoptr(GNotification) notification = g_notification_new(title);
   g_notification_set_body(notification, body);
   if (icon != NULL) {
     g_notification_set_icon(notification, g_object_ref(icon));
   }
-  g_application_send_notification(self->application, ID, notification);
+  g_application_send_notification(self->application, id, notification);
 }
 
 void sdi_notify_pending_refresh_one(SdiNotify *self, SnapdSnap *snap) {
   g_return_if_fail(SDI_IS_NOTIFY(self));
   g_return_if_fail(snap != NULL);
 
-  GIcon *icon = NULL;
-  g_autofree gchar *body = NULL;
   g_autoptr(GAppInfo) app_info = sdi_get_desktop_file_from_snap(snap);
 
   const gchar *name = snapd_snap_get_name(snap);
@@ -93,19 +95,21 @@ void sdi_notify_pending_refresh_one(SdiNotify *self, SnapdSnap *snap) {
 
   GTimeSpan difference = get_remaining_time(snap) / 1000000;
 
-  if (difference > 86400) {
+  g_autofree gchar *body = NULL;
+  if (difference > SECONDS_IN_A_DAY) {
     body = g_strdup_printf(_("Close the app to start updating (%ld days left)"),
-                           difference / 86400);
-  } else if (difference > 3600) {
+                           difference / SECONDS_IN_A_DAY);
+  } else if (difference > SECONDS_IN_AN_HOUR) {
     body =
         g_strdup_printf(_("Close the app to start updating (%ld hours left)"),
-                        difference / 3600);
+                        difference / SECONDS_IN_AN_HOUR);
   } else {
     body =
         g_strdup_printf(_("Close the app to start updating (%ld minutes left)"),
-                        difference / 60);
+                        difference / SECONDS_IN_A_MINUTE);
   }
 
+  GIcon *icon = NULL;
   if (app_info != NULL) {
     icon = g_app_info_get_icon(app_info);
   }
@@ -186,13 +190,7 @@ static void sdi_notify_action_ignore(GActionGroup *action_group,
     g_signal_emit_by_name(self, "ignore-snap-event", apps[i]);
 }
 
-static void sdi_notify_action_close(GActionGroup *action_group,
-                                    GVariant *action_name, SdiNotify *self) {
-  g_print("Action2 close\n");
-}
-
 static void set_actions(SdiNotify *self) {
-
   g_autoptr(GVariantType) type_ignore = g_variant_type_new("as");
   g_autoptr(GSimpleAction) action_ignore =
       g_simple_action_new("ignore-updates", type_ignore);
@@ -205,8 +203,6 @@ static void set_actions(SdiNotify *self) {
                           G_ACTION(action_close));
   g_signal_connect(G_OBJECT(action_ignore), "activate",
                    (GCallback)sdi_notify_action_ignore, self);
-  g_signal_connect(G_OBJECT(action_close), "activate",
-                   (GCallback)sdi_notify_action_close, self);
 }
 
 static void sdi_notify_set_property(GObject *object, guint prop_id,

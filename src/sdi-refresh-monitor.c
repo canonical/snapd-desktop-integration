@@ -40,8 +40,8 @@ struct _SdiRefreshMonitor {
   GHashTable *changes;
   SnapdNoticesMonitor *snapd_monitor;
   SnapdClient *client;
-  guint signal_notice_ID;
-  guint signal_error_ID;
+  guint signal_notice_id;
+  guint signal_error_id;
   GtkWindow *main_window;
   GApplication *application;
   GtkBox *refresh_bar_container;
@@ -227,9 +227,7 @@ static void refresh_change(gpointer p) {
 static void manage_change_update(SnapdClient *source, GAsyncResult *res,
                                  gpointer p) {
   g_autoptr(SdiRefreshMonitor) self = p;
-
   g_autoptr(GError) error = NULL;
-
   g_autoptr(SnapdChange) change =
       snapd_client_get_change_finish(source, res, &error);
 
@@ -272,7 +270,7 @@ static void manage_change_update(SnapdClient *source, GAsyncResult *res,
             GPtrArray *tasks = snapd_change_get_tasks(change);
             gint done = 0;
             g_autoptr(SnapdTask) current_task = NULL;
-            for (int i = 0; i < tasks->len; i++) {
+            for (guint i = 0; i < tasks->len; i++) {
               SnapdTask *task = (SnapdTask *)tasks->pdata[i];
               const gchar *status = snapd_task_get_status(task);
               if (g_str_equal("Done", status)) {
@@ -330,7 +328,7 @@ static void manage_refresh_inhibit(SnapdClient *source, GAsyncResult *res,
     return;
   // remove snaps that are marked as "ignore"
   g_autoptr(GSList) snaps_not_ignored = NULL;
-  for (int i = 0; i < snaps->len; i++) {
+  for (guint i = 0; i < snaps->len; i++) {
     const gchar *name = snapd_snap_get_name(snaps->pdata[i]);
     if (name == NULL)
       continue;
@@ -403,8 +401,8 @@ static void sdi_refresh_monitor_dispose(GObject *object) {
 
   if (self->snapd_monitor) {
     snapd_notices_monitor_stop(self->snapd_monitor, NULL);
-    g_signal_handler_disconnect(self->snapd_monitor, self->signal_notice_ID);
-    g_signal_handler_disconnect(self->snapd_monitor, self->signal_error_ID);
+    g_signal_handler_disconnect(self->snapd_monitor, self->signal_notice_id);
+    g_signal_handler_disconnect(self->snapd_monitor, self->signal_error_id);
   }
   g_clear_pointer(&self->snaps, g_hash_table_unref);
   g_clear_object(&self->client);
@@ -428,9 +426,9 @@ static void configure_snapd_monitor(SdiRefreshMonitor *self) {
   if (check_is_running_in_snap())
     snapd_client_set_socket_path(client, "/run/snapd-snap.socket");
   self->snapd_monitor = snapd_notices_monitor_new_with_client(client);
-  self->signal_notice_ID = g_signal_connect(self->snapd_monitor, "notice-event",
+  self->signal_notice_id = g_signal_connect(self->snapd_monitor, "notice-event",
                                             (GCallback)notice_cb, self);
-  self->signal_error_ID = g_signal_connect(self->snapd_monitor, "error-event",
+  self->signal_error_id = g_signal_connect(self->snapd_monitor, "error-event",
                                            (GCallback)error_cb, self);
 }
 
@@ -443,8 +441,8 @@ static void launch_snapd_monitor_after_error(gpointer data) {
 static void error_cb(GObject *object, GError *error, gpointer data) {
   SdiRefreshMonitor *self = SDI_REFRESH_MONITOR(data);
   g_print("Error %d; %s\n", error->code, error->message);
-  g_signal_handler_disconnect(self->snapd_monitor, self->signal_notice_ID);
-  g_signal_handler_disconnect(self->snapd_monitor, self->signal_error_ID);
+  g_signal_handler_disconnect(self->snapd_monitor, self->signal_notice_id);
+  g_signal_handler_disconnect(self->snapd_monitor, self->signal_error_id);
   g_clear_object(&self->snapd_monitor);
   // wait one second to ensure that, in case that the error is because snapd is
   // being replaced, the new instance has created the new socket, and thus avoid

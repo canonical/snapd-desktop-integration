@@ -23,32 +23,32 @@ GAppInfo *sdi_get_desktop_file_from_snap(SnapdSnap *snap) {
     return NULL;
   }
 
-  if (apps->len > 1) {
-    const gchar *name = snapd_snap_get_name(snap);
-    // get the entry that has the same app name than the snap
-    for (int i = 0; i < apps->len; i++) {
-      SnapdApp *app = apps->pdata[i];
-      if (g_str_equal(name, snapd_app_get_name(app))) {
-        const gchar *desktop_file = snapd_app_get_desktop_file(app);
-        return G_APP_INFO(g_desktop_app_info_new_from_filename(desktop_file));
-      }
-    }
-    // if it doesn't exist, get the first entry with an icon
-    for (int i = 0; i < apps->len; i++) {
-      SnapdApp *app = apps->pdata[i];
-      const gchar *desktop_file = snapd_app_get_desktop_file(app);
-      g_autoptr(GAppInfo) app_info =
-          G_APP_INFO(g_desktop_app_info_new_from_filename(desktop_file));
-      if (app_info != NULL) {
-        GIcon *icon = g_app_info_get_icon(app_info);
-        if (icon != NULL) {
-          return g_steal_pointer(&app_info);
-        }
-      }
-    }
-  } else {
+  if (apps->len == 1) {
     const gchar *desktop_file = snapd_app_get_desktop_file(apps->pdata[0]);
     return G_APP_INFO(g_desktop_app_info_new_from_filename(desktop_file));
+  }
+
+  const gchar *name = snapd_snap_get_name(snap);
+  // get the entry that has the same app name than the snap
+  for (guint i = 0; i < apps->len; i++) {
+    SnapdApp *app = apps->pdata[i];
+    if (g_str_equal(name, snapd_app_get_name(app))) {
+      const gchar *desktop_file = snapd_app_get_desktop_file(app);
+      return G_APP_INFO(g_desktop_app_info_new_from_filename(desktop_file));
+    }
+  }
+  // if it doesn't exist, get the first entry with an icon
+  for (guint i = 0; i < apps->len; i++) {
+    SnapdApp *app = apps->pdata[i];
+    const gchar *desktop_file = snapd_app_get_desktop_file(app);
+    g_autoptr(GAppInfo) app_info =
+        G_APP_INFO(g_desktop_app_info_new_from_filename(desktop_file));
+    if (app_info != NULL) {
+      GIcon *icon = g_app_info_get_icon(app_info);
+      if (icon != NULL) {
+        return g_steal_pointer(&app_info);
+      }
+    }
   }
   return NULL;
 }
