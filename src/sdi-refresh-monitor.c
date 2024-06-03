@@ -356,13 +356,17 @@ static void notice_cb(GObject *object, SnapdNotice *notice, gboolean first_run,
                       gpointer monitor) {
   SdiRefreshMonitor *self = SDI_REFRESH_MONITOR(monitor);
 
-  gboolean sent_refresh_inhibit = FALSE;
-
   g_autoptr(GHashTable) data = snapd_notice_get_last_data(notice);
   g_autofree gchar *kind = g_strdup(g_hash_table_lookup(data, "kind"));
 
   switch (snapd_notice_get_notice_type(notice)) {
   case SNAPD_NOTICE_TYPE_CHANGE_UPDATE:
+    /**
+     * During first run, we must ignore these events to avoid showing old
+     * notices that do not apply anymore.
+     */
+    if (first_run)
+      return;
     if (!g_str_equal(kind, "auto-refresh"))
       return;
     snapd_client_get_change_async(
@@ -371,17 +375,14 @@ static void notice_cb(GObject *object, SnapdNotice *notice, gboolean first_run,
     break;
   case SNAPD_NOTICE_TYPE_REFRESH_INHIBIT:
     /**
-     * in each refresh-inhibit notice, all refresh-inhibited snaps will be
-     * processed, so we should only do it once during startup, to avoid showing
-     * several notices. Instead, only one with all the pending snaps must be
-     * shown to the user.
+     * During first run, we must ignore these events to avoid showing old
+     * notices that do not apply anymore.
      */
-    if (!first_run || !sent_refresh_inhibit) {
-      sent_refresh_inhibit = TRUE;
-      snapd_client_get_snaps_async(
-          self->client, SNAPD_GET_SNAPS_FLAGS_REFRESH_INHIBITED, NULL, NULL,
-          (GAsyncReadyCallback)manage_refresh_inhibit, g_object_ref(self));
-    }
+    if (first_run)
+      return;
+    snapd_client_get_snaps_async(
+        self->client, SNAPD_GET_SNAPS_FLAGS_REFRESH_INHIBITED, NULL, NULL,
+        (GAsyncReadyCallback)manage_refresh_inhibit, g_object_ref(self));
     break;
   case SNAPD_NOTICE_TYPE_SNAP_RUN_INHIBIT:
     // TODO. At this moment, no notice of this kind is emmited.
