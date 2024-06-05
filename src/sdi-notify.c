@@ -81,6 +81,7 @@ static gchar *get_icon_name_from_gicon(GIcon *icon) {
 
   if (G_IS_FILE_ICON(icon)) {
     GFileIcon *file_icon = G_FILE_ICON(icon);
+    // the value returned by g_file_icon_get_file() is owned by the instance
     return g_file_get_path(g_file_icon_get_file(file_icon));
   }
   return NULL;
@@ -116,10 +117,9 @@ static void show_pending_update_notification(SdiNotify *self,
   // Don't use g_autoptr because it must survive for the actions
   NotifyNotification *notification =
       notify_notification_new(title, body, icon_name);
-  // don't use g_autoptr with the GVariant because it is consumed in set_hint
-  GVariant *hint_icon = NULL;
   if (icon_name != NULL) {
-    hint_icon = g_variant_new_string(icon_name);
+    // don't use g_autoptr with the GVariant because it is consumed in set_hint
+    GVariant *hint_icon = g_variant_new_string(icon_name);
     notify_notification_set_hint(notification, "image-path", hint_icon);
   }
   notify_notification_add_action(notification, "app.close-notification",
@@ -143,10 +143,10 @@ static void show_simple_notification(SdiNotify *self, const gchar *title,
   // Don't use g_autoptr because it must survive for the actions
   NotifyNotification *notification =
       notify_notification_new(title, body, icon_name);
-  // don't use g_autoptr with the GVariant because it is consumed in set_hint
-  GVariant *hint_icon = NULL;
+
   if (icon_name != NULL) {
-    hint_icon = g_variant_new_string(icon_name);
+    // don't use g_autoptr with the GVariant because it is consumed in set_hint
+    GVariant *hint_icon = g_variant_new_string(icon_name);
     notify_notification_set_hint(notification, "image-path", hint_icon);
   }
   notify_notification_add_action(notification, "default", _("Close"),
