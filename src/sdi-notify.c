@@ -178,8 +178,9 @@ static void show_pending_update_notification(SdiNotify *self,
                                   notification);
 }
 
-void show_simple_notification(SdiNotify *self, const gchar *title,
-                              const gchar *body, GIcon *icon, const gchar *id) {
+static void show_simple_notification(SdiNotify *self, const gchar *title,
+                                     const gchar *body, GIcon *icon,
+                                     const gchar *id) {
   g_autoptr(GNotification) notification = g_notification_new(title);
   g_notification_set_body(notification, body);
   if (icon != NULL) {
