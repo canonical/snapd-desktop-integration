@@ -17,12 +17,24 @@
 
 #pragma once
 
+#include "sdi-snap.h"
 #include <gio/gio.h>
+
+G_BEGIN_DECLS
+
+#define SDI_TYPE_REFRESH_MONITOR sdi_refresh_monitor_get_type()
 
 G_DECLARE_FINAL_TYPE(SdiRefreshMonitor, sdi_refresh_monitor, SDI,
                      REFRESH_MONITOR, GObject)
 
-SdiRefreshMonitor *sdi_refresh_monitor_new();
+SdiRefreshMonitor *sdi_refresh_monitor_new(GApplication *application);
 
-gboolean sdi_refresh_monitor_start(SdiRefreshMonitor *monitor,
-                                   GDBusConnection *connection, GError **error);
+gboolean sdi_refresh_monitor_start(SdiRefreshMonitor *monitor, GError **error);
+
+SdiSnap *
+sdi_refresh_monitor_begin_application_refresh(SdiRefreshMonitor *monitor,
+                                              const gchar *snap_name);
+
+GApplication *sdi_refresh_monitor_get_application(SdiRefreshMonitor *monitor);
+
+G_END_DECLS

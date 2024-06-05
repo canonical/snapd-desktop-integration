@@ -1,51 +1,56 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <interface>
   <requires lib="gtk" version="4.6"/>
-  <template class="SdiRefreshDialog" parent="GtkWindow">
-    <property name="default-height">150</property>
-    <property name="default-width">560</property>
+  <template class="SdiRefreshDialog" parent="GtkBox">
+    <property name="height-request">100</property>
+    <property name="width-request">560</property>
+    <property name="margin-bottom">20</property>
+    <property name="margin-end">20</property>
+    <property name="margin-start">20</property>
+    <property name="margin-top">0</property>
+    <property name="orientation">vertical</property>
+    <property name="spacing">10</property>
+    <child>
+      <object class="GtkSeparator">
+        <property name="orientation">horizontal</property>
+        <property name="margin-bottom">20</property>
+        <property name="margin-end">0</property>
+        <property name="margin-start">0</property>
+        <property name="margin-top">0</property>
+      </object>
+    </child>
     <child>
       <object class="GtkBox">
-        <property name="margin-bottom">20</property>
-        <property name="margin-end">20</property>
-        <property name="margin-start">20</property>
-        <property name="margin-top">20</property>
-        <property name="orientation">vertical</property>
-        <property name="spacing">10</property>
+        <property name="spacing">20</property>
+        <property name="vexpand">True</property>
+        <property name="valign">fill</property>
         <child>
-          <object class="GtkBox">
-            <property name="spacing">20</property>
-            <property name="vexpand">True</property>
-            <property name="valign">fill</property>
-            <child>
-              <object class="GtkImage" id="icon_image">
-                <property name="visible">FALSE</property>
-                <property name="pixel-size">48</property>
-              </object>
-            </child>
-            <child>
-              <object class="GtkLabel" id="message_label">
-                <property name="halign">start</property>
-              </object>
-            </child>
+          <object class="GtkImage" id="icon_image">
+            <property name="visible">FALSE</property>
+            <property name="pixel-size">48</property>
           </object>
         </child>
         <child>
-          <object class="GtkBox">
-            <property name="spacing">10</property>
-            <child>
-              <object class="GtkProgressBar" id="progress_bar">
-                <property name="hexpand">True</property>
-                <property name="valign">center</property>
-              </object>
-            </child>
-            <child>
-              <object class="GtkButton">
-                <property name="label" translatable="yes">Hide</property>
-                <signal name="clicked" handler="hide_cb" object="SdiRefreshDialog" swapped="yes"/>
-                <property name="valign">center</property>
-              </object>
-            </child>
+          <object class="GtkLabel" id="message_label">
+            <property name="halign">start</property>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="GtkBox">
+        <property name="spacing">10</property>
+        <child>
+          <object class="GtkProgressBar" id="progress_bar">
+            <property name="hexpand">True</property>
+            <property name="valign">center</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton">
+            <property name="label" translatable="yes">Hide</property>
+            <signal name="clicked" handler="hide_cb" object="SdiRefreshDialog" swapped="yes"/>
+            <property name="valign">center</property>
           </object>
         </child>
       </object>

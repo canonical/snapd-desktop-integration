@@ -134,14 +134,15 @@ static gboolean check_graphical_sessions(gpointer data) {
   }
   return G_SOURCE_REMOVE;
 }
+
 static void do_startup(GObject *object, gpointer data) {
+  GError *error = NULL;
   notify_init("snapd-desktop-integration");
   client = snapd_client_new();
-  refresh_monitor = sdi_refresh_monitor_new();
-  if (!sdi_refresh_monitor_start(
-          refresh_monitor,
-          g_application_get_dbus_connection(G_APPLICATION(app)), NULL)) {
-    g_message("Failed to export the DBus Desktop Integration API");
+  refresh_monitor = sdi_refresh_monitor_new(G_APPLICATION(object));
+  if (!sdi_refresh_monitor_start(refresh_monitor, &error)) {
+    g_message("Failed to export the DBus Desktop Integration API %s",
+              error->message);
   }
 }
 

@@ -25,6 +25,7 @@ apps:
     extensions: [gnome]
     command: usr/bin/snapd-desktop-integration
     daemon: simple
+    desktop: usr/share/applications/io.snapcraft.SnapDesktopIntegration.desktop
     passthrough: #///! TODO: Remove once daemon-scope lands in snapcraft
       daemon-scope: user
     restart-condition: on-success
@@ -33,6 +34,7 @@ apps:
       - snap-themes-control
       - login-session-observe
       - snap
+      - snap-refresh-observe
 
 slots:
   snapd-desktop-integration:
@@ -50,8 +52,11 @@ parts:
       - -Ddocs=false
       - -Dintrospection=false
       - -Dvala-bindings=false
+      - -Dqt5=false
       - -Dqt6=false
       - -Dqml-bindings=false
+      - -Dtests=false
+      - -Dexamples=false
     build-packages:
       - libpolkit-gobject-1-dev
     prime:
@@ -67,5 +72,9 @@ parts:
       - jq
     override-build: |
       craftctl default
-      craftctl set version="$(meson introspect . --projectinfo |
-          jq -r .version)"
+      craftctl set version="$(meson introspect . --projectinfo | jq -r .version)"
+    override-prime: |
+      craftctl default
+      sed -i "s#Icon=#Icon=usr/share/icons/hicolor/scalable/apps/#g" usr/share/applications/io.snapcraft.SnapDesktopIntegration.desktop
+      mkdir -p $CRAFT_PRIME/meta/gui
+      cp usr/share/icons/hicolor/scalable/apps/snapd-desktop-integration.svg $CRAFT_PRIME/meta/gui/

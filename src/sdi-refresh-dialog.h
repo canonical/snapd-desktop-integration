@@ -19,11 +19,15 @@
 
 #include <gtk/gtk.h>
 
+G_BEGIN_DECLS
+
+#define SDI_TYPE_REFRESH_DIALOG sdi_refresh_dialog_get_type()
+
 G_DECLARE_FINAL_TYPE(SdiRefreshDialog, sdi_refresh_dialog, SDI, REFRESH_DIALOG,
-                     GtkWindow)
+                     GtkBox)
 
 SdiRefreshDialog *sdi_refresh_dialog_new(const gchar *app_name,
-                                         const gchar *lock_file_path);
+                                         const gchar *visible_name);
 
 const gchar *sdi_refresh_dialog_get_app_name(SdiRefreshDialog *dialog);
 
@@ -34,12 +38,19 @@ void sdi_refresh_dialog_set_percentage_progress(SdiRefreshDialog *dialog,
                                                 const gchar *bar_text,
                                                 gdouble percentage);
 
+void sdi_refresh_dialog_set_n_tasks_progress(SdiRefreshDialog *dialog,
+                                             const gchar *bar_text,
+                                             gint done_tasks, gint total_tasks);
+
 void sdi_refresh_dialog_set_message(SdiRefreshDialog *dialog,
                                     const gchar *message);
 
 void sdi_refresh_dialog_set_title(SdiRefreshDialog *dialog, const gchar *title);
 
-void sdi_refresh_dialog_set_icon(SdiRefreshDialog *dialog, const gchar *icon);
+void sdi_refresh_dialog_set_icon(SdiRefreshDialog *dialog, GIcon *icon);
+
+void sdi_refresh_dialog_set_icon_from_data(SdiRefreshDialog *self,
+                                           GBytes *data);
 
 void sdi_refresh_dialog_set_icon_image(SdiRefreshDialog *dialog,
                                        const gchar *icon_image);
@@ -48,3 +59,5 @@ void sdi_refresh_dialog_set_wait_change_in_lock_file(SdiRefreshDialog *dialog);
 
 void sdi_refresh_dialog_set_desktop_file(SdiRefreshDialog *dialog,
                                          const gchar *desktop_file);
+
+G_END_DECLS

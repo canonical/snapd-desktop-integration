@@ -306,7 +306,7 @@ void sdi_theme_monitor_class_init(SdiThemeMonitorClass *klass) {
 }
 
 SdiThemeMonitor *sdi_theme_monitor_new(SnapdClient *client) {
-  SdiThemeMonitor *self = g_object_new(sdi_theme_monitor_get_type(), NULL);
+  SdiThemeMonitor *self = g_object_new(SDI_TYPE_THEME_MONITOR, NULL);
   self->client = g_object_ref(client);
   return self;
 }

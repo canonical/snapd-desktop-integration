@@ -1,0 +1,8 @@
+[Desktop Entry]
+Icon=snapd-desktop-integration.svg
+Name=Snapd Desktop Integration
+Exec=/bin/false
+Type=Application
+DBusActivatable=true
+X-GNOME-UsesNotifications=true
+NoDisplay=true
