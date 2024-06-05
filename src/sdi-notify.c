@@ -118,9 +118,10 @@ static void show_pending_update_notification(SdiNotify *self,
       notify_notification_new(title, body, icon_name);
   // don't use g_autoptr with the GVariant because it is consumed in set_hint
   GVariant *hint_icon = NULL;
-  if (icon_name != NULL)
+  if (icon_name != NULL) {
     hint_icon = g_variant_new_string(icon_name);
-  notify_notification_set_hint(notification, "image-path", hint_icon);
+    notify_notification_set_hint(notification, "image-path", hint_icon);
+  }
   notify_notification_add_action(notification, "app.close-notification",
                                  _("Close"), app_close_notification, NULL,
                                  NULL);
@@ -144,9 +145,10 @@ static void show_simple_notification(SdiNotify *self, const gchar *title,
       notify_notification_new(title, body, icon_name);
   // don't use g_autoptr with the GVariant because it is consumed in set_hint
   GVariant *hint_icon = NULL;
-  if (icon_name != NULL)
+  if (icon_name != NULL) {
     hint_icon = g_variant_new_string(icon_name);
-  notify_notification_set_hint(notification, "image-path", hint_icon);
+    notify_notification_set_hint(notification, "image-path", hint_icon);
+  }
   notify_notification_add_action(notification, "default", _("Close"),
                                  app_close_notification, NULL, NULL);
   notify_notification_show(notification, NULL);
