@@ -25,6 +25,8 @@ GAppInfo *sdi_get_desktop_file_from_snap(SnapdSnap *snap) {
 
   if (apps->len == 1) {
     const gchar *desktop_file = snapd_app_get_desktop_file(apps->pdata[0]);
+    if (desktop_file == NULL)
+      return NULL;
     return G_APP_INFO(g_desktop_app_info_new_from_filename(desktop_file));
   }
 
@@ -34,6 +36,8 @@ GAppInfo *sdi_get_desktop_file_from_snap(SnapdSnap *snap) {
     SnapdApp *app = apps->pdata[i];
     if (g_str_equal(name, snapd_app_get_name(app))) {
       const gchar *desktop_file = snapd_app_get_desktop_file(app);
+      if (desktop_file == NULL)
+        return NULL;
       return G_APP_INFO(g_desktop_app_info_new_from_filename(desktop_file));
     }
   }
@@ -41,6 +45,8 @@ GAppInfo *sdi_get_desktop_file_from_snap(SnapdSnap *snap) {
   for (guint i = 0; i < apps->len; i++) {
     SnapdApp *app = apps->pdata[i];
     const gchar *desktop_file = snapd_app_get_desktop_file(app);
+    if (desktop_file == NULL)
+      continue;
     g_autoptr(GAppInfo) app_info =
         G_APP_INFO(g_desktop_app_info_new_from_filename(desktop_file));
     if (app_info != NULL) {
