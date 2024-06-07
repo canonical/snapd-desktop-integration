@@ -241,6 +241,7 @@ static void manage_change_update(SnapdClient *source, GAsyncResult *res,
   if (change == NULL)
     return;
 
+  gboolean hold = g_str_equal(snapd_change_get_status(change), "Hold");
   gboolean done = g_str_equal(snapd_change_get_status(change), "Done");
 
   SnapdAutorefreshChangeData *changeData =
@@ -254,13 +255,14 @@ static void manage_change_update(SnapdClient *source, GAsyncResult *res,
         continue;
       if (!sdi_snap_get_inhibited(snap))
         continue;
-      if (done) {
+      if (done || hold) {
         remove_snap(self, snap);
         SnapRefreshData *data = g_malloc0(sizeof(SnapRefreshData));
         data->snap_name = g_strdup(*p);
         data->self = g_object_ref(self);
-        snapd_client_get_snap_async(self->client, *p, NULL, show_snap_completed,
-                                    data);
+        if (done)
+          snapd_client_get_snap_async(self->client, *p, NULL,
+                                      show_snap_completed, data);
       } else {
         if (!sdi_snap_get_hidden(snap) && !sdi_snap_get_manually_hidden(snap)) {
           // if there's already a dialog for this snap, just refresh the
@@ -298,7 +300,7 @@ static void manage_change_update(SnapdClient *source, GAsyncResult *res,
         }
       }
     }
-    if (!done) {
+    if (!done && !hold) {
       // refresh periodically this data, until the snap has been refreshed
       SnapRefreshData *data = g_malloc0(sizeof(SnapRefreshData));
       data->change_id = g_strdup(snapd_change_get_id(change));
@@ -374,12 +376,6 @@ static void notice_cb(GObject *object, SnapdNotice *notice, gboolean first_run,
         (GAsyncReadyCallback)manage_change_update, g_object_ref(self));
     break;
   case SNAPD_NOTICE_TYPE_REFRESH_INHIBIT:
-    /**
-     * During first run, we must ignore these events to avoid showing old
-     * notices that do not apply anymore.
-     */
-    if (first_run)
-      return;
     snapd_client_get_snaps_async(
         self->client, SNAPD_GET_SNAPS_FLAGS_REFRESH_INHIBITED, NULL, NULL,
         (GAsyncReadyCallback)manage_refresh_inhibit, g_object_ref(self));
