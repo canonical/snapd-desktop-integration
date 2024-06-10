@@ -61,7 +61,7 @@ static GVariant *get_snap_list(GSList *snaps) {
     SnapdSnap *snap = (SnapdSnap *)snaps->data;
     g_variant_builder_add(builder, "s", snapd_snap_get_name(snap));
   }
-  return g_variant_builder_end(builder);
+  return g_variant_ref_sink(g_variant_builder_end(builder));
 }
 
 #ifndef USE_GNOTIFY
@@ -119,8 +119,7 @@ static void show_pending_update_notification(SdiNotify *self,
       notify_notification_new(title, body, icon_name);
   if (icon_name != NULL) {
     // don't use g_autoptr with the GVariant because it is consumed in set_hint
-    GVariant *hint_icon = g_variant_new_string(icon_name);
-    notify_notification_set_hint(notification, "image-path", hint_icon);
+    notify_notification_set_hint(notification, "image-path", g_variant_new_string(icon_name));
   }
   notify_notification_add_action(notification, "app.close-notification",
                                  _("Close"), app_close_notification, NULL,
@@ -145,9 +144,7 @@ static void show_simple_notification(SdiNotify *self, const gchar *title,
       notify_notification_new(title, body, icon_name);
 
   if (icon_name != NULL) {
-    // don't use g_autoptr with the GVariant because it is consumed in set_hint
-    GVariant *hint_icon = g_variant_new_string(icon_name);
-    notify_notification_set_hint(notification, "image-path", hint_icon);
+    notify_notification_set_hint(notification, "image-path", g_variant_new_string(icon_name));
   }
   notify_notification_add_action(notification, "default", _("Close"),
                                  app_close_notification, NULL, NULL);
@@ -171,9 +168,9 @@ static void show_pending_update_notification(SdiNotify *self,
   g_notification_add_button_with_target(notification, _("Close"),
                                         "app.close-notification", "s",
                                         "pending-update");
-  GVariant *values = get_snap_list(snaps);
+  g_autoptr (GVariant) snap_list = get_snap_list(snaps);
   g_notification_add_button_with_target_value(notification, _("Ignore"),
-                                              "app.ignore-updates", values);
+                                              "app.ignore-updates", snap_list);
   g_application_send_notification(self->application, "pending-update",
                                   notification);
 }
