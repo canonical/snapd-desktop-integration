@@ -65,10 +65,10 @@ static GVariant *get_snap_list(GSList *snaps) {
 }
 
 // Currently, due to the way Snapd creates the .desktop files, the notifications
-// created with GNotify don't show the application icon in the upper-left corner,
-// putting instead the "generic gears" icon. This is the reason why, by default,
-// we use libnotify. This problem is being tackled by the snapd people, so, in
-// the future, GNotify would be the prefered choice.
+// created with GNotify don't show the application icon in the upper-left
+// corner, putting instead the "generic gears" icon. This is the reason why, by
+// default, we use libnotify. This problem is being tackled by the snapd people,
+// so, in the future, GNotify would be the prefered choice.
 #ifndef USE_GNOTIFY
 
 static gchar *get_icon_name_from_gicon(GIcon *icon) {
