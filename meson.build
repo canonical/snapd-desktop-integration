@@ -3,7 +3,7 @@ project('snapd-desktop-integration', 'c', version: '0.9')
 gio_dep = dependency('gio-2.0')
 gio_unix_dep = dependency('gio-unix-2.0')
 gtk_dep = dependency('gtk4', version: '>= 4.0')
-snapd_glib_dep = dependency('snapd-glib-2', required: false, version: '>= 1.60')
+snapd_glib_dep = dependency('snapd-glib-2', required: false, version: '>= 1.65')
 if not snapd_glib_dep.found()
     snapd_glib_dep = dependency('snapd-glib', version: '>= 1.60')
 endif
