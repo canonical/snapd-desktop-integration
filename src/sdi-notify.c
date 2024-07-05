@@ -18,6 +18,8 @@
 #define SECONDS_IN_A_DAY 86400
 #define SECONDS_IN_AN_HOUR 3600
 #define SECONDS_IN_A_MINUTE 60
+#define SNAP_STORE                                                             \
+  "/var/lib/snapd/desktop/applications/snap-store_snap-store.desktop"
 
 #include <gio/gdesktopappinfo.h>
 #include <glib/gi18n.h>
@@ -172,12 +174,18 @@ static void show_pending_update_notification(SdiNotify *self,
   }
   g_notification_set_default_action_and_target(
       notification, "app.close-notification", "s", "pending-update");
-  g_notification_add_button_with_target(notification, _("Close"),
-                                        "app.close-notification", "s",
+  g_notification_add_button_with_target(notification, _("Show updates"),
+                                        "app.show-updates", "s",
                                         "pending-update");
-  g_autoptr(GVariant) snap_list = get_snap_list(snaps);
-  g_notification_add_button_with_target_value(notification, _("Ignore"),
-                                              "app.ignore-updates", snap_list);
+  g_autoptr(GVariantBuilder) builder =
+      g_variant_builder_new(G_VARIANT_TYPE("as"));
+  for (; snaps != NULL; snaps = snaps->next) {
+    SnapdSnap *snap = (SnapdSnap *)snaps->data;
+    g_variant_builder_add(builder, "s", snapd_snap_get_name(snap));
+  }
+  GVariant *values = g_variant_builder_end(builder);
+  g_notification_add_button_with_target_value(
+      notification, _("Don't remind me again"), "app.ignore-updates", values);
   g_application_send_notification(self->application, "pending-update",
                                   notification);
 }
@@ -295,6 +303,22 @@ GApplication *sdi_notify_get_application(SdiNotify *self) {
   return self->application;
 }
 
+static void sdi_notify_action_ignore(GActionGroup *action_group,
+                                     GVariant *app_list, SdiNotify *self) {
+  gsize len;
+  g_autofree gchar **apps = (gchar **)g_variant_get_strv(app_list, &len);
+
+  g_return_if_fail(apps != NULL);
+  for (gsize i = 0; i < len; i++)
+    g_signal_emit_by_name(self, "ignore-snap-event", apps[i]);
+}
+
+static void sdi_notify_action_show_updates(GActionGroup *action_group,
+                                           GVariant *str_data,
+                                           SdiNotify *self) {
+  sdi_launch_desktop(self->application, "snap-store_snap-store.desktop");
+}
+
 static void set_actions(SdiNotify *self) {
   g_autoptr(GVariantType) type_ignore = g_variant_type_new("as");
   g_autoptr(GSimpleAction) action_ignore =
@@ -304,10 +328,17 @@ static void set_actions(SdiNotify *self) {
   g_autoptr(GVariantType) type_close = g_variant_type_new("s");
   g_autoptr(GSimpleAction) action_close =
       g_simple_action_new("close-notification", type_close);
+  g_autoptr(GVariantType) type_updates = g_variant_type_new("s");
   g_action_map_add_action(G_ACTION_MAP(self->application),
                           G_ACTION(action_close));
+  g_autoptr(GSimpleAction) action_show_updates =
+      g_simple_action_new("show-updates", type_updates);
+  g_action_map_add_action(G_ACTION_MAP(self->application),
+                          G_ACTION(action_show_updates));
   g_signal_connect(G_OBJECT(action_ignore), "activate",
                    (GCallback)sdi_notify_action_ignore, self);
+  g_signal_connect(G_OBJECT(action_show_updates), "activate",
+                   (GCallback)sdi_notify_action_show_updates, self);
 }
 
 static void sdi_notify_set_property(GObject *object, guint prop_id,
