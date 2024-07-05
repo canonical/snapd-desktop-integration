@@ -38,16 +38,6 @@ struct _SdiNotify {
 
 G_DEFINE_TYPE(SdiNotify, sdi_notify, G_TYPE_OBJECT)
 
-static void sdi_notify_action_ignore(GActionGroup *action_group,
-                                     GVariant *app_list, SdiNotify *self) {
-  gsize len;
-  g_autofree gchar **apps = (gchar **)g_variant_get_strv(app_list, &len);
-
-  g_return_if_fail(apps != NULL);
-  for (gsize i = 0; i < len; i++)
-    g_signal_emit_by_name(self, "ignore-snap-event", apps[i]);
-}
-
 static GTimeSpan get_remaining_time(SnapdSnap *snap) {
   g_autoptr(GDateTime) proceed_time = snapd_snap_get_proceed_time(snap);
   g_autoptr(GDateTime) now = g_date_time_new_now_local();
