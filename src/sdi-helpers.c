@@ -16,6 +16,7 @@
  */
 
 #include "sdi-helpers.h"
+#include "io.snapcraft.PrivilegedDesktopLauncher.h"
 
 GAppInfo *sdi_get_desktop_file_from_snap(SnapdSnap *snap) {
   GPtrArray *apps = snapd_snap_get_apps(snap);
@@ -78,4 +79,15 @@ GPtrArray *sdi_get_desktop_filenames_for_snap(const gchar *snap_name) {
     g_ptr_array_add(desktop_files, g_strdup(filename));
   }
   return desktop_files;
+}
+
+void sdi_launch_desktop(GApplication *app, const gchar *desktop_file) {
+  g_autoptr(PrivilegedDesktopLauncher) launcher = NULL;
+
+  launcher = privileged_desktop_launcher__proxy_new_sync(
+      g_application_get_dbus_connection(app), G_DBUS_PROXY_FLAGS_NONE,
+      "io.snapcraft.Launcher", "/io/snapcraft/PrivilegedDesktopLauncher", NULL,
+      NULL);
+  privileged_desktop_launcher__call_open_desktop_entry_sync(
+      launcher, desktop_file, NULL, NULL);
 }
