@@ -476,13 +476,8 @@ static void manage_refresh_inhibit(SnapdClient *source, GAsyncResult *res,
     snaps_not_ignored =
         g_slist_prepend(snaps_not_ignored, g_object_ref(snaps->pdata[i]));
   }
-  if (g_slist_length(snaps_not_ignored) > 1) {
+  if (g_slist_length(snaps_not_ignored) >= 1) {
     sdi_notify_pending_refresh_multiple(self->notify, snaps_not_ignored);
-    return;
-  }
-  if (snaps_not_ignored != NULL) {
-    // just one notice
-    sdi_notify_pending_refresh_one(self->notify, snaps_not_ignored->data);
     return;
   }
 }

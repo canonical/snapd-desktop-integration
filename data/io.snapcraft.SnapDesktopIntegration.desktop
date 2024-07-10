@@ -1,6 +1,6 @@
 [Desktop Entry]
 Icon=snapd-desktop-integration.svg
-Name=Snapd Desktop Integration
+Name=Snaps
 Exec=/bin/false
 Type=Application
 DBusActivatable=true
