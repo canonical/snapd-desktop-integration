@@ -18,8 +18,10 @@
 #define SECONDS_IN_A_DAY 86400
 #define SECONDS_IN_AN_HOUR 3600
 #define SECONDS_IN_A_MINUTE 60
-#define SNAP_STORE                                                             \
-  "/var/lib/snapd/desktop/applications/snap-store_snap-store.desktop"
+#define MINIMUM_TIME_TO_FORCE_SHOW (2 * SECONDS_IN_A_DAY)
+
+#define SNAP_STORE "snap-store_snap-store.desktop"
+#define SNAP_STORE_UPDATES "snap-store_show-updates.desktop"
 
 #include <gio/gdesktopappinfo.h>
 #include <glib/gi18n.h>
@@ -44,6 +46,17 @@ static GTimeSpan get_remaining_time(SnapdSnap *snap) {
   return g_date_time_difference(proceed_time, now);
 }
 
+static void show_updates(SdiNotify *self) {
+  if (!sdi_launch_desktop(self->application, SNAP_STORE_UPDATES)) {
+    sdi_launch_desktop(self->application, SNAP_STORE);
+  }
+}
+
+static void sdi_action_show_updates(GActionGroup *action_group,
+                                    GVariant *str_data, SdiNotify *self) {
+  show_updates(self);
+}
+
 static GVariant *get_snap_list(GSList *snaps) {
   if (snaps == NULL)
     return NULL;
@@ -54,6 +67,16 @@ static GVariant *get_snap_list(GSList *snaps) {
     g_variant_builder_add(builder, "s", snapd_snap_get_name(snap));
   }
   return g_variant_ref_sink(g_variant_builder_end(builder));
+}
+
+static void sdi_notify_action_ignore(GActionGroup *action_group,
+                                     GVariant *app_list, SdiNotify *self) {
+  gsize len;
+  g_autofree gchar **apps = (gchar **)g_variant_get_strv(app_list, &len);
+
+  g_return_if_fail(apps != NULL);
+  for (gsize i = 0; i < len; i++)
+    g_signal_emit_by_name(self, "ignore-snap-event", apps[i]);
 }
 
 // Currently, due to the way Snapd creates the .desktop files, the notifications
@@ -96,6 +119,12 @@ static void app_close_notification(NotifyNotification *notification,
   g_object_unref(notification);
 }
 
+static void app_show_updates(NotifyNotification *notification, char *action,
+                             gpointer user_data) {
+  g_object_unref(notification);
+  show_updates((SdiNotify *)user_data);
+}
+
 static void app_ignore_snaps_notification(NotifyNotification *notification,
                                           char *action, gpointer user_data) {
   IgnoreNotifyData *data = user_data;
@@ -120,7 +149,7 @@ static void show_pending_update_notification(SdiNotify *self,
                                  g_variant_new_string(icon_name));
   }
   notify_notification_add_action(notification, "app.close-notification",
-                                 _("Close"), app_close_notification, NULL,
+                                 _("Show updates"), app_show_updates, self,
                                  NULL);
   notify_notification_add_action(notification, "default", _("Close"),
                                  app_close_notification, NULL, NULL);
@@ -128,8 +157,8 @@ static void show_pending_update_notification(SdiNotify *self,
   data->self = self;
   data->snaps = get_snap_list(snaps);
   notify_notification_add_action(notification, "app.ignore-notification",
-                                 _("Ignore"), app_ignore_snaps_notification,
-                                 data, NULL);
+                                 _("Don't remind me again"),
+                                 app_ignore_snaps_notification, data, NULL);
   notify_notification_show(notification, NULL);
 }
 
@@ -203,23 +232,20 @@ void sdi_notify_pending_refresh_one(SdiNotify *self, SnapdSnap *snap) {
     name = g_app_info_get_display_name(app_info);
   }
 
-  g_autofree gchar *title =
-      g_strdup_printf(_("Pending update of %s snap"), name);
+  g_autofree gchar *title = NULL;
 
   GTimeSpan difference = get_remaining_time(snap) / 1000000;
 
   g_autofree gchar *body = NULL;
   if (difference > SECONDS_IN_A_DAY) {
-    body = g_strdup_printf(_("Close the app to start updating (%ld days left)"),
-                           difference / SECONDS_IN_A_DAY);
+    title = g_strdup_printf(_("%s will close and update in %ld days"), name,
+                            difference / SECONDS_IN_A_DAY);
   } else if (difference > SECONDS_IN_AN_HOUR) {
-    body =
-        g_strdup_printf(_("Close the app to start updating (%ld hours left)"),
-                        difference / SECONDS_IN_AN_HOUR);
+    title = g_strdup_printf(_("%s will close and update in %ld hours"), name,
+                            difference / SECONDS_IN_AN_HOUR);
   } else {
-    body =
-        g_strdup_printf(_("Close the app to start updating (%ld minutes left)"),
-                        difference / SECONDS_IN_A_MINUTE);
+    title = g_strdup_printf(_("%s will close and update in %ld minutes"), name,
+                            difference / SECONDS_IN_A_MINUTE);
   }
 
   GIcon *icon = NULL;
@@ -227,38 +253,71 @@ void sdi_notify_pending_refresh_one(SdiNotify *self, SnapdSnap *snap) {
     icon = g_app_info_get_icon(app_info);
   }
 
-  show_pending_update_notification(self, title, body, icon,
-                                   g_slist_append(NULL, snap));
+  show_pending_update_notification(self, title,
+                                   _("You can quit the app to update it now."),
+                                   icon, g_slist_append(NULL, snap));
 }
 
 void sdi_notify_pending_refresh_multiple(SdiNotify *self, GSList *snaps) {
   g_return_if_fail(SDI_IS_NOTIFY(self));
   g_return_if_fail(snaps != NULL);
 
-  g_autoptr(GString) body = g_string_new(_("Close the apps to start updating"));
-  for (; snaps != NULL; snaps = snaps->next) {
+  g_autoptr(GSList) pending = NULL;
+  GSList *p = snaps;
+  for (; p != NULL; p = p->next) {
     SnapdSnap *snap = (SnapdSnap *)snaps->data;
-    const gchar *name = snapd_snap_get_name(snap);
-    g_autoptr(GAppInfo) app_info = sdi_get_desktop_file_from_snap(snap);
-    if (app_info != NULL) {
-      name = g_app_info_get_display_name(app_info);
-    }
-
     GTimeSpan difference = get_remaining_time(snap) / 1000000;
-    if (difference > 86400) {
-      g_string_append_printf(body, _(" (%s %ld days left)"), name,
-                             difference / 86400);
-    } else if (difference > 3600) {
-      g_string_append_printf(body, _(" (%s %ld hours left)"), name,
-                             difference / 3600);
-    } else {
-      g_string_append_printf(body, _(" (%s %ld minutes left)"), name,
-                             difference / 60);
+    if (difference < MINIMUM_TIME_TO_FORCE_SHOW) {
+      sdi_notify_pending_refresh_one(self, snap);
+      continue;
     }
+    pending = g_slist_append(pending, snap);
   }
-  g_autoptr(GIcon) icon = g_themed_icon_new("emblem-important-symbolic");
-  show_pending_update_notification(self, _("Pending updates for some snaps"),
-                                   body->str, g_steal_pointer(&icon), snaps);
+
+  guint nsnaps = g_slist_length(pending);
+
+  if (nsnaps > 0) {
+    g_autoptr(GIcon) icon = NULL;
+    g_autofree gchar *title = NULL;
+    gchar *body = ngettext("Quit the app to update it now.",
+                           "Quit the apps to update them now.", nsnaps);
+    switch (nsnaps) {
+    case 1:
+      title = g_strdup_printf(_("Update available for %s"),
+                              snapd_snap_get_name((SnapdSnap *)pending->data));
+      g_autoptr(GAppInfo) app_info =
+          sdi_get_desktop_file_from_snap((SnapdSnap *)pending->data);
+      if (app_info != NULL) {
+        icon = g_app_info_get_icon(app_info);
+      }
+      break;
+    case 2:
+      title = g_strdup_printf(
+          _("Updates available for %s and %s"),
+          snapd_snap_get_name((SnapdSnap *)pending->data),
+          snapd_snap_get_name((SnapdSnap *)pending->next->data));
+      break;
+    case 3:
+      title = g_strdup_printf(
+          _("Updates available for %s, %s and %s"),
+          snapd_snap_get_name((SnapdSnap *)pending->data),
+          snapd_snap_get_name((SnapdSnap *)pending->next->data),
+          snapd_snap_get_name((SnapdSnap *)pending->next->next->data));
+      break;
+    default:
+      title = g_strdup_printf(ngettext("Update available for %d app",
+                                       "Updates available for %d apps", nsnaps),
+                              nsnaps);
+      break;
+    }
+    if (icon == NULL) {
+      g_autoptr(GDesktopAppInfo) app_info = g_desktop_app_info_new(SNAP_STORE);
+      if (app_info != NULL) {
+        icon = g_app_info_get_icon(G_APP_INFO(app_info));
+      }
+    }
+    show_pending_update_notification(self, title, body, icon, pending);
+  }
 }
 
 void sdi_notify_refresh_complete(SdiNotify *self, SnapdSnap *snap,
@@ -293,22 +352,6 @@ GApplication *sdi_notify_get_application(SdiNotify *self) {
   return self->application;
 }
 
-static void sdi_notify_action_ignore(GActionGroup *action_group,
-                                     GVariant *app_list, SdiNotify *self) {
-  gsize len;
-  g_autofree gchar **apps = (gchar **)g_variant_get_strv(app_list, &len);
-
-  g_return_if_fail(apps != NULL);
-  for (gsize i = 0; i < len; i++)
-    g_signal_emit_by_name(self, "ignore-snap-event", apps[i]);
-}
-
-static void sdi_notify_action_show_updates(GActionGroup *action_group,
-                                           GVariant *str_data,
-                                           SdiNotify *self) {
-  sdi_launch_desktop(self->application, "snap-store_snap-store.desktop");
-}
-
 static void set_actions(SdiNotify *self) {
   g_autoptr(GVariantType) type_ignore = g_variant_type_new("as");
   g_autoptr(GSimpleAction) action_ignore =
@@ -328,7 +371,7 @@ static void set_actions(SdiNotify *self) {
   g_signal_connect(G_OBJECT(action_ignore), "activate",
                    (GCallback)sdi_notify_action_ignore, self);
   g_signal_connect(G_OBJECT(action_show_updates), "activate",
-                   (GCallback)sdi_notify_action_show_updates, self);
+                   (GCallback)sdi_action_show_updates, self);
 }
 
 static void sdi_notify_set_property(GObject *object, guint prop_id,
