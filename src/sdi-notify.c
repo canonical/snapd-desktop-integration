@@ -38,20 +38,22 @@ struct _SdiNotify {
 
 G_DEFINE_TYPE(SdiNotify, sdi_notify, G_TYPE_OBJECT)
 
-static void sdi_notify_action_ignore(GActionGroup *action_group,
-                                     GVariant *app_list, SdiNotify *self) {
-  gsize len;
-  g_autofree gchar **apps = (gchar **)g_variant_get_strv(app_list, &len);
-
-  g_return_if_fail(apps != NULL);
-  for (gsize i = 0; i < len; i++)
-    g_signal_emit_by_name(self, "ignore-snap-event", apps[i]);
-}
-
 static GTimeSpan get_remaining_time(SnapdSnap *snap) {
   g_autoptr(GDateTime) proceed_time = snapd_snap_get_proceed_time(snap);
   g_autoptr(GDateTime) now = g_date_time_new_now_local();
   return g_date_time_difference(proceed_time, now);
+}
+
+static void show_updates(SdiNotify *self) {
+  if (!sdi_launch_desktop(self->application, SNAP_STORE_UPDATES)) {
+    sdi_launch_desktop(self->application, SNAP_STORE);
+  }
+}
+
+static void sdi_notify_action_show_updates(GActionGroup *action_group,
+                                           GVariant *str_data,
+                                           SdiNotify *self) {
+  show_updates(self);
 }
 
 static GVariant *get_snap_list(GSList *snaps) {
@@ -64,6 +66,16 @@ static GVariant *get_snap_list(GSList *snaps) {
     g_variant_builder_add(builder, "s", snapd_snap_get_name(snap));
   }
   return g_variant_ref_sink(g_variant_builder_end(builder));
+}
+
+static void sdi_notify_action_ignore(GActionGroup *action_group,
+                                     GVariant *app_list, SdiNotify *self) {
+  gsize len;
+  g_autofree gchar **apps = (gchar **)g_variant_get_strv(app_list, &len);
+
+  g_return_if_fail(apps != NULL);
+  for (gsize i = 0; i < len; i++)
+    g_signal_emit_by_name(self, "ignore-snap-event", apps[i]);
 }
 
 // Currently, due to the way Snapd creates the .desktop files, the notifications
@@ -117,8 +129,43 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(IgnoreNotifyData, ignore_notify_data_free)
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(NotifyNotification, g_object_unref)
 
+typedef struct {
+  SdiNotify *self;
+  gchar *desktop;
+} LaunchUpdatedApp;
+
+LaunchUpdatedApp *launch_updated_app_new(SdiNotify *self,
+                                         const gchar *desktop) {
+  LaunchUpdatedApp *data = g_malloc0(sizeof(LaunchUpdatedApp));
+  data->self = g_object_ref(self);
+  data->desktop = g_strdup(desktop);
+  return data;
+}
+
+void launch_updated_app_free(void *user_data) {
+  LaunchUpdatedApp *data = (LaunchUpdatedApp *)user_data;
+  g_object_unref(data->self);
+  g_free(data->desktop);
+  g_free(data);
+}
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(LaunchUpdatedApp, launch_updated_app_free)
+
 static void app_close_notification(NotifyNotification *notification,
                                    char *action, gpointer user_data) {
+  g_object_unref(notification);
+}
+
+static void app_launch_updated(NotifyNotification *notification, char *action,
+                               gpointer user_data) {
+  LaunchUpdatedApp *data = (LaunchUpdatedApp *)user_data;
+  sdi_launch_desktop(data->self->application, (const gchar *)data->desktop);
+  g_object_unref(notification);
+}
+
+static void app_show_updates(NotifyNotification *notification, char *action,
+                             gpointer user_data) {
+  show_updates((SdiNotify *)user_data);
   g_object_unref(notification);
 }
 
@@ -126,24 +173,6 @@ static void app_ignore_snaps_notification(NotifyNotification *notification,
                                           char *action,
                                           IgnoreNotifyData *data) {
   sdi_notify_action_ignore(NULL, data->snaps, data->self);
-  g_object_unref(notification);
-}
-
-static void show_updates(SdiNotify *self) {
-  if (!sdi_launch_desktop(self->application, SNAP_STORE_UPDATES)) {
-    sdi_launch_desktop(self->application, SNAP_STORE);
-  }
-}
-
-static void sdi_notify_action_show_updates(GActionGroup *action_group,
-                                           GVariant *str_data,
-                                           SdiNotify *self) {
-  show_updates(self);
-}
-
-static void app_show_updates(NotifyNotification *notification, char *action,
-                             gpointer user_data) {
-  show_updates((SdiNotify *)user_data);
   g_object_unref(notification);
 }
 
@@ -174,9 +203,10 @@ static void show_pending_update_notification(SdiNotify *self,
   notify_notification_show(notification, NULL);
 }
 
-static void show_simple_notification(SdiNotify *self, const gchar *title,
-                                     const gchar *body, GIcon *icon,
-                                     const gchar *id) {
+static void update_complete_notification(SdiNotify *self, const gchar *title,
+                                         const gchar *body, GIcon *icon,
+                                         const gchar *id,
+                                         const gchar *desktop) {
   g_autofree gchar *icon_name = get_icon_name_from_gicon(icon);
   // Don't use g_autoptr because it must survive for the actions
   NotifyNotification *notification =
@@ -187,8 +217,15 @@ static void show_simple_notification(SdiNotify *self, const gchar *title,
                                  g_variant_new_string(icon_name));
   }
 
-  notify_notification_add_action(notification, "default", _("Close"),
-                                 app_close_notification, NULL, NULL);
+  if (desktop == NULL) {
+    notify_notification_add_action(notification, "default", _("Close"),
+                                   app_close_notification, NULL, NULL);
+  } else {
+    LaunchUpdatedApp *data = launch_updated_app_new(self, desktop);
+    notify_notification_add_action(notification, "default", _("Close"),
+                                   app_launch_updated, data,
+                                   launch_updated_app_free);
+  }
   notify_notification_show(notification, NULL);
 }
 
@@ -222,13 +259,18 @@ static void show_pending_update_notification(SdiNotify *self,
                                   notification);
 }
 
-static void show_simple_notification(SdiNotify *self, const gchar *title,
-                                     const gchar *body, GIcon *icon,
-                                     const gchar *id) {
+static void update_complete_notification(SdiNotify *self, const gchar *title,
+                                         const gchar *body, GIcon *icon,
+                                         const gchar *id,
+                                         const gchar *desktop) {
   g_autoptr(GNotification) notification = g_notification_new(title);
   g_notification_set_body(notification, body);
   if (icon != NULL) {
     g_notification_set_icon(notification, g_object_ref(icon));
+  }
+  if (desktop != NULL) {
+    g_notification_set_default_action_and_target(
+        notification, "app.launch-refreshed-app", "s", desktop);
   }
   g_application_send_notification(self->application, id, notification);
 }
@@ -311,12 +353,14 @@ void sdi_notify_refresh_complete(SdiNotify *self, SnapdSnap *snap,
   GIcon *icon = NULL;
   g_autoptr(GAppInfo) app_info = NULL;
   const gchar *name = NULL;
+  const gchar *desktop = NULL;
 
   if (snap != NULL) {
     app_info = sdi_get_desktop_file_from_snap(snap);
     if (app_info != NULL) {
       name = g_app_info_get_display_name(app_info);
       icon = g_app_info_get_icon(app_info);
+      desktop = g_desktop_app_info_get_filename(G_DESKTOP_APP_INFO(app_info));
     }
     if (name == NULL)
       name = snapd_snap_get_name(snap);
@@ -326,8 +370,8 @@ void sdi_notify_refresh_complete(SdiNotify *self, SnapdSnap *snap,
 
   g_autofree gchar *title = g_strdup_printf(_("%s was updated"), name);
 
-  show_simple_notification(self, title, _("Ready to launch"), icon,
-                           "update-complete");
+  update_complete_notification(self, title, _("Ready to launch"), icon,
+                               "update-complete", desktop);
 }
 
 GApplication *sdi_notify_get_application(SdiNotify *self) {
