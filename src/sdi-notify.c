@@ -18,8 +18,7 @@
 #define SECONDS_IN_A_DAY 86400
 #define SECONDS_IN_AN_HOUR 3600
 #define SECONDS_IN_A_MINUTE 60
-#define SNAP_STORE                                                             \
-  "/var/lib/snapd/desktop/applications/snap-store_snap-store.desktop"
+#define SNAP_STORE "snap-store_snap-store.desktop"
 
 #include <gio/gdesktopappinfo.h>
 #include <glib/gi18n.h>
@@ -319,7 +318,7 @@ GApplication *sdi_notify_get_application(SdiNotify *self) {
 static void sdi_notify_action_show_updates(GActionGroup *action_group,
                                            GVariant *str_data,
                                            SdiNotify *self) {
-  sdi_launch_desktop(self->application, "snap-store_snap-store.desktop");
+  sdi_launch_desktop(self->application, SNAP_STORE);
 }
 
 static void set_actions(SdiNotify *self) {
