@@ -347,15 +347,18 @@ static void update_dock_bar(gpointer key, gpointer value, gpointer data) {
   task_data->done_tasks = 0;
   task_data->total_tasks = 0;
   task_data->old_progress = progress;
+  if (task_data->desktop_files->len == 0) {
+    return;
+  }
   g_autoptr(GVariantBuilder) builder =
       g_variant_builder_new(G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(builder, "{sv}", "progress",
                         g_variant_new_double(progress));
   g_variant_builder_add(builder, "{sv}", "progress-visible",
                         g_variant_new_boolean(!task_data->done));
-  // values has a floating reference, so it's consumed when calling
-  // EMIT_UPDATE()
-  GVariant *values = g_variant_builder_end(builder);
+
+  g_autoptr(GVariant) values =
+      g_object_ref_sink(g_variant_builder_end(builder));
 
   for (int i = 0; i < task_data->desktop_files->len; i++) {
     const gchar *desktop_file = task_data->desktop_files->pdata[i];
