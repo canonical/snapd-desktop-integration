@@ -317,7 +317,7 @@ static void update_inhibited_snaps(SdiRefreshMonitor *self, SnapdChange *change,
     // if there's already a dialog for this snap, just refresh the
     // progress bar
     GPtrArray *tasks = snapd_change_get_tasks(change);
-    gint done = 0;
+    gsize done = 0;
     g_autoptr(SnapdTask) current_task = NULL;
     for (guint i = 0; i < tasks->len; i++) {
       SnapdTask *task = (SnapdTask *)tasks->pdata[i];
