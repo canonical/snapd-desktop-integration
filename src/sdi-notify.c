@@ -30,6 +30,17 @@
 #include "sdi-helpers.h"
 #include "sdi-notify.h"
 
+// when to force a notification even if the user has dismissed them
+static GTimeSpan force_refresh_frontiers[] = {
+    5 * SECONDS_IN_A_MINUTE, // five minutes
+    1 * SECONDS_IN_AN_HOUR,  // one hour
+    6 * SECONDS_IN_AN_HOUR,  // six hours
+    12 * SECONDS_IN_AN_HOUR, // twelve hours
+    1 * SECONDS_IN_A_DAY,    // one day
+    2 * SECONDS_IN_A_DAY,    // two days
+    3 * SECONDS_IN_A_DAY,    // three days
+    G_MAXINT64};
+
 enum { PROP_APPLICATION = 1, PROP_LAST };
 
 struct _SdiNotify {
@@ -288,7 +299,7 @@ static void update_complete_notification(SdiNotify *self, const gchar *title,
 }
 #endif
 
-void sdi_notify_pending_refresh_one(SdiNotify *self, SnapdSnap *snap) {
+static void notify_pending_refresh_forced(SdiNotify *self, SnapdSnap *snap) {
   g_return_if_fail(SDI_IS_NOTIFY(self));
   g_return_if_fail(snap != NULL);
 
@@ -299,23 +310,19 @@ void sdi_notify_pending_refresh_one(SdiNotify *self, SnapdSnap *snap) {
     name = g_app_info_get_display_name(app_info);
   }
 
-  g_autofree gchar *title =
-      g_strdup_printf(_("Pending update of %s snap"), name);
+  g_autofree gchar *title = NULL;
 
   GTimeSpan difference = sdi_get_remaining_time_in_seconds(snap);
 
-  g_autofree gchar *body = NULL;
   if (difference > SECONDS_IN_A_DAY) {
-    body = g_strdup_printf(_("Close the app to start updating (%ld days left)"),
-                           difference / SECONDS_IN_A_DAY);
+    title = g_strdup_printf(_("%s will close an update in %ld days"), name,
+                            difference / SECONDS_IN_A_DAY);
   } else if (difference > SECONDS_IN_AN_HOUR) {
-    body =
-        g_strdup_printf(_("Close the app to start updating (%ld hours left)"),
-                        difference / SECONDS_IN_AN_HOUR);
+    title = g_strdup_printf(_("%s will close an update in %ld hours"), name,
+                            difference / SECONDS_IN_AN_HOUR);
   } else {
-    body =
-        g_strdup_printf(_("Close the app to start updating (%ld minutes left)"),
-                        difference / SECONDS_IN_A_MINUTE);
+    title = g_strdup_printf(_("%s will close an update in %ld minutes"), name,
+                            difference / SECONDS_IN_A_MINUTE);
   }
 
   GIcon *icon = NULL;
@@ -323,12 +330,29 @@ void sdi_notify_pending_refresh_one(SdiNotify *self, SnapdSnap *snap) {
     icon = g_app_info_get_icon(app_info);
   }
 
-  show_pending_update_notification(self, title, body, icon,
-                                   g_slist_append(NULL, snap));
+  show_pending_update_notification(self, title,
+                                   _("You can quit the app to update it now"),
+                                   icon, g_slist_append(NULL, snap));
 }
 
-void sdi_notify_check_ignored_snap(SdiNotify *notify, SnapdSnap *snap,
-                                   SdiSnap *snap_data) {}
+void sdi_notify_check_ignored_snap(SdiNotify *self, SnapdSnap *snap,
+                                   SdiSnap *snap_data) {
+  // Check if we have to force a notification because it is near the
+  // moment where the snap will have a forced update
+  GTimeSpan *p = force_refresh_frontiers;
+  GTimeSpan next_refresh = sdi_get_remaining_time_in_seconds(snap);
+  for (; *p != G_MAXINT64; p++) {
+    // if the remaining time before the forced update is less than the
+    // "frontier" value, and the last time that we shown a notification is
+    // bigger than it, we have to show a notification.
+    if ((next_refresh <= *p) &&
+        (sdi_snap_get_last_remaining_time(snap_data) > *p)) {
+      sdi_snap_set_last_remaining_time(snap_data, next_refresh);
+      notify_pending_refresh_forced(self, snap);
+      return;
+    }
+  }
+}
 
 static gchar *get_name_from_snap(SnapdSnap *snap) {
   const gchar *name = snapd_snap_get_name(snap);
