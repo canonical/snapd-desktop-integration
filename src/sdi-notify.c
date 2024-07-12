@@ -58,6 +58,16 @@ static void sdi_notify_action_show_updates(GActionGroup *action_group,
   show_updates(self);
 }
 
+static void sdi_notify_action_ignore(GActionGroup *action_group,
+                                     GVariant *app_list, SdiNotify *self) {
+  gsize len;
+  g_autofree gchar **apps = (gchar **)g_variant_get_strv(app_list, &len);
+
+  g_return_if_fail(apps != NULL);
+  for (gsize i = 0; i < len; i++)
+    g_signal_emit_by_name(self, "ignore-snap-event", apps[i]);
+}
+
 static GVariant *get_snap_list(GSList *snaps) {
   if (snaps == NULL)
     return NULL;
@@ -292,7 +302,7 @@ void sdi_notify_pending_refresh_one(SdiNotify *self, SnapdSnap *snap) {
   g_autofree gchar *title =
       g_strdup_printf(_("Pending update of %s snap"), name);
 
-  GTimeSpan difference = get_remaining_time(snap) / 1000000;
+  GTimeSpan difference = sdi_get_remaining_time_in_seconds(snap);
 
   g_autofree gchar *body = NULL;
   if (difference > SECONDS_IN_A_DAY) {
@@ -316,6 +326,9 @@ void sdi_notify_pending_refresh_one(SdiNotify *self, SnapdSnap *snap) {
   show_pending_update_notification(self, title, body, icon,
                                    g_slist_append(NULL, snap));
 }
+
+void sdi_notify_check_ignored_snap(SdiNotify *notify, SnapdSnap *snap,
+                                   SdiSnap *snap_data) {}
 
 static gchar *get_name_from_snap(SnapdSnap *snap) {
   const gchar *name = snapd_snap_get_name(snap);

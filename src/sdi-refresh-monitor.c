@@ -471,17 +471,23 @@ static void manage_refresh_inhibit(SnapdClient *source, GAsyncResult *res,
   // remove snaps that are marked as "ignore"
   g_autoptr(GSList) snaps_not_ignored = NULL;
   for (guint i = 0; i < snaps->len; i++) {
-    const gchar *name = snapd_snap_get_name(snaps->pdata[i]);
+    SnapdSnap *snap = snaps->pdata[i];
+    const gchar *name = snapd_snap_get_name(snap);
     if (name == NULL)
       continue;
     g_autoptr(SdiSnap) snap_data = add_snap(self, name);
     if (snap_data == NULL)
       continue;
     sdi_snap_set_inhibited(snap_data, TRUE);
-    if (sdi_snap_get_ignored(snap_data))
+    if (sdi_snap_get_ignored(snap_data)) {
+      // Check if we have to notify the user because the snap will be
+      // force-refreshed soon
+      sdi_notify_check_ignored_snap(self->notify, snap, snap_data);
       continue;
-    snaps_not_ignored =
-        g_slist_prepend(snaps_not_ignored, g_object_ref(snaps->pdata[i]));
+    }
+    snaps_not_ignored = g_slist_prepend(snaps_not_ignored, g_object_ref(snap));
+    sdi_snap_set_last_remaining_time(snap_data,
+                                     sdi_get_remaining_time_in_seconds(snap));
   }
   if (g_slist_length(snaps_not_ignored) >= 1) {
     sdi_notify_pending_refresh(self->notify, snaps_not_ignored);

@@ -17,9 +17,11 @@
 
 #pragma once
 
+#include "sdi-snap.h"
 #include <gio/gdesktopappinfo.h>
 #include <snapd-glib/snapd-glib.h>
 
 GAppInfo *sdi_get_desktop_file_from_snap(SnapdSnap *snap);
 GPtrArray *sdi_get_desktop_filenames_for_snap(const gchar *snap_name);
 gboolean sdi_launch_desktop(GApplication *app, const gchar *desktop_file);
+GTimeSpan sdi_get_remaining_time_in_seconds(SnapdSnap *snap);

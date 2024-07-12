@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include "sdi-snap.h"
 #include <gtk/gtk.h>
 #include <snapd-glib/snapd-glib.h>
 
@@ -36,5 +37,8 @@ void sdi_notify_pending_refresh(SdiNotify *notify, GSList *snaps);
 
 void sdi_notify_refresh_complete(SdiNotify *notify, SnapdSnap *snap,
                                  const gchar *snap_name);
+
+void sdi_notify_check_ignored_snap(SdiNotify *notify, SnapdSnap *snap,
+                                   SdiSnap *snap_data);
 
 G_END_DECLS

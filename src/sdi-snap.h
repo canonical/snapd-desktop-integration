@@ -50,4 +50,8 @@ void sdi_snap_set_ignored(SdiSnap *self, gboolean ignore);
 
 const gchar *sdi_snap_get_name(SdiSnap *self);
 
+GTimeSpan sdi_snap_get_last_remaining_time(SdiSnap *self);
+
+void sdi_snap_set_last_remaining_time(SdiSnap *self, GTimeSpan time);
+
 G_END_DECLS
