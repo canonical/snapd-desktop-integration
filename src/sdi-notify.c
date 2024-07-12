@@ -121,9 +121,8 @@ static void app_close_notification(NotifyNotification *notification,
 }
 
 static void app_ignore_snaps_notification(NotifyNotification *notification,
-                                          char *action, gpointer user_data) {
-  // Declaring it as autoptr automatically cleans the memory used.
-  g_autoptr(IgnoreNotifyData) data = user_data;
+                                          char *action,
+                                          IgnoreNotifyData *data) {
   sdi_notify_action_ignore(NULL, data->snaps, data->self);
   g_object_unref(notification);
 }
@@ -147,11 +146,11 @@ static void show_pending_update_notification(SdiNotify *self,
   notify_notification_add_action(notification, "default", _("Close"),
                                  app_close_notification, NULL, NULL);
   g_autoptr(GVariant) snap_list = get_snap_list(snaps);
-  // The memory block of data will be freed in the callback
-  IgnoreNotifyData *data = ignore_notify_data_new(self, snap_list);
-  notify_notification_add_action(notification, "app.ignore-notification",
-                                 _("Ignore"), app_ignore_snaps_notification,
-                                 data, NULL);
+  notify_notification_add_action(
+      notification, "app.ignore-notification", _("Ignore"),
+      (NotifyActionCallback)app_ignore_snaps_notification,
+      ignore_notify_data_new(self, snap_list),
+      (GFreeFunc)ignore_notify_data_free);
   notify_notification_show(notification, NULL);
 }
 
