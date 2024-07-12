@@ -17,6 +17,7 @@ unity_launcher_src = gnome.gdbus_codegen('com.canonical.Unity.LauncherEntry',
   sources: 'com.canonical.Unity.LauncherEntry.dbus.xml',
   interface_prefix : 'com.canonical.unity.launcherentry',
   namespace: 'Unity'
+)
 
 desktop_launcher_src = gnome.gdbus_codegen('io.snapcraft.PrivilegedDesktopLauncher',
   sources: 'io.snapcraft.PrivilegedDesktopLauncher.dbus.xml',
