@@ -21,6 +21,8 @@
 #define SNAP_STORE "snap-store_snap-store.desktop"
 #define SNAP_STORE_UPDATES "snap-store_show-updates.desktop"
 
+#define SNAP_STORE "snap-store_snap-store.desktop"
+
 #include <gio/gdesktopappinfo.h>
 #include <glib/gi18n.h>
 #include <libnotify/notify.h>
@@ -315,34 +317,68 @@ void sdi_notify_pending_refresh_one(SdiNotify *self, SnapdSnap *snap) {
                                    g_slist_append(NULL, snap));
 }
 
-void sdi_notify_pending_refresh_multiple(SdiNotify *self, GSList *snaps) {
+static gchar *get_name_from_snap(SnapdSnap *snap) {
+  const gchar *name = snapd_snap_get_name(snap);
+  g_autoptr(GAppInfo) app_info = sdi_get_desktop_file_from_snap(snap);
+  if (app_info != NULL) {
+    const gchar *name2 = g_app_info_get_display_name(app_info);
+    if (name2 != NULL) {
+      name = name2;
+    }
+  }
+  return g_strdup(name);
+}
+
+void sdi_notify_pending_refresh(SdiNotify *self, GSList *snaps) {
   g_return_if_fail(SDI_IS_NOTIFY(self));
   g_return_if_fail(snaps != NULL);
 
-  g_autoptr(GString) body = g_string_new(_("Close the apps to start updating"));
-  for (; snaps != NULL; snaps = snaps->next) {
-    SnapdSnap *snap = (SnapdSnap *)snaps->data;
-    const gchar *name = snapd_snap_get_name(snap);
-    g_autoptr(GAppInfo) app_info = sdi_get_desktop_file_from_snap(snap);
-    if (app_info != NULL) {
-      name = g_app_info_get_display_name(app_info);
-    }
+  g_autofree gchar *title = NULL;
+  g_autofree gchar *body = NULL;
+  g_autoptr(GAppInfo) app_info = NULL;
+  g_autoptr(GDesktopAppInfo) app_info2 = NULL;
 
-    GTimeSpan difference = get_remaining_time(snap) / 1000000;
-    if (difference > 86400) {
-      g_string_append_printf(body, _(" (%s %ld days left)"), name,
-                             difference / 86400);
-    } else if (difference > 3600) {
-      g_string_append_printf(body, _(" (%s %ld hours left)"), name,
-                             difference / 3600);
-    } else {
-      g_string_append_printf(body, _(" (%s %ld minutes left)"), name,
-                             difference / 60);
+  guint n_snaps = g_slist_length(snaps);
+
+  GIcon *icon = NULL;
+  if (n_snaps == 1) {
+    g_autofree gchar *snap_name = get_name_from_snap((SnapdSnap *)snaps->data);
+    title = g_strdup_printf(_("Update available for %s"), snap_name);
+    body = g_strdup(_("Quit the app to update it now."));
+    app_info = sdi_get_desktop_file_from_snap((SnapdSnap *)snaps->data);
+    if (app_info != NULL) {
+      icon = g_app_info_get_icon(app_info);
+    }
+  } else {
+    // although the case for 1 app is managed outside this, I put it here to
+    // ensure that ngettext works as expected, and to ensure that translators
+    // know what is going on.
+    title = g_strdup_printf(ngettext("Update available for %d app",
+                                     "Updates available for %d apps", n_snaps),
+                            n_snaps);
+    switch (n_snaps) {
+    case 2:
+      body =
+          g_strdup_printf(_("Quit %s and %s to update them now."),
+                          get_name_from_snap((SnapdSnap *)snaps->data),
+                          get_name_from_snap((SnapdSnap *)snaps->next->data));
+      break;
+    case 3:
+      body = g_strdup_printf(
+          _("Quit %s, %s and %s to update them now."),
+          get_name_from_snap((SnapdSnap *)snaps->data),
+          get_name_from_snap((SnapdSnap *)snaps->next->data),
+          get_name_from_snap((SnapdSnap *)snaps->next->next->data));
+      break;
     }
   }
-  g_autoptr(GIcon) icon = g_themed_icon_new("emblem-important-symbolic");
-  show_pending_update_notification(self, _("Pending updates for some snaps"),
-                                   body->str, g_steal_pointer(&icon), snaps);
+  if (icon == NULL) {
+    app_info2 = g_desktop_app_info_new(SNAP_STORE);
+    if (app_info2 != NULL) {
+      icon = g_app_info_get_icon(G_APP_INFO(app_info2));
+    }
+  }
+  show_pending_update_notification(self, title, body, icon, snaps);
 }
 
 void sdi_notify_refresh_complete(SdiNotify *self, SnapdSnap *snap,

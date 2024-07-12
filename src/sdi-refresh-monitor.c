@@ -359,13 +359,12 @@ static void update_dock_bar(gpointer key, gpointer value, gpointer data) {
   g_variant_builder_add(builder, "{sv}", "updating",
                         g_variant_new_boolean(!task_data->done));
 
-  g_autoptr(GVariant) values =
-      g_object_ref_sink(g_variant_builder_end(builder));
+  g_autoptr(GVariant) values = g_variant_builder_end(builder);
 
   for (int i = 0; i < task_data->desktop_files->len; i++) {
     const gchar *desktop_file = task_data->desktop_files->pdata[i];
-    unity_com_canonical_unity_launcher_entry_emit_update(self->unity_manager,
-                                                         desktop_file, values);
+    unity_com_canonical_unity_launcher_entry_emit_update(
+        self->unity_manager, desktop_file, g_variant_ref(values));
   }
 }
 
@@ -484,13 +483,8 @@ static void manage_refresh_inhibit(SnapdClient *source, GAsyncResult *res,
     snaps_not_ignored =
         g_slist_prepend(snaps_not_ignored, g_object_ref(snaps->pdata[i]));
   }
-  if (g_slist_length(snaps_not_ignored) > 1) {
-    sdi_notify_pending_refresh_multiple(self->notify, snaps_not_ignored);
-    return;
-  }
-  if (snaps_not_ignored != NULL) {
-    // just one notice
-    sdi_notify_pending_refresh_one(self->notify, snaps_not_ignored->data);
+  if (g_slist_length(snaps_not_ignored) >= 1) {
+    sdi_notify_pending_refresh(self->notify, snaps_not_ignored);
     return;
   }
 }
