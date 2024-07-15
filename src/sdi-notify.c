@@ -97,6 +97,22 @@ typedef struct {
   GVariant *snaps;
 } IgnoreNotifyData;
 
+static IgnoreNotifyData *ignore_notify_data_new(SdiNotify *self,
+                                                GVariant *snaps) {
+  IgnoreNotifyData *data = g_malloc0(sizeof(IgnoreNotifyData));
+  data->self = g_object_ref(self);
+  data->snaps = g_variant_ref(snaps);
+  return data;
+}
+
+static void ignore_notify_data_free(IgnoreNotifyData *data) {
+  g_object_unref(data->self);
+  g_variant_unref(data->snaps);
+  g_free(data);
+}
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(IgnoreNotifyData, ignore_notify_data_free)
+
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(NotifyNotification, g_object_unref)
 
 static void app_close_notification(NotifyNotification *notification,
@@ -105,12 +121,9 @@ static void app_close_notification(NotifyNotification *notification,
 }
 
 static void app_ignore_snaps_notification(NotifyNotification *notification,
-                                          char *action, gpointer user_data) {
-  IgnoreNotifyData *data = user_data;
+                                          char *action,
+                                          IgnoreNotifyData *data) {
   sdi_notify_action_ignore(NULL, data->snaps, data->self);
-  g_variant_unref(data->snaps);
-  g_free(user_data);
-
   g_object_unref(notification);
 }
 
@@ -132,12 +145,12 @@ static void show_pending_update_notification(SdiNotify *self,
                                  NULL);
   notify_notification_add_action(notification, "default", _("Close"),
                                  app_close_notification, NULL, NULL);
-  IgnoreNotifyData *data = g_malloc(sizeof(IgnoreNotifyData));
-  data->self = self;
-  data->snaps = get_snap_list(snaps);
-  notify_notification_add_action(notification, "app.ignore-notification",
-                                 _("Ignore"), app_ignore_snaps_notification,
-                                 data, NULL);
+  g_autoptr(GVariant) snap_list = get_snap_list(snaps);
+  notify_notification_add_action(
+      notification, "app.ignore-notification", _("Ignore"),
+      (NotifyActionCallback)app_ignore_snaps_notification,
+      ignore_notify_data_new(self, snap_list),
+      (GFreeFunc)ignore_notify_data_free);
   notify_notification_show(notification, NULL);
 }
 
