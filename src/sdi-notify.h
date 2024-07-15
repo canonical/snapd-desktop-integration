@@ -38,7 +38,7 @@ void sdi_notify_pending_refresh(SdiNotify *notify, GSList *snaps);
 void sdi_notify_refresh_complete(SdiNotify *notify, SnapdSnap *snap,
                                  const gchar *snap_name);
 
-void sdi_notify_check_ignored_snap(SdiNotify *notify, SnapdSnap *snap,
-                                   SdiSnap *snap_data);
+gboolean sdi_notify_check_forced_refresh(SdiNotify *notify, SnapdSnap *snap,
+                                         SdiSnap *snap_data);
 
 G_END_DECLS

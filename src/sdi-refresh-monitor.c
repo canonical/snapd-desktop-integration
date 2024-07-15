@@ -479,10 +479,9 @@ static void manage_refresh_inhibit(SnapdClient *source, GAsyncResult *res,
     if (snap_data == NULL)
       continue;
     sdi_snap_set_inhibited(snap_data, TRUE);
-    if (sdi_snap_get_ignored(snap_data)) {
-      // Check if we have to notify the user because the snap will be
-      // force-refreshed soon
-      sdi_notify_check_ignored_snap(self->notify, snap, snap_data);
+    // Check if we have to notify the user because the snap will be
+    // force-refreshed soon
+    if (sdi_notify_check_forced_refresh(self->notify, snap, snap_data)) {
       continue;
     }
     snaps_not_ignored = g_slist_prepend(snaps_not_ignored, g_object_ref(snap));

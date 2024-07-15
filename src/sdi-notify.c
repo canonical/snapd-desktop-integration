@@ -335,8 +335,19 @@ static void notify_pending_refresh_forced(SdiNotify *self, SnapdSnap *snap) {
                                    icon, g_slist_append(NULL, snap));
 }
 
-void sdi_notify_check_ignored_snap(SdiNotify *self, SnapdSnap *snap,
-                                   SdiSnap *snap_data) {
+/* sdi_notify_check_forced_refresh checks if a snap will have a forced
+ * refresh in less than the time intervals defined in *force_refresh_frontiers*.
+ * If that's the case and notifications for that specific snap hasn't been
+ * ignored by the user, then a notification will be shown with how many time
+ * lasts before snapd force quits the application to update it. Instead, if the
+ * user chose to ignore notifications for that snap, the notification will be
+ * shown only when one of the "time frontiers" in the *force_refresh_frontiers*
+ * list is crossed. This allows to avoid overwhelming the user with
+ * notifications, while at the same time ensuring that they remain informed
+ * about such a destructive action.
+ */
+gboolean sdi_notify_check_forced_refresh(SdiNotify *self, SnapdSnap *snap,
+                                         SdiSnap *snap_data) {
   // Check if we have to force a notification because it is near the
   // moment where the snap will have a forced update
   GTimeSpan *p = force_refresh_frontiers;
@@ -346,12 +357,14 @@ void sdi_notify_check_ignored_snap(SdiNotify *self, SnapdSnap *snap,
     // "frontier" value, and the last time that we shown a notification is
     // bigger than it, we have to show a notification.
     if ((next_refresh <= *p) &&
-        (sdi_snap_get_last_remaining_time(snap_data) > *p)) {
+        ((sdi_snap_get_last_remaining_time(snap_data) > *p) ||
+         (!sdi_snap_get_ignored(snap_data)))) {
       sdi_snap_set_last_remaining_time(snap_data, next_refresh);
       notify_pending_refresh_forced(self, snap);
-      return;
+      return TRUE;
     }
   }
+  return FALSE;
 }
 
 static gchar *get_name_from_snap(SnapdSnap *snap) {
