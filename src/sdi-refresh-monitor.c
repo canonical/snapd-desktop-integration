@@ -356,6 +356,8 @@ static void update_dock_bar(gpointer key, gpointer value, gpointer data) {
                         g_variant_new_double(progress));
   g_variant_builder_add(builder, "{sv}", "progress-visible",
                         g_variant_new_boolean(!task_data->done));
+  g_variant_builder_add(builder, "{sv}", "updating",
+                        g_variant_new_boolean(!task_data->done));
 
   g_autoptr(GVariant) values =
       g_object_ref_sink(g_variant_builder_end(builder));
