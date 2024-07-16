@@ -19,5 +19,11 @@ unity_launcher_src = gnome.gdbus_codegen('com.canonical.Unity.LauncherEntry',
   namespace: 'Unity'
 )
 
+desktop_launcher_src = gnome.gdbus_codegen('io.snapcraft.PrivilegedDesktopLauncher',
+  sources: 'io.snapcraft.PrivilegedDesktopLauncher.dbus.xml',
+  interface_prefix : 'io.snapcraft.PrivilegedDesktopLauncher',
+  namespace: 'PrivilegedDesktopLauncher'
+)
+
 install_data('io.snapcraft.SnapDesktopIntegration.desktop', install_dir: 'share/applications')
 install_data('snapd-desktop-integration.svg', install_dir: 'share/icons/hicolor/scalable/apps')
