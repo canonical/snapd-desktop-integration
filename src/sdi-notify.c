@@ -21,8 +21,6 @@
 #define SNAP_STORE "snap-store_snap-store.desktop"
 #define SNAP_STORE_UPDATES "snap-store_show-updates.desktop"
 
-#define SNAP_STORE "snap-store_snap-store.desktop"
-
 #include <gio/gdesktopappinfo.h>
 #include <glib/gi18n.h>
 #include <libnotify/notify.h>
@@ -89,16 +87,6 @@ static GVariant *get_snap_list(GSList *snaps) {
     g_variant_builder_add(builder, "s", snapd_snap_get_name(snap));
   }
   return g_variant_ref_sink(g_variant_builder_end(builder));
-}
-
-static void sdi_notify_action_ignore(GActionGroup *action_group,
-                                     GVariant *app_list, SdiNotify *self) {
-  gsize len;
-  g_autofree gchar **apps = (gchar **)g_variant_get_strv(app_list, &len);
-
-  g_return_if_fail(apps != NULL);
-  for (gsize i = 0; i < len; i++)
-    g_signal_emit_by_name(self, "ignore-snap-event", apps[i]);
 }
 
 // Currently, due to the way Snapd creates the .desktop files, the notifications
