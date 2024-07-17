@@ -112,7 +112,8 @@ static SdiSnap *add_snap(SdiRefreshMonitor *self, const gchar *snap_name) {
   g_autoptr(SdiSnap) snap = find_snap(self, snap_name);
   if (snap == NULL) {
     snap = sdi_snap_new(snap_name);
-    g_hash_table_insert(self->snaps, (gpointer)snap_name, g_object_ref(snap));
+    g_hash_table_insert(self->snaps, (gpointer)g_strdup(snap_name),
+                        g_object_ref(snap));
   }
   return g_steal_pointer(&snap);
 }
@@ -468,8 +469,9 @@ static void manage_refresh_inhibit(SnapdClient *source, GAsyncResult *res,
   }
   if (snaps->len == 0)
     return;
-  // remove snaps that are marked as "ignore"
-  g_autoptr(GSList) snaps_not_ignored = NULL;
+  // Check if there's at least one snap not marked as "ignore"
+  gboolean show_grouped_notification = FALSE;
+  g_autoptr(GSList) snap_list = NULL;
   for (guint i = 0; i < snaps->len; i++) {
     SnapdSnap *snap = snaps->pdata[i];
     const gchar *name = snapd_snap_get_name(snap);
@@ -479,18 +481,16 @@ static void manage_refresh_inhibit(SnapdClient *source, GAsyncResult *res,
     if (snap_data == NULL)
       continue;
     sdi_snap_set_inhibited(snap_data, TRUE);
+    if (!sdi_snap_get_ignored(snap_data)) {
+      show_grouped_notification = TRUE;
+    }
     // Check if we have to notify the user because the snap will be
     // force-refreshed soon
-    if (sdi_notify_check_forced_refresh(self->notify, snap, snap_data)) {
-      continue;
-    }
-    snaps_not_ignored = g_slist_prepend(snaps_not_ignored, g_object_ref(snap));
-    sdi_snap_set_last_remaining_time(snap_data,
-                                     sdi_get_remaining_time_in_seconds(snap));
+    snap_list = g_slist_prepend(snap_list, snap);
+    sdi_notify_check_forced_refresh(self->notify, snap, snap_data);
   }
-  if (g_slist_length(snaps_not_ignored) >= 1) {
-    sdi_notify_pending_refresh(self->notify, snaps_not_ignored);
-    return;
+  if (show_grouped_notification) {
+    sdi_notify_pending_refresh(self->notify, snap_list);
   }
 }
 
