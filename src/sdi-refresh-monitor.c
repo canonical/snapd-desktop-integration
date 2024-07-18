@@ -337,7 +337,7 @@ static void update_inhibited_snaps(SdiRefreshMonitor *self, SnapdChange *change,
 
 static void update_dock_bar(gpointer key, gpointer value, gpointer data) {
   SnapProgressTaskData *task_data = value;
-  g_autoptr(SdiRefreshMonitor) self = data;
+  SdiRefreshMonitor *self = data;
 
   gdouble progress =
       ((gdouble)task_data->done_tasks) / ((gdouble)task_data->total_tasks);
@@ -406,8 +406,7 @@ static void update_dock_snaps(SdiRefreshMonitor *self, SnapdChange *change,
       }
     }
   }
-  g_hash_table_foreach(self->refreshing_snap_list, update_dock_bar,
-                       g_object_ref(self));
+  g_hash_table_foreach(self->refreshing_snap_list, update_dock_bar, self);
   for (GSList *p = snaps_to_remove; p != NULL; p = p->next) {
     g_hash_table_remove(self->refreshing_snap_list, p->data);
   }
