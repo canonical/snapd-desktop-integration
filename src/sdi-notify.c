@@ -297,13 +297,13 @@ static void notify_pending_refresh_forced(SdiNotify *self, SnapdSnap *snap,
   GTimeSpan difference = sdi_get_remaining_time_in_seconds(snap);
 
   if (difference > SECONDS_IN_A_DAY) {
-    title = g_strdup_printf(_("%s will close an update in %ld days"), name,
+    title = g_strdup_printf(_("%s will close and update in %ld days"), name,
                             difference / SECONDS_IN_A_DAY);
   } else if (difference > SECONDS_IN_AN_HOUR) {
-    title = g_strdup_printf(_("%s will close an update in %ld hours"), name,
+    title = g_strdup_printf(_("%s will close and update in %ld hours"), name,
                             difference / SECONDS_IN_AN_HOUR);
   } else {
-    title = g_strdup_printf(_("%s will close an update in %ld minutes"), name,
+    title = g_strdup_printf(_("%s will close and update in %ld minutes"), name,
                             difference / SECONDS_IN_A_MINUTE);
   }
 
@@ -386,6 +386,9 @@ void sdi_notify_pending_refresh(SdiNotify *self, GSList *snaps) {
           get_name_from_snap((SnapdSnap *)snaps->data),
           get_name_from_snap((SnapdSnap *)snaps->next->data),
           get_name_from_snap((SnapdSnap *)snaps->next->next->data));
+      break;
+    default:
+      body = g_strdup(_("Quit the apps to update them now."));
       break;
     }
   }

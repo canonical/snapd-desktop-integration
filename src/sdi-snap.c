@@ -43,7 +43,7 @@ struct _SdiSnap {
   // a progress bar for this snap in the next loop.
   gboolean hidden;
 
-  //* If the user pressed the "Hide" button in a  progress dialog, it is
+  //* If the user pressed the "Hide" button in a progress dialog, it is
   // destroyed and
   // this is set to TRUE to avoid creating again that dialog in the next loop.
   gboolean manually_hidden;
