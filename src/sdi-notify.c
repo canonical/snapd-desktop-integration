@@ -248,14 +248,14 @@ static void show_pending_update_notification(SdiNotify *self,
   g_notification_add_button_with_target(notification, _("Show updates"),
                                         "app.show-updates", "s",
                                         "pending-update");
-  g_autoptr(GVariantBuilder) builder =
-      g_variant_builder_new(G_VARIANT_TYPE("as"));
-  for (; snaps != NULL; snaps = snaps->next) {
-    SnapdSnap *snap = (SnapdSnap *)snaps->data;
-    g_variant_builder_add(builder, "s", snapd_snap_get_name(snap));
-  }
-  GVariant *values = g_variant_builder_end(builder);
   if (allow_to_ignore) {
+    g_autoptr(GVariantBuilder) builder =
+        g_variant_builder_new(G_VARIANT_TYPE("as"));
+    for (; snaps != NULL; snaps = snaps->next) {
+      SnapdSnap *snap = (SnapdSnap *)snaps->data;
+      g_variant_builder_add(builder, "s", snapd_snap_get_name(snap));
+    }
+    GVariant *values = g_variant_ref_sink(g_variant_builder_end(builder));
     g_notification_add_button_with_target_value(
         notification, _("Don't remind me again"), "app.ignore-updates", values);
   }
