@@ -339,6 +339,9 @@ static void update_dock_bar(gpointer key, gpointer value, gpointer data) {
   SnapProgressTaskData *task_data = value;
   SdiRefreshMonitor *self = data;
 
+  if (task_data->total_tasks == 0) {
+    return;
+  }
   gdouble progress =
       ((gdouble)task_data->done_tasks) / ((gdouble)task_data->total_tasks);
   if ((progress == task_data->old_progress) && !task_data->done) {
