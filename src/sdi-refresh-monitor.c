@@ -360,12 +360,13 @@ static void update_dock_bar(gpointer key, gpointer value, gpointer data) {
   g_variant_builder_add(builder, "{sv}", "updating",
                         g_variant_new_boolean(!task_data->done));
 
-  g_autoptr(GVariant) values = g_variant_builder_end(builder);
+  g_autoptr(GVariant) values =
+      g_variant_ref_sink(g_variant_builder_end(builder));
 
   for (int i = 0; i < task_data->desktop_files->len; i++) {
     const gchar *desktop_file = task_data->desktop_files->pdata[i];
-    unity_com_canonical_unity_launcher_entry_emit_update(
-        self->unity_manager, desktop_file, g_variant_ref(values));
+    unity_com_canonical_unity_launcher_entry_emit_update(self->unity_manager,
+                                                         desktop_file, values);
   }
 }
 
