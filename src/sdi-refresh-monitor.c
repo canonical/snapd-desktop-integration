@@ -344,11 +344,11 @@ static void update_dock_bar(gpointer key, gpointer value, gpointer data) {
   }
   gdouble progress =
       ((gdouble)task_data->done_tasks) / ((gdouble)task_data->total_tasks);
+  task_data->done_tasks = 0;
+  task_data->total_tasks = 0;
   if ((progress == task_data->old_progress) && !task_data->done) {
     return;
   }
-  task_data->done_tasks = 0;
-  task_data->total_tasks = 0;
   task_data->old_progress = progress;
   if (task_data->desktop_files->len == 0) {
     return;
