@@ -267,12 +267,12 @@ static void refresh_change(gpointer p) {
 static gboolean status_is_done(const gchar *status) {
   gboolean done = g_str_equal(status, "Done") || g_str_equal(status, "Abort") ||
                   g_str_equal(status, "Error") || g_str_equal(status, "Hold") ||
-                  g_str_equal(status, "Wait");
+                  g_str_equal(status, "Wait") || g_str_equal(status, "Undone");
   return done;
 }
 
 static void update_inhibited_snaps(SdiRefreshMonitor *self, SnapdChange *change,
-                                   gboolean done, gboolean hold) {
+                                   gboolean done, gboolean cancelled) {
   SnapdAutorefreshChangeData *change_data =
       SNAPD_AUTOREFRESH_CHANGE_DATA(snapd_change_get_data(change));
 
@@ -291,7 +291,7 @@ static void update_inhibited_snaps(SdiRefreshMonitor *self, SnapdChange *change,
     if (!sdi_snap_get_inhibited(snap))
       continue;
 
-    if (done || hold) {
+    if (done || cancelled) {
       remove_snap(self, snap);
       SnapRefreshData *data = snap_refresh_data_new(self, NULL, snap_name);
       if (done) {
@@ -375,7 +375,7 @@ static void update_dock_bar(gpointer key, gpointer value, gpointer data) {
 }
 
 static void update_dock_snaps(SdiRefreshMonitor *self, SnapdChange *change,
-                              gboolean done, gboolean hold) {
+                              gboolean done, gboolean cancelled) {
   GPtrArray *tasks = snapd_change_get_tasks(change);
   GSList *snaps_to_remove = NULL;
 
@@ -406,7 +406,7 @@ static void update_dock_snaps(SdiRefreshMonitor *self, SnapdChange *change,
       if (task_done) {
         progress_task_data->done_tasks++;
       }
-      if (done || hold) {
+      if (done || cancelled) {
         snaps_to_remove = g_slist_prepend(snaps_to_remove, g_strdup(snap_name));
       }
     }
@@ -419,8 +419,13 @@ static void update_dock_snaps(SdiRefreshMonitor *self, SnapdChange *change,
 }
 
 static gboolean cancelled_change_status(const gchar *status) {
-  return g_str_equal(status, "Hold") || g_str_equal(status, "Undone") ||
-         g_str_equal(status, "Undo");
+  return g_str_equal(status, "Undoing") || g_str_equal(status, "Undone") ||
+         g_str_equal(status, "Undo") || g_str_equal(status, "Error");
+}
+
+static gboolean valid_working_change_status(const gchar *status) {
+  return g_str_equal(status, "Do") || g_str_equal(status, "Doing") ||
+         g_str_equal(status, "Done");
 }
 
 static void manage_change_update(SnapdClient *source, GAsyncResult *res,
@@ -440,8 +445,15 @@ static void manage_change_update(SnapdClient *source, GAsyncResult *res,
   if (change == NULL)
     return;
 
-  gboolean done = g_str_equal(snapd_change_get_status(change), "Done");
-  gboolean cancelled = cancelled_change_status(snapd_change_get_status(change));
+  const gchar *change_status = snapd_change_get_status(change);
+
+  gboolean done = g_str_equal(change_status, "Done");
+  gboolean cancelled = cancelled_change_status(change_status);
+  gboolean valid_do = valid_working_change_status(change_status);
+  if (!(valid_do || cancelled)) {
+    g_print("Unknown state %s\n", change_status);
+    return;
+  }
 
   if (g_str_equal(snapd_change_get_kind(change), "auto-refresh")) {
     update_inhibited_snaps(self, change, done, cancelled);
