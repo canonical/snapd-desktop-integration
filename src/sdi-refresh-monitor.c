@@ -112,7 +112,8 @@ static SdiSnap *add_snap(SdiRefreshMonitor *self, const gchar *snap_name) {
   g_autoptr(SdiSnap) snap = find_snap(self, snap_name);
   if (snap == NULL) {
     snap = sdi_snap_new(snap_name);
-    g_hash_table_insert(self->snaps, (gpointer)snap_name, g_object_ref(snap));
+    g_hash_table_insert(self->snaps, (gpointer)g_strdup(snap_name),
+                        g_object_ref(snap));
   }
   return g_steal_pointer(&snap);
 }
@@ -363,7 +364,7 @@ static void update_dock_bar(gpointer key, gpointer value, gpointer data) {
                         g_variant_new_boolean(!task_data->done));
 
   g_autoptr(GVariant) values =
-      g_object_ref_sink(g_variant_builder_end(builder));
+      g_variant_ref_sink(g_variant_builder_end(builder));
 
   for (int i = 0; i < task_data->desktop_files->len; i++) {
     const gchar *desktop_file = task_data->desktop_files->pdata[i];
@@ -472,29 +473,28 @@ static void manage_refresh_inhibit(SnapdClient *source, GAsyncResult *res,
   }
   if (snaps->len == 0)
     return;
-  // remove snaps that are marked as "ignore"
-  g_autoptr(GSList) snaps_not_ignored = NULL;
+  // Check if there's at least one snap not marked as "ignore"
+  gboolean show_grouped_notification = FALSE;
+  g_autoptr(GSList) snap_list = NULL;
   for (guint i = 0; i < snaps->len; i++) {
-    const gchar *name = snapd_snap_get_name(snaps->pdata[i]);
+    SnapdSnap *snap = snaps->pdata[i];
+    const gchar *name = snapd_snap_get_name(snap);
     if (name == NULL)
       continue;
     g_autoptr(SdiSnap) snap_data = add_snap(self, name);
     if (snap_data == NULL)
       continue;
     sdi_snap_set_inhibited(snap_data, TRUE);
-    if (sdi_snap_get_ignored(snap_data))
-      continue;
-    snaps_not_ignored =
-        g_slist_prepend(snaps_not_ignored, g_object_ref(snaps->pdata[i]));
+    if (!sdi_snap_get_ignored(snap_data)) {
+      show_grouped_notification = TRUE;
+    }
+    // Check if we have to notify the user because the snap will be
+    // force-refreshed soon
+    snap_list = g_slist_prepend(snap_list, snap);
+    sdi_notify_check_forced_refresh(self->notify, snap, snap_data);
   }
-  if (g_slist_length(snaps_not_ignored) > 1) {
-    sdi_notify_pending_refresh_multiple(self->notify, snaps_not_ignored);
-    return;
-  }
-  if (snaps_not_ignored != NULL) {
-    // just one notice
-    sdi_notify_pending_refresh_one(self->notify, snaps_not_ignored->data);
-    return;
+  if (show_grouped_notification) {
+    sdi_notify_pending_refresh(self->notify, snap_list);
   }
 }
 

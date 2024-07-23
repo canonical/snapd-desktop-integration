@@ -24,26 +24,36 @@ struct _SdiSnap {
 
   //* the snap name used as identifier
   gchar *name;
+
   //* if this snap is being refreshed, this is the Gtk widget that contains the
   // icon, progress bar, refresh message and "Hide" button
   SdiRefreshDialog *dialog;
+
   //* This is set to TRUE if the user clicked the "Ignore" button in a
   // notification, to avoid new notifications to be shown
   gboolean ignored;
+
   //* If a snap is marked as "inhibited", it means that it is waiting for the
   // user to close the instance to continue the refresh. Non-inhibited snaps
   // must NOT show a progress bar.
   gboolean inhibited;
+
   //* If a dialog is destroyed for whatever reason (for example, because the top
   // window containing it is closed) this is set to TRUE to avoid creating again
   // a progress bar for this snap in the next loop.
   gboolean hidden;
-  //* If the user pressed the "Hide" button in a dialog, it is destroyed and
+
+  //* If the user pressed the "Hide" button in a progress dialog, it is
+  // destroyed and
   // this is set to TRUE to avoid creating again that dialog in the next loop.
   gboolean manually_hidden;
+
   //* The id for the "destroy" signal connection, to allow to disconnect it when
   // the object is disposed, or if the dialog is replaced by another one.
   gint destroy_id;
+
+  //* Every time a notification is shown, this value is updated to the remaining
+  GTimeSpan last_remaining_time;
 };
 
 G_DEFINE_TYPE(SdiSnap, sdi_snap, G_TYPE_OBJECT)
@@ -85,6 +95,16 @@ gboolean sdi_snap_get_hidden(SdiSnap *self) {
 void sdi_snap_set_hidden(SdiSnap *self, gboolean hidden) {
   g_return_if_fail(SDI_IS_SNAP(self));
   self->hidden = hidden;
+}
+
+GTimeSpan sdi_snap_get_last_remaining_time(SdiSnap *self) {
+  g_return_val_if_fail(SDI_IS_SNAP(self), G_MAXINT64);
+  return self->last_remaining_time;
+}
+
+void sdi_snap_set_last_remaining_time(SdiSnap *self, GTimeSpan time) {
+  g_return_if_fail(SDI_IS_SNAP(self));
+  self->last_remaining_time = time;
 }
 
 gboolean sdi_snap_get_manually_hidden(SdiSnap *self) {
@@ -174,7 +194,7 @@ static void sdi_snap_dispose(GObject *object) {
   G_OBJECT_CLASS(sdi_snap_parent_class)->dispose(object);
 }
 
-void sdi_snap_init(SdiSnap *self) {}
+void sdi_snap_init(SdiSnap *self) { self->last_remaining_time = G_MAXINT64; }
 
 void sdi_snap_class_init(SdiSnapClass *klass) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(klass);

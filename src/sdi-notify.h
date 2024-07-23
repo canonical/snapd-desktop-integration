@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include "sdi-snap.h"
 #include <gtk/gtk.h>
 #include <snapd-glib/snapd-glib.h>
 
@@ -30,11 +31,12 @@ SdiNotify *sdi_notify_new(GApplication *application);
 
 GApplication *sdi_notify_get_application(SdiNotify *notify);
 
-void sdi_notify_pending_refresh_one(SdiNotify *notify, SnapdSnap *snap);
-
-void sdi_notify_pending_refresh_multiple(SdiNotify *notify, GSList *snaps);
+void sdi_notify_pending_refresh(SdiNotify *notify, GSList *snaps);
 
 void sdi_notify_refresh_complete(SdiNotify *notify, SnapdSnap *snap,
                                  const gchar *snap_name);
+
+gboolean sdi_notify_check_forced_refresh(SdiNotify *notify, SnapdSnap *snap,
+                                         SdiSnap *snap_data);
 
 G_END_DECLS
