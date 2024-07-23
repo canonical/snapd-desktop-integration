@@ -258,6 +258,7 @@ static void show_snap_completed(GObject *source, GAsyncResult *res,
 
 static void refresh_change(gpointer p) {
   g_autoptr(SnapRefreshData) data = p;
+  g_hash_table_remove(data->self->changes, data->change_id);
   snapd_client_get_change_async(data->self->client, data->change_id, NULL,
                                 (GAsyncReadyCallback)manage_change_update,
                                 g_object_ref(data->self));
@@ -447,12 +448,14 @@ static void manage_change_update(SnapdClient *source, GAsyncResult *res,
   }
   update_dock_snaps(self, change, done, cancelled);
 
-  if (!done && !cancelled) {
+  const gchar *change_id = snapd_change_get_id(change);
+  if (!done && !cancelled && !g_hash_table_contains(self->changes, change_id)) {
     // refresh periodically this data, until the snap has been refreshed
-    SnapRefreshData *data =
-        snap_refresh_data_new(self, snapd_change_get_id(change), NULL);
-    g_timeout_add_once(CHANGE_REFRESH_PERIOD, (GSourceOnceFunc)refresh_change,
-                       data);
+    SnapRefreshData *data = snap_refresh_data_new(self, change_id, NULL);
+    guint id = g_timeout_add_once(CHANGE_REFRESH_PERIOD,
+                                  (GSourceOnceFunc)refresh_change, data);
+    g_hash_table_insert(self->changes, g_strdup(change_id),
+                        GINT_TO_POINTER(id));
   }
 }
 
@@ -548,6 +551,7 @@ static void sdi_refresh_monitor_dispose(GObject *object) {
   }
   g_clear_pointer(&self->snaps, g_hash_table_unref);
   g_clear_object(&self->client);
+  g_clear_pointer(&self->changes, g_hash_table_unref);
   g_clear_object(&self->snapd_monitor);
   g_clear_object(&self->notify);
   g_clear_object(&self->application);
@@ -596,6 +600,7 @@ static void error_cb(GObject *object, GError *error, gpointer data) {
 void sdi_refresh_monitor_init(SdiRefreshMonitor *self) {
   self->snaps =
       g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_object_unref);
+  self->changes = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
   // the key in this table is the snap name; the value is a SnapProgressTaskData
   // structure
   self->refreshing_snap_list = g_hash_table_new_full(
