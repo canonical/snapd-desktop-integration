@@ -451,7 +451,7 @@ static void manage_change_update(SnapdClient *source, GAsyncResult *res,
   gboolean cancelled = cancelled_change_status(change_status);
   gboolean valid_do = valid_working_change_status(change_status);
   if (!(valid_do || cancelled)) {
-    g_print("Unknown state %s\n", change_status);
+    g_debug("Unknown change status %s\n", change_status);
     return;
   }
 
