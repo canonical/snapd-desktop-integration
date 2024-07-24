@@ -192,7 +192,8 @@ static void show_pending_update_notification(SdiNotify *self,
                                  _("Show updates"), app_show_updates,
                                  g_object_ref(self), g_object_unref);
   notify_notification_add_action(notification, "default", _("Close"),
-                                 app_close_notification, NULL, NULL);
+                                 app_show_updates, g_object_ref(self),
+                                 g_object_unref);
   if (allow_to_ignore) {
     g_autoptr(GVariant) snap_list = get_snap_list(snaps);
     notify_notification_add_action(
@@ -243,8 +244,8 @@ static void show_pending_update_notification(SdiNotify *self,
   if (icon != NULL) {
     g_notification_set_icon(notification, g_object_ref(icon));
   }
-  g_notification_set_default_action_and_target(
-      notification, "app.close-notification", "s", "pending-update");
+  g_notification_set_default_action_and_target(notification, "app.show-updates",
+                                               "s", "pending-update");
   g_notification_add_button_with_target(notification, _("Show updates"),
                                         "app.show-updates", "s",
                                         "pending-update");
