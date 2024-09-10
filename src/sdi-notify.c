@@ -297,13 +297,13 @@ static void notify_pending_refresh_forced(SdiNotify *self, SnapdSnap *snap,
   GTimeSpan difference = sdi_get_remaining_time_in_seconds(snap);
 
   if (difference > SECONDS_IN_A_DAY) {
-    title = g_strdup_printf(_("%s will close and update in %ld days"), name,
+    title = g_strdup_printf(_("%s will quit and update in %ld days"), name,
                             difference / SECONDS_IN_A_DAY);
   } else if (difference > SECONDS_IN_AN_HOUR) {
-    title = g_strdup_printf(_("%s will close and update in %ld hours"), name,
+    title = g_strdup_printf(_("%s will quit and update in %ld hours"), name,
                             difference / SECONDS_IN_AN_HOUR);
   } else {
-    title = g_strdup_printf(_("%s will close and update in %ld minutes"), name,
+    title = g_strdup_printf(_("%s will quit and update in %ld minutes"), name,
                             difference / SECONDS_IN_A_MINUTE);
   }
 
@@ -376,13 +376,13 @@ void sdi_notify_pending_refresh(SdiNotify *self, GSList *snaps) {
     switch (n_snaps) {
     case 2:
       body =
-          g_strdup_printf(_("Quit %s and %s to update them now."),
+          g_strdup_printf(_("%s and %s will update when you quit them."),
                           get_name_from_snap((SnapdSnap *)snaps->data),
                           get_name_from_snap((SnapdSnap *)snaps->next->data));
       break;
     case 3:
       body = g_strdup_printf(
-          _("Quit %s, %s and %s to update them now."),
+          _("%s, %s and %s will update when you quit them."),
           get_name_from_snap((SnapdSnap *)snaps->data),
           get_name_from_snap((SnapdSnap *)snaps->next->data),
           get_name_from_snap((SnapdSnap *)snaps->next->next->data));
@@ -426,7 +426,7 @@ void sdi_notify_refresh_complete(SdiNotify *self, SnapdSnap *snap,
 
   g_autofree gchar *title = g_strdup_printf(_("%s was updated"), name);
 
-  update_complete_notification(self, title, _("Ready to launch"), icon,
+  update_complete_notification(self, title, _("You can reopen it now."), icon,
                                "update-complete", desktop);
 }
 
