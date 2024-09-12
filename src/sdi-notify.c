@@ -191,7 +191,11 @@ static void show_pending_update_notification(SdiNotify *self,
   notify_notification_add_action(notification, "app.show-updates",
                                  _("Show updates"), app_show_updates,
                                  g_object_ref(self), g_object_unref);
-  notify_notification_add_action(notification, "default", _("Close"),
+  // This is the default action, the one executed when the user clicks on the
+  // notification itself. It has no button, so the _("Show updates") text is
+  // really unnecesary. It's added just in case in a future notifications do
+  // use it for... whatever... a popup, for example.
+  notify_notification_add_action(notification, "default", _("Show updates"),
                                  app_show_updates, g_object_ref(self),
                                  g_object_unref);
   if (allow_to_ignore) {
