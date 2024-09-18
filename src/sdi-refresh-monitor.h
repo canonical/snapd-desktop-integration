@@ -29,11 +29,12 @@ G_DECLARE_FINAL_TYPE(SdiRefreshMonitor, sdi_refresh_monitor, SDI,
 
 SdiRefreshMonitor *sdi_refresh_monitor_new(GApplication *application);
 
-gboolean sdi_refresh_monitor_start(SdiRefreshMonitor *monitor, GError **error);
-
 SdiSnap *
 sdi_refresh_monitor_begin_application_refresh(SdiRefreshMonitor *monitor,
                                               const gchar *snap_name);
+
+void sdi_refresh_monitor_notice_cb(GObject *object, SnapdNotice *notice,
+                                   gboolean first_run, gpointer monitor);
 
 GApplication *sdi_refresh_monitor_get_application(SdiRefreshMonitor *monitor);
 

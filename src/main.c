@@ -29,6 +29,7 @@
 
 #include "sdi-refresh-monitor.h"
 #include "sdi-session-helpers.h"
+#include "sdi-snapd-monitor.h"
 #include "sdi-theme-monitor.h"
 
 static gchar *snapd_socket_path = NULL;
@@ -49,15 +50,17 @@ static SnapdClient *create_snapd_client() {
 }
 
 static void do_startup(GObject *object, gpointer data) {
-  GError *error = NULL;
 #ifndef USE_GNOTIFY
   notify_init("snapd-desktop-integration_snapd-desktop-integration");
 #endif
   SdiRefreshMonitor *refresh_monitor =
       sdi_refresh_monitor_new(G_APPLICATION(object));
-  if (!sdi_refresh_monitor_start(refresh_monitor, &error)) {
-    g_message("Failed to export the DBus Desktop Integration API %s",
-              error->message);
+  SdiSnapdMonitor *snapd_monitor = sdi_snapd_monitor_new();
+
+  g_signal_connect(snapd_monitor, "notice-event",
+                   (GCallback)sdi_refresh_monitor_notice_cb, refresh_monitor);
+  if (!sdi_snapd_monitor_start(snapd_monitor)) {
+    g_message("Failed to start monitor");
   }
 }
 
