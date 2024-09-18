@@ -31,11 +31,6 @@
 #include "sdi-session-helpers.h"
 #include "sdi-theme-monitor.h"
 
-static SnapdClient *client = NULL;
-static GtkApplication *app = NULL;
-static SdiThemeMonitor *theme_monitor = NULL;
-static SdiRefreshMonitor *refresh_monitor = NULL;
-
 static gchar *snapd_socket_path = NULL;
 
 static GOptionEntry entries[] = {{"snapd-socket-path", 0, 0,
@@ -43,13 +38,23 @@ static GOptionEntry entries[] = {{"snapd-socket-path", 0, 0,
                                   "Snapd socket path", "PATH"},
                                  {NULL}};
 
+static SnapdClient *create_snapd_client() {
+  SnapdClient *client = snapd_client_new();
+  if (snapd_socket_path != NULL) {
+    snapd_client_set_socket_path(client, snapd_socket_path);
+  } else if (g_getenv("SNAP") != NULL) {
+    snapd_client_set_socket_path(client, "/run/snapd-snap.socket");
+  }
+  return client;
+}
+
 static void do_startup(GObject *object, gpointer data) {
   GError *error = NULL;
 #ifndef USE_GNOTIFY
   notify_init("snapd-desktop-integration_snapd-desktop-integration");
 #endif
-  client = snapd_client_new();
-  refresh_monitor = sdi_refresh_monitor_new(G_APPLICATION(object));
+  SdiRefreshMonitor *refresh_monitor =
+      sdi_refresh_monitor_new(G_APPLICATION(object));
   if (!sdi_refresh_monitor_start(refresh_monitor, &error)) {
     g_message("Failed to export the DBus Desktop Integration API %s",
               error->message);
@@ -58,15 +63,10 @@ static void do_startup(GObject *object, gpointer data) {
 
 static void do_activate(GObject *object, gpointer data) {
   // because, by default, there are no windows, so the application would quit
-  g_application_hold(G_APPLICATION(app));
+  g_application_hold(G_APPLICATION(object));
 
-  if (snapd_socket_path != NULL) {
-    snapd_client_set_socket_path(client, snapd_socket_path);
-  } else if (g_getenv("SNAP") != NULL) {
-    snapd_client_set_socket_path(client, "/run/snapd-snap.socket");
-  }
-
-  theme_monitor = sdi_theme_monitor_new(client);
+  SnapdClient *client = create_snapd_client();
+  SdiThemeMonitor *theme_monitor = sdi_theme_monitor_new(client);
   sdi_theme_monitor_start(theme_monitor);
 }
 
@@ -80,6 +80,9 @@ void sighandler(int v) {
 
 int main(int argc, char **argv) {
   int retval;
+
+  // This is a hack to avoid the daemon being relaunched over and
+  // over again when opening a non-graphical session.
   int pid = fork();
   if (pid != 0) {
     if (pid > 0) {
@@ -109,6 +112,9 @@ int main(int argc, char **argv) {
   textdomain(GETTEXT_PACKAGE);
 
   if (!gtk_init_check()) {
+    // The program is running in a non-graphical session (like a SSH remote
+    // session, or a text-mode terminal), so it has to wait until a graphical
+    // session is opened.
     g_message("Failed to do gtk init. Waiting for a new session with desktop "
               "capabilities.");
     sdi_wait_for_graphical_session();
@@ -116,9 +122,9 @@ int main(int argc, char **argv) {
     return 0;
   }
 
-  app = gtk_application_new("io.snapcraft.SnapDesktopIntegration",
-                            G_APPLICATION_ALLOW_REPLACEMENT |
-                                G_APPLICATION_REPLACE);
+  GtkApplication *app = gtk_application_new(
+      "io.snapcraft.SnapDesktopIntegration",
+      G_APPLICATION_ALLOW_REPLACEMENT | G_APPLICATION_REPLACE);
   g_signal_connect(G_OBJECT(app), "startup", G_CALLBACK(do_startup), NULL);
   g_signal_connect(G_OBJECT(app), "shutdown", G_CALLBACK(do_shutdown), NULL);
   g_signal_connect(G_OBJECT(app), "activate", G_CALLBACK(do_activate), NULL);
