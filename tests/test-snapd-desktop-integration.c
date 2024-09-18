@@ -143,7 +143,7 @@ static void handle_snapd_request(SoupServer *server, SoupServerMessage *message,
                                  gpointer user_data) {
   if (strcmp(path, "/v2/accessories/themes") == 0) {
     handle_snapd_themes_request(message);
-  } else if (strcmp(path, "/v2/changes/1234") == 0 &&
+  } else if (strcmp(path, "/v2/accessories/changes/1234") == 0 &&
              strcmp(soup_server_message_get_method(message), "GET") == 0) {
     handle_snapd_get_changes_request(message);
   } else {
@@ -285,11 +285,13 @@ static void handle_notifications_method_call(
     if (state == STATE_PROMPT_INSTALL) {
       g_assert_cmpstr(summary, ==, "Some required theme snaps are missing.");
       g_assert_cmpstr(body, ==, "Would you like to install them now?");
-      g_assert_cmpint(g_strv_length(actions), ==, 4);
+      g_assert_cmpint(g_strv_length(actions), ==, 6);
       g_assert_cmpstr(actions[0], ==, "yes");
       g_assert_cmpstr(actions[1], ==, "Yes");
       g_assert_cmpstr(actions[2], ==, "no");
       g_assert_cmpstr(actions[3], ==, "No");
+      g_assert_cmpstr(actions[4], ==, "default");
+      g_assert_cmpstr(actions[5], ==, "default");
 
       g_assert_true(g_dbus_connection_emit_signal(
           connection, NULL, "/org/freedesktop/Notifications",
