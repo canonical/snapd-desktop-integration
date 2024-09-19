@@ -61,7 +61,6 @@ static gboolean _sdi_session_is_desktop(const gchar *object_path) {
 }
 
 static gboolean _sdi_check_graphical_sessions(GMainLoop *loop) {
-
   GVariant *sessions = NULL;
   gboolean got_session_list;
 
