@@ -96,8 +96,7 @@ static gboolean _sdi_check_graphical_sessions(GMainLoop *loop) {
 }
 
 static void new_session(Login1Manager *manager, const gchar *session_id,
-                        const gchar *object_path, gpointer data) {
-  GMainLoop *loop = (GMainLoop *)data;
+                        const gchar *object_path, GMainLoop *loop) {
   g_message("Detected new session %s at %s\n", session_id, object_path);
 
   if (_sdi_session_is_desktop(object_path)) {
