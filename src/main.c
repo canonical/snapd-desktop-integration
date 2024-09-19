@@ -17,6 +17,7 @@
 
 #include "config.h"
 #include <errno.h>
+#include <glib-unix.h>
 #include <glib/gi18n.h>
 #include <gtk/gtk.h>
 #include <libnotify/notify.h>
@@ -37,6 +38,7 @@ static SnapdClient *client = NULL;
 static GtkApplication *app = NULL;
 static SdiThemeMonitor *theme_monitor = NULL;
 static SdiRefreshMonitor *refresh_monitor = NULL;
+static gboolean running = FALSE;
 
 static gchar *snapd_socket_path = NULL;
 
@@ -151,6 +153,7 @@ static void do_startup(GObject *object, gpointer data) {
 static void do_activate(GObject *object, gpointer data) {
   // because, by default, there are no windows, so the application would quit
   g_application_hold(G_APPLICATION(app));
+  running = TRUE;
 
   if (snapd_socket_path != NULL) {
     snapd_client_set_socket_path(client, snapd_socket_path);
@@ -168,6 +171,14 @@ static int global_retval = 0;
 
 void sighandler(int v) {
   global_retval = 128 + v; // exit value is usually 128 + signal_id
+}
+
+static gboolean close_app(GApplication *application) {
+  if (running) {
+    g_application_release(application);
+    running = FALSE;
+  }
+  return G_SOURCE_REMOVE;
 }
 
 int main(int argc, char **argv) {
@@ -233,7 +244,16 @@ int main(int argc, char **argv) {
 
   g_application_add_main_option_entries(G_APPLICATION(app), entries);
 
+  g_unix_signal_add(SIGINT, (GSourceFunc)close_app, app);
+  g_unix_signal_add(SIGTERM, (GSourceFunc)close_app, app);
+
   g_application_run(G_APPLICATION(app), argc, argv);
+
+  g_clear_object(&client);
+  g_clear_object(&theme_monitor);
+  g_clear_object(&refresh_monitor);
+  g_clear_object(&login_manager);
+  g_clear_object(&app);
 
   // since it should never ends, if we reach here, we return 0 as error value to
   // ensure that systemd will relaunch it.
