@@ -35,7 +35,6 @@
 
 static Login1Manager *login_manager = NULL;
 static SnapdClient *client = NULL;
-static GtkApplication *app = NULL;
 static SdiThemeMonitor *theme_monitor = NULL;
 static SdiRefreshMonitor *refresh_monitor = NULL;
 static gboolean running = FALSE;
@@ -152,7 +151,7 @@ static void do_startup(GObject *object, gpointer data) {
 
 static void do_activate(GObject *object, gpointer data) {
   // because, by default, there are no windows, so the application would quit
-  g_application_hold(G_APPLICATION(app));
+  g_application_hold(G_APPLICATION(object));
   running = TRUE;
 
   if (snapd_socket_path != NULL) {
@@ -165,7 +164,13 @@ static void do_activate(GObject *object, gpointer data) {
   sdi_theme_monitor_start(theme_monitor);
 }
 
-static void do_shutdown(GObject *object, gpointer data) { notify_uninit(); }
+static void do_shutdown(GObject *object, gpointer data) {
+  notify_uninit();
+  g_clear_object(&client);
+  g_clear_object(&theme_monitor);
+  g_clear_object(&refresh_monitor);
+  g_clear_object(&login_manager);
+}
 
 static int global_retval = 0;
 
@@ -235,9 +240,9 @@ int main(int argc, char **argv) {
     return 0;
   }
 
-  app = gtk_application_new("io.snapcraft.SnapDesktopIntegration",
-                            G_APPLICATION_ALLOW_REPLACEMENT |
-                                G_APPLICATION_REPLACE);
+  g_autoptr(GtkApplication) app = gtk_application_new(
+      "io.snapcraft.SnapDesktopIntegration",
+      G_APPLICATION_ALLOW_REPLACEMENT | G_APPLICATION_REPLACE);
   g_signal_connect(G_OBJECT(app), "startup", G_CALLBACK(do_startup), NULL);
   g_signal_connect(G_OBJECT(app), "shutdown", G_CALLBACK(do_shutdown), NULL);
   g_signal_connect(G_OBJECT(app), "activate", G_CALLBACK(do_activate), NULL);
@@ -248,12 +253,6 @@ int main(int argc, char **argv) {
   g_unix_signal_add(SIGTERM, (GSourceFunc)close_app, app);
 
   g_application_run(G_APPLICATION(app), argc, argv);
-
-  g_clear_object(&client);
-  g_clear_object(&theme_monitor);
-  g_clear_object(&refresh_monitor);
-  g_clear_object(&login_manager);
-  g_clear_object(&app);
 
   // since it should never ends, if we reach here, we return 0 as error value to
   // ensure that systemd will relaunch it.
