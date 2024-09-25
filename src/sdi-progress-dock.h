@@ -17,17 +17,21 @@
 
 #pragma once
 
-#include <snapd-glib/snapd-glib.h>
+#include <gio/gio.h>
 
 G_BEGIN_DECLS
 
-#define SDI_TYPE_SNAPD_MONITOR sdi_snapd_monitor_get_type()
+#define SDI_TYPE_PROGRESS_DOCK sdi_progress_dock_get_type()
 
-G_DECLARE_FINAL_TYPE(SdiSnapdMonitor, sdi_snapd_monitor, SDI, SNAPD_MONITOR,
+G_DECLARE_FINAL_TYPE(SdiProgressDock, sdi_progress_dock, SDI, PROGRESS_DOCK,
                      GObject)
 
-SdiSnapdMonitor *sdi_snapd_monitor_new();
+SdiProgressDock *sdi_progress_dock_new(GApplication *application);
 
-gboolean sdi_snapd_monitor_start(SdiSnapdMonitor *self);
+void sdi_progress_dock_update_progress(SdiProgressDock *self, gchar *snap_name,
+                                       GStrv desktop_files,
+                                       gchar *task_description,
+                                       guint done_tasks, guint total_tasks,
+                                       gboolean task_done);
 
 G_END_DECLS

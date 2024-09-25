@@ -29,10 +29,10 @@ G_DECLARE_FINAL_TYPE(SdiRefreshMonitor, sdi_refresh_monitor, SDI,
 
 SdiRefreshMonitor *sdi_refresh_monitor_new(GApplication *application);
 
-void sdi_refresh_monitor_ignore_snap_cb(SdiRefreshMonitor *self,
-                                        const gchar *snap_name, gpointer data);
+void sdi_refresh_monitor_ignore_snap(SdiRefreshMonitor *self,
+                                     const gchar *snap_name);
 
 void sdi_refresh_monitor_notice(SdiRefreshMonitor *monitor, SnapdNotice *notice,
-                                gboolean first_run, gpointer data);
+                                gboolean first_run);
 
 G_END_DECLS

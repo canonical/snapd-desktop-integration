@@ -92,11 +92,12 @@ static void sdi_notify_action_ignore(GActionGroup *action_group,
 #endif
 }
 
-// Currently, due to the way Snapd creates the .desktop files, the notifications
-// created with GNotify don't show the application icon in the upper-left
-// corner, putting instead the "generic gears" icon. This is the reason why, by
-// default, we use libnotify. This problem is being tackled by the snapd people,
-// so, in the future, GNotify would be the prefered choice.
+/* Currently, due to the way Snapd creates the .desktop files, the notifications
+ * created with GNotify don't show the application icon in the upper-left
+ * corner, putting instead the "generic gears" icon. This is the reason why, by
+ * default, we use libnotify. This problem is being tackled by the snapd people,
+ * so, in the future, GNotify would be the prefered choice.
+ */
 #ifndef USE_GNOTIFY
 
 static GVariant *get_snap_list(GListModel *snaps) {
@@ -227,10 +228,11 @@ static void show_pending_update_notification(SdiNotify *self,
                                  _("Show updates"),
                                  (NotifyActionCallback)app_show_updates,
                                  g_object_ref(self), g_object_unref);
-  // This is the default action, the one executed when the user clicks on the
-  // notification itself. It has no button, so the _("Show updates") text is
-  // really unnecesary. It's added just in case in a future notifications do
-  // use it for... whatever... a popup, for example.
+  /* This is the default action, the one executed when the user clicks on the
+   * notification itself. It has no button, so the _("Show updates") text is
+   * really unnecesary. It's added just in case in a future notifications do
+   * use it for... whatever... a popup, for example.
+   */
   notify_notification_add_action(notification, "default", _("Show updates"),
                                  (NotifyActionCallback)app_show_updates,
                                  g_object_ref(self), g_object_unref);
@@ -329,8 +331,7 @@ static void update_complete_notification(SdiNotify *self, const gchar *title,
 
 void sdi_notify_pending_refresh_forced(SdiNotify *self, SnapdSnap *snap,
                                        GTimeSpan remaining_time,
-                                       gboolean allow_to_ignore,
-                                       gpointer data) {
+                                       gboolean allow_to_ignore) {
   g_return_if_fail(SDI_IS_NOTIFY(self));
   g_return_if_fail(snap != NULL);
 
@@ -414,8 +415,7 @@ static gchar *build_body_message_for_three_refreshes(SnapdSnap *snap0,
                          snap_name0, snap_name1, snap_name2);
 }
 
-void sdi_notify_pending_refresh(SdiNotify *self, GListModel *snaps,
-                                gpointer data) {
+void sdi_notify_pending_refresh(SdiNotify *self, GListModel *snaps) {
   g_return_if_fail(SDI_IS_NOTIFY(self));
   g_return_if_fail(snaps != NULL);
 
@@ -438,9 +438,10 @@ void sdi_notify_pending_refresh(SdiNotify *self, GListModel *snaps,
       icon = g_app_info_get_icon(app_info);
     }
   } else {
-    // Although the case for 1 app is managed outside this, I put it here to
-    // ensure that ngettext works as expected, and to ensure that translators
-    // know what is going on.
+    /* Although the case for 1 app is managed outside this, I put it here to
+     * ensure that ngettext works as expected, and to ensure that translators
+     * know what is going on.
+     */
     /// TRANSLATORS: when there are several updates available, this is the
     /// message used to notify the user how many updates are.
     title = g_strdup_printf(ngettext("Update available for %d app",
@@ -448,8 +449,9 @@ void sdi_notify_pending_refresh(SdiNotify *self, GListModel *snaps,
                             n_snaps);
     g_autoptr(SnapdSnap) snap0 = g_list_model_get_item(snaps, 0);
     g_autoptr(SnapdSnap) snap1 = g_list_model_get_item(snaps, 1);
-    // snap2 will be NULL if the number of items is less than three,
-    // so it's not a problem to do this.
+    /* snap2 will be NULL if the number of items is less than three,
+     * so it's not a problem to do this.
+     */
     g_autoptr(SnapdSnap) snap2 = g_list_model_get_item(snaps, 2);
     switch (n_snaps) {
     case 2:
@@ -475,7 +477,7 @@ void sdi_notify_pending_refresh(SdiNotify *self, GListModel *snaps,
 }
 
 void sdi_notify_refresh_complete(SdiNotify *self, SnapdSnap *snap,
-                                 const gchar *snap_name, gpointer data) {
+                                 const gchar *snap_name) {
   g_return_if_fail(SDI_IS_NOTIFY(self));
   g_return_if_fail((snap != NULL) || (snap_name != NULL));
 

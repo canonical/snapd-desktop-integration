@@ -194,10 +194,11 @@ static void set_icon_image(SdiRefreshDialog *self, GdkPixbuf *image) {
     gtk_widget_set_visible(GTK_WIDGET(self->icon_image), FALSE);
     return;
   }
-  // This convoluted code is needed to be able to scale
-  // any picture to the desired size, and also to allow
-  // to set the scale and take advantage of the monitor
-  // scale.
+  /* This convoluted code is needed to be able to scale
+   * any picture to the desired size, and also to allow
+   * to set the scale and take advantage of the monitor
+   * scale.
+   */
   scale = gtk_widget_get_scale_factor(GTK_WIDGET(self->icon_image));
   scaled_image = gdk_pixbuf_scale_simple(
       image, ICON_SIZE * scale, ICON_SIZE * scale, GDK_INTERP_BILINEAR);
@@ -220,8 +221,10 @@ void sdi_refresh_dialog_set_icon_image(SdiRefreshDialog *self,
   g_autoptr(GFile) fimage = NULL;
   g_autoptr(GdkPixbuf) image = NULL;
 
-  if (icon_image == NULL)
+  if (icon_image == NULL) {
+    gtk_widget_set_visible(GTK_WIDGET(self->icon_image), FALSE);
     return;
+  }
 
   if (strlen(icon_image) == 0) {
     gtk_widget_set_visible(GTK_WIDGET(self->icon_image), FALSE);
