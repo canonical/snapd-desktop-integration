@@ -111,7 +111,8 @@ void sdi_wait_for_graphical_session(void) {
   login_manager = login1_manager_proxy_new_for_bus_sync(
       G_BUS_TYPE_SYSTEM, G_DBUS_PROXY_FLAGS_NONE, "org.freedesktop.login1",
       "/org/freedesktop/login1", NULL, NULL);
-  g_signal_connect(login_manager, "session-new", G_CALLBACK(new_session), loop);
+  guint session_new_id = g_signal_connect(login_manager, "session-new",
+                                          G_CALLBACK(new_session), loop);
   // Check if we are already in a graphical session to avoid race conditions
   // between the signals being connected and the main loop being run. This is
   // a must because, sometimes, snapd-desktop-integration is launched "too
@@ -122,4 +123,6 @@ void sdi_wait_for_graphical_session(void) {
   // session.
   g_idle_add((GSourceFunc)_sdi_check_graphical_sessions, loop);
   g_main_loop_run(loop);
+  g_signal_handler_disconnect(login_manager, session_new_id);
+  g_clear_object(&login_manager);
 }
