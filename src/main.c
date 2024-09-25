@@ -17,6 +17,7 @@
 
 #include "config.h"
 #include <errno.h>
+#include <glib-unix.h>
 #include <glib/gi18n.h>
 #include <gtk/gtk.h>
 #include <libnotify/notify.h>
@@ -34,9 +35,9 @@
 
 static Login1Manager *login_manager = NULL;
 static SnapdClient *client = NULL;
-static GtkApplication *app = NULL;
 static SdiThemeMonitor *theme_monitor = NULL;
 static SdiRefreshMonitor *refresh_monitor = NULL;
+static gboolean running = FALSE;
 
 static gchar *snapd_socket_path = NULL;
 
@@ -150,7 +151,8 @@ static void do_startup(GObject *object, gpointer data) {
 
 static void do_activate(GObject *object, gpointer data) {
   // because, by default, there are no windows, so the application would quit
-  g_application_hold(G_APPLICATION(app));
+  g_application_hold(G_APPLICATION(object));
+  running = TRUE;
 
   if (snapd_socket_path != NULL) {
     snapd_client_set_socket_path(client, snapd_socket_path);
@@ -162,12 +164,26 @@ static void do_activate(GObject *object, gpointer data) {
   sdi_theme_monitor_start(theme_monitor);
 }
 
-static void do_shutdown(GObject *object, gpointer data) { notify_uninit(); }
+static void do_shutdown(GObject *object, gpointer data) {
+  notify_uninit();
+  g_clear_object(&client);
+  g_clear_object(&theme_monitor);
+  g_clear_object(&refresh_monitor);
+  g_clear_object(&login_manager);
+}
 
 static int global_retval = 0;
 
 void sighandler(int v) {
   global_retval = 128 + v; // exit value is usually 128 + signal_id
+}
+
+static gboolean close_app(GApplication *application) {
+  if (running) {
+    g_application_release(application);
+    running = FALSE;
+  }
+  return G_SOURCE_REMOVE;
 }
 
 int main(int argc, char **argv) {
@@ -224,14 +240,17 @@ int main(int argc, char **argv) {
     return 0;
   }
 
-  app = gtk_application_new("io.snapcraft.SnapDesktopIntegration",
-                            G_APPLICATION_ALLOW_REPLACEMENT |
-                                G_APPLICATION_REPLACE);
+  g_autoptr(GtkApplication) app = gtk_application_new(
+      "io.snapcraft.SnapDesktopIntegration",
+      G_APPLICATION_ALLOW_REPLACEMENT | G_APPLICATION_REPLACE);
   g_signal_connect(G_OBJECT(app), "startup", G_CALLBACK(do_startup), NULL);
   g_signal_connect(G_OBJECT(app), "shutdown", G_CALLBACK(do_shutdown), NULL);
   g_signal_connect(G_OBJECT(app), "activate", G_CALLBACK(do_activate), NULL);
 
   g_application_add_main_option_entries(G_APPLICATION(app), entries);
+
+  g_unix_signal_add(SIGINT, (GSourceFunc)close_app, app);
+  g_unix_signal_add(SIGTERM, (GSourceFunc)close_app, app);
 
   g_application_run(G_APPLICATION(app), argc, argv);
 
