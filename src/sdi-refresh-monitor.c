@@ -25,11 +25,11 @@
 #include "sdi-helpers.h"
 #include "sdi-notify.h"
 #include "sdi-refresh-monitor.h"
+#include "sdi-snapd-client-factory.h"
 
 // time in ms for periodic check of each change in Refresh Monitor.
 #define CHANGE_REFRESH_PERIOD 500
 
-static void error_cb(GObject *object, GError *error, gpointer data);
 static void manage_change_update(SnapdClient *source, GAsyncResult *res,
                                  gpointer p);
 
@@ -41,10 +41,7 @@ struct _SdiRefreshMonitor {
   SdiNotify *notify;
   GHashTable *snaps;
   GHashTable *changes;
-  SnapdNoticesMonitor *snapd_monitor;
   SnapdClient *client;
-  guint signal_notice_id;
-  guint signal_error_id;
   GtkWindow *main_window;
   GApplication *application;
   GtkBox *refresh_bar_container;
@@ -565,12 +562,11 @@ static void manage_refresh_inhibit(SnapdClient *source, GAsyncResult *res,
   }
 }
 
-static void notice_cb(GObject *object, SnapdNotice *notice, gboolean first_run,
-                      gpointer monitor) {
-  SdiRefreshMonitor *self = SDI_REFRESH_MONITOR(monitor);
+void sdi_refresh_monitor_notice(SdiRefreshMonitor *self, SnapdNotice *notice,
+                                gboolean first_run, gpointer data) {
 
-  GHashTable *data = snapd_notice_get_last_data2(notice);
-  g_autofree gchar *kind = g_strdup(g_hash_table_lookup(data, "kind"));
+  GHashTable *notice_data = snapd_notice_get_last_data2(notice);
+  g_autofree gchar *kind = g_strdup(g_hash_table_lookup(notice_data, "kind"));
 
   switch (snapd_notice_get_notice_type(notice)) {
   case SNAPD_NOTICE_TYPE_CHANGE_UPDATE:
@@ -608,15 +604,9 @@ SdiNotify *sdi_refresh_monitor_get_notify(SdiRefreshMonitor *self) {
 static void sdi_refresh_monitor_dispose(GObject *object) {
   SdiRefreshMonitor *self = SDI_REFRESH_MONITOR(object);
 
-  if (self->snapd_monitor) {
-    snapd_notices_monitor_stop(self->snapd_monitor, NULL);
-    g_signal_handler_disconnect(self->snapd_monitor, self->signal_notice_id);
-    g_signal_handler_disconnect(self->snapd_monitor, self->signal_error_id);
-  }
   g_clear_pointer(&self->snaps, g_hash_table_unref);
   g_clear_object(&self->client);
   g_clear_pointer(&self->changes, g_hash_table_unref);
-  g_clear_object(&self->snapd_monitor);
   g_clear_object(&self->notify);
   g_clear_object(&self->application);
   g_clear_pointer(&self->refreshing_snap_list, g_hash_table_unref);
@@ -628,39 +618,6 @@ static void sdi_refresh_monitor_dispose(GObject *object) {
   G_OBJECT_CLASS(sdi_refresh_monitor_parent_class)->dispose(object);
 }
 
-static gboolean check_is_running_in_snap() {
-  return g_getenv("SNAP_NAME") != NULL;
-}
-
-static void configure_snapd_monitor(SdiRefreshMonitor *self) {
-  g_autoptr(SnapdClient) client = snapd_client_new();
-  if (check_is_running_in_snap())
-    snapd_client_set_socket_path(client, "/run/snapd-snap.socket");
-  self->snapd_monitor = snapd_notices_monitor_new_with_client(client);
-  self->signal_notice_id = g_signal_connect(self->snapd_monitor, "notice-event",
-                                            (GCallback)notice_cb, self);
-  self->signal_error_id = g_signal_connect(self->snapd_monitor, "error-event",
-                                           (GCallback)error_cb, self);
-}
-
-static void launch_snapd_monitor_after_error(gpointer data) {
-  SdiRefreshMonitor *self = SDI_REFRESH_MONITOR(data);
-  configure_snapd_monitor(self);
-  snapd_notices_monitor_start(self->snapd_monitor, NULL);
-}
-
-static void error_cb(GObject *object, GError *error, gpointer data) {
-  SdiRefreshMonitor *self = SDI_REFRESH_MONITOR(data);
-  g_print("Error %d; %s\n", error->code, error->message);
-  g_signal_handler_disconnect(self->snapd_monitor, self->signal_notice_id);
-  g_signal_handler_disconnect(self->snapd_monitor, self->signal_error_id);
-  g_clear_object(&self->snapd_monitor);
-  // wait one second to ensure that, in case that the error is because snapd is
-  // being replaced, the new instance has created the new socket, and thus avoid
-  // hundreds of error messages until it appears.
-  g_timeout_add_once(1000, launch_snapd_monitor_after_error, self);
-}
-
 void sdi_refresh_monitor_init(SdiRefreshMonitor *self) {
   self->snaps =
       g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_object_unref);
@@ -669,10 +626,7 @@ void sdi_refresh_monitor_init(SdiRefreshMonitor *self) {
   // structure
   self->refreshing_snap_list = g_hash_table_new_full(
       g_str_hash, g_str_equal, g_free, free_progress_task_data);
-  self->client = snapd_client_new();
-  if (check_is_running_in_snap())
-    snapd_client_set_socket_path(self->client, "/run/snapd-snap.socket");
-  configure_snapd_monitor(self);
+  self->client = sdi_snapd_client_factory_new_snapd_client();
 }
 
 /**
@@ -714,11 +668,4 @@ SdiRefreshMonitor *sdi_refresh_monitor_new(GApplication *application) {
       G_DBUS_INTERFACE_SKELETON(self->unity_manager),
       g_application_get_dbus_connection(application), unity_object, NULL);
   return self;
-}
-
-gboolean sdi_refresh_monitor_start(SdiRefreshMonitor *self, GError **error) {
-  g_return_val_if_fail(SDI_IS_REFRESH_MONITOR(self), FALSE);
-
-  snapd_notices_monitor_start(self->snapd_monitor, NULL);
-  return TRUE;
 }
