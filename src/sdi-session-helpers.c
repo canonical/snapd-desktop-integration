@@ -18,14 +18,14 @@
 #include "sdi-session-helpers.h"
 
 static Login1Manager *login_manager = NULL;
+static guint idle_id = 0;
 
 static gboolean _sdi_session_is_desktop(const gchar *object_path) {
   g_autoptr(OrgFreedesktopLogin1Session) session = NULL;
   g_autoptr(GVariant) user = NULL;
-  GVariant *user_data =
-      NULL; // this value belongs to the session proxy, so it must not be freed
-  const gchar *session_type =
-      NULL; // this value belongs to the session proxy, so it must not be freed
+  // these values belongs to the session proxy, so they must not be freed
+  GVariant *user_data = NULL;
+  const gchar *session_type = NULL;
 
   session = org_freedesktop_login1_session_proxy_new_for_bus_sync(
       G_BUS_TYPE_SYSTEM, G_DBUS_PROXY_FLAGS_NONE, "org.freedesktop.login1",
@@ -92,6 +92,8 @@ static gboolean _sdi_check_graphical_sessions(GMainLoop *loop) {
               "interface is connected). Forcing a reload.");
     g_main_loop_quit(loop);
   }
+  idle_id = 0; // we are already removing it here, so g_source_remove should not
+               // be called
   return G_SOURCE_REMOVE;
 }
 
@@ -107,7 +109,7 @@ static void new_session(Login1Manager *manager, const gchar *session_id,
 }
 
 void sdi_wait_for_graphical_session(void) {
-  GMainLoop *loop = g_main_loop_new(NULL, TRUE);
+  g_autoptr(GMainLoop) loop = g_main_loop_new(NULL, TRUE);
   login_manager = login1_manager_proxy_new_for_bus_sync(
       G_BUS_TYPE_SYSTEM, G_DBUS_PROXY_FLAGS_NONE, "org.freedesktop.login1",
       "/org/freedesktop/login1", NULL, NULL);
@@ -121,8 +123,12 @@ void sdi_wait_for_graphical_session(void) {
   // graphical session active, and if that's the case, we must exit to let
   // systemd relaunch us again, this time being able to get access to the
   // session.
-  g_idle_add((GSourceFunc)_sdi_check_graphical_sessions, loop);
+  idle_id = g_idle_add((GSourceFunc)_sdi_check_graphical_sessions, loop);
   g_main_loop_run(loop);
   g_signal_handler_disconnect(login_manager, session_new_id);
+  if (idle_id != 0)
+    g_source_remove(idle_id);
+  // login_manager is used in _sdi_check_graphical_session, so we can't make it
+  // local and use g_autoptr
   g_clear_object(&login_manager);
 }
