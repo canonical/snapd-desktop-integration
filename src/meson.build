@@ -12,6 +12,8 @@ snapd_desktop_integration = executable(
   'sdi-refresh-monitor.c',
   'sdi-theme-monitor.c',
   'sdi-helpers.c',
+  'sdi-snapd-monitor.c',
+  'sdi-snapd-client-factory.c',
   resources, login_src, login_session_src, unity_launcher_src, desktop_launcher_src,
   dependencies: [gtk_dep, snapd_glib_dep, libnotify_dep],
   install: true,
