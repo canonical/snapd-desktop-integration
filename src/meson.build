@@ -10,6 +10,7 @@ snapd_desktop_integration = executable(
   'sdi-snap.c',
   'sdi-refresh-dialog.c',
   'sdi-refresh-monitor.c',
+  'sdi-refresh-window.c',
   'sdi-theme-monitor.c',
   'sdi-user-session-helper.c',
   'sdi-helpers.c',
