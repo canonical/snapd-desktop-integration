@@ -31,12 +31,14 @@
 #include "org.freedesktop.login1.Session.h"
 #include "org.freedesktop.login1.h"
 #include "sdi-refresh-monitor.h"
+#include "sdi-refresh-window.h"
 #include "sdi-theme-monitor.h"
 
 static Login1Manager *login_manager = NULL;
 static SnapdClient *client = NULL;
 static SdiThemeMonitor *theme_monitor = NULL;
 static SdiRefreshMonitor *refresh_monitor = NULL;
+static SdiRefreshWindow *refresh_window = NULL;
 
 static gchar *snapd_socket_path = NULL;
 
@@ -142,6 +144,16 @@ static void do_startup(GObject *object, gpointer data) {
 #endif
   client = snapd_client_new();
   refresh_monitor = sdi_refresh_monitor_new(G_APPLICATION(object));
+  refresh_window = sdi_refresh_window_new(G_APPLICATION(object));
+  g_signal_connect_object(refresh_monitor, "begin_refresh",
+                          (GCallback)sdi_refresh_window_begin_refresh,
+                          refresh_window, G_CONNECT_SWAPPED);
+  g_signal_connect_object(refresh_monitor, "refresh_progress",
+                          (GCallback)sdi_refresh_window_update_progress,
+                          refresh_window, G_CONNECT_SWAPPED);
+  g_signal_connect_object(refresh_monitor, "end_refresh",
+                          (GCallback)sdi_refresh_window_end_refresh,
+                          refresh_window, G_CONNECT_SWAPPED);
   if (!sdi_refresh_monitor_start(refresh_monitor, &error)) {
     g_message("Failed to export the DBus Desktop Integration API %s",
               error->message);
@@ -167,6 +179,7 @@ static void do_shutdown(GObject *object, gpointer data) {
   g_clear_object(&client);
   g_clear_object(&theme_monitor);
   g_clear_object(&refresh_monitor);
+  g_clear_object(&refresh_window);
   g_clear_object(&login_manager);
 }
 
