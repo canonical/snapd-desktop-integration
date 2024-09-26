@@ -16,7 +16,6 @@
  */
 
 #include "sdi-helpers.h"
-#include "io.snapcraft.PrivilegedDesktopLauncher.h"
 
 GAppInfo *sdi_get_desktop_file_from_snap(SnapdSnap *snap) {
   GPtrArray *apps = snapd_snap_get_apps(snap);
@@ -58,57 +57,4 @@ GAppInfo *sdi_get_desktop_file_from_snap(SnapdSnap *snap) {
     }
   }
   return NULL;
-}
-
-GPtrArray *sdi_get_desktop_filenames_for_snap(const gchar *snap_name) {
-  g_autoptr(GDir) desktop_folder =
-      g_dir_open("/var/lib/snapd/desktop/applications", 0, NULL);
-  if (desktop_folder == NULL) {
-    return NULL;
-  }
-  g_autofree gchar *prefix = g_strdup_printf("%s_", snap_name);
-  const gchar *filename;
-  GPtrArray *desktop_files = g_ptr_array_new_with_free_func(g_free);
-  while ((filename = g_dir_read_name(desktop_folder)) != NULL) {
-    if (!g_str_has_prefix(filename, prefix)) {
-      continue;
-    }
-    if (!g_str_has_suffix(filename, ".desktop")) {
-      continue;
-    }
-    g_ptr_array_add(desktop_files, g_strdup(filename));
-  }
-  return desktop_files;
-}
-
-gboolean sdi_launch_desktop(GApplication *app, const gchar *desktop_file) {
-  g_autofree gchar *full_desktop_path = NULL;
-  g_autofree gchar *desktop_file2 = NULL;
-  if (*desktop_file == '/') {
-    full_desktop_path = g_strdup(desktop_file);
-    desktop_file2 = g_path_get_basename(desktop_file);
-  } else {
-    full_desktop_path = g_build_path("/", "/var/lib/snapd/desktop/applications",
-                                     desktop_file, NULL);
-    desktop_file2 = g_strdup(desktop_file);
-  }
-  if (!g_file_test(full_desktop_path, G_FILE_TEST_EXISTS)) {
-    return FALSE;
-  }
-  g_autoptr(PrivilegedDesktopLauncher) launcher = NULL;
-
-  launcher = privileged_desktop_launcher__proxy_new_sync(
-      g_application_get_dbus_connection(app), G_DBUS_PROXY_FLAGS_NONE,
-      "io.snapcraft.Launcher", "/io/snapcraft/PrivilegedDesktopLauncher", NULL,
-      NULL);
-  privileged_desktop_launcher__call_open_desktop_entry_sync(
-      launcher, desktop_file2, NULL, NULL);
-  return TRUE;
-}
-
-GTimeSpan sdi_get_remaining_time_in_seconds(SnapdSnap *snap) {
-  GDateTime *proceed_time = snapd_snap_get_proceed_time(snap);
-  g_autoptr(GDateTime) now = g_date_time_new_now_local();
-  GTimeSpan difference = g_date_time_difference(proceed_time, now) / 1000000;
-  return difference;
 }

@@ -25,6 +25,7 @@
 #include <glib/gi18n.h>
 #include <libnotify/notify.h>
 
+#include "io.snapcraft.PrivilegedDesktopLauncher.h"
 #include "sdi-helpers.h"
 #include "sdi-notify.h"
 
@@ -41,9 +42,41 @@ struct _SdiNotify {
 
 G_DEFINE_TYPE(SdiNotify, sdi_notify, G_TYPE_OBJECT)
 
+static GTimeSpan get_remaining_time_in_seconds(SnapdSnap *snap) {
+  GDateTime *proceed_time = snapd_snap_get_proceed_time(snap);
+  g_autoptr(GDateTime) now = g_date_time_new_now_local();
+  GTimeSpan difference = g_date_time_difference(proceed_time, now) / 1000000;
+  return difference;
+}
+
+static gboolean launch_desktop(GApplication *app, const gchar *desktop_file) {
+  g_autofree gchar *full_desktop_path = NULL;
+  g_autofree gchar *desktop_file2 = NULL;
+  if (*desktop_file == '/') {
+    full_desktop_path = g_strdup(desktop_file);
+    desktop_file2 = g_path_get_basename(desktop_file);
+  } else {
+    full_desktop_path = g_build_path("/", "/var/lib/snapd/desktop/applications",
+                                     desktop_file, NULL);
+    desktop_file2 = g_strdup(desktop_file);
+  }
+  if (!g_file_test(full_desktop_path, G_FILE_TEST_EXISTS)) {
+    return FALSE;
+  }
+  g_autoptr(PrivilegedDesktopLauncher) launcher = NULL;
+
+  launcher = privileged_desktop_launcher__proxy_new_sync(
+      g_application_get_dbus_connection(app), G_DBUS_PROXY_FLAGS_NONE,
+      "io.snapcraft.Launcher", "/io/snapcraft/PrivilegedDesktopLauncher", NULL,
+      NULL);
+  privileged_desktop_launcher__call_open_desktop_entry_sync(
+      launcher, desktop_file2, NULL, NULL);
+  return TRUE;
+}
+
 static void show_updates(SdiNotify *self) {
-  if (!sdi_launch_desktop(self->application, SNAP_STORE_UPDATES)) {
-    sdi_launch_desktop(self->application, SNAP_STORE);
+  if (!launch_desktop(self->application, SNAP_STORE_UPDATES)) {
+    launch_desktop(self->application, SNAP_STORE);
   }
 }
 
@@ -157,7 +190,7 @@ static void app_close_notification(NotifyNotification *notification,
 static void app_launch_updated(NotifyNotification *notification, char *action,
                                gpointer user_data) {
   LaunchUpdatedApp *data = (LaunchUpdatedApp *)user_data;
-  sdi_launch_desktop(data->self->application, (const gchar *)data->desktop);
+  launch_desktop(data->self->application, (const gchar *)data->desktop);
   g_object_unref(notification);
 }
 
@@ -299,7 +332,7 @@ static void notify_pending_refresh_forced(SdiNotify *self, SnapdSnap *snap,
 
   g_autofree gchar *title = NULL;
 
-  GTimeSpan difference = sdi_get_remaining_time_in_seconds(snap);
+  GTimeSpan difference = get_remaining_time_in_seconds(snap);
 
   if (difference > SECONDS_IN_A_DAY) {
     title = g_strdup_printf(_("%s will quit and update in %ld days"), name,
@@ -326,7 +359,7 @@ gboolean sdi_notify_check_forced_refresh(SdiNotify *self, SnapdSnap *snap,
                                          SdiSnap *snap_data) {
   // Check if we have to show a notification with the time when it will be
   // force-refreshed
-  GTimeSpan next_refresh = sdi_get_remaining_time_in_seconds(snap);
+  GTimeSpan next_refresh = get_remaining_time_in_seconds(snap);
   if ((next_refresh <= TIME_TO_SHOW_REMAINING_TIME_BEFORE_FORCED_REFRESH) &&
       (!sdi_snap_get_ignored(snap_data))) {
     notify_pending_refresh_forced(self, snap, TRUE);
