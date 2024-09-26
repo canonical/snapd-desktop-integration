@@ -29,8 +29,8 @@
 #include <unistd.h>
 
 #include "sdi-refresh-monitor.h"
-#include "sdi-session-helpers.h"
 #include "sdi-theme-monitor.h"
+#include "sdi-user-session-manager.h"
 
 static SnapdClient *client = NULL;
 static SdiThemeMonitor *theme_monitor = NULL;
