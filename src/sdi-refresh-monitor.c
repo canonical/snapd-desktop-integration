@@ -21,11 +21,12 @@
 #include <unistd.h>
 
 #include "com.canonical.Unity.LauncherEntry.h"
+#include "sdi-forced-refresh-time-constants.h"
 #include "sdi-helpers.h"
 #include "sdi-notify.h"
 #include "sdi-refresh-monitor.h"
 
-// time in ms for periodic check
+// time in ms for periodic check of each change in Refresh Monitor.
 #define CHANGE_REFRESH_PERIOD 500
 
 static void error_cb(GObject *object, GError *error, gpointer data);
@@ -273,9 +274,10 @@ static void show_snap_completed(GObject *source, GAsyncResult *res,
     return;
   }
   if ((error == NULL) && (snap != NULL))
-    sdi_notify_refresh_complete(self->notify, snap, NULL);
+    g_signal_emit_by_name(self, "notify-refresh-complete", snap, NULL);
   else
-    sdi_notify_refresh_complete(self->notify, NULL, data->snap_name);
+    g_signal_emit_by_name(self, "notify-refresh-complete", NULL,
+                          data->snap_name);
 }
 
 static void refresh_change(gpointer p) {
@@ -493,6 +495,25 @@ static void manage_change_update(SnapdClient *source, GAsyncResult *res,
   }
 }
 
+static gboolean notify_check_forced_refresh(SdiNotify *self, SnapdSnap *snap,
+                                            SdiSnap *snap_data) {
+  // Check if we have to show a notification with the time when it will be
+  // force-refreshed
+  GTimeSpan next_refresh = sdi_get_remaining_time_in_seconds(snap);
+  if ((next_refresh <= TIME_TO_SHOW_REMAINING_TIME_BEFORE_FORCED_REFRESH) &&
+      (!sdi_snap_get_ignored(snap_data))) {
+    g_signal_emit_by_name(self, "notify-pending-refresh-forced", snap,
+                          next_refresh, TRUE);
+    return TRUE;
+  } else if (next_refresh <= TIME_TO_SHOW_ALERT_BEFORE_FORCED_REFRESH) {
+    // If the remaining time is less than this, force a notification.
+    g_signal_emit_by_name(self, "notify-pending-refresh-forced", snap,
+                          next_refresh, FALSE);
+    return TRUE;
+  }
+  return FALSE;
+}
+
 static void manage_refresh_inhibit(SnapdClient *source, GAsyncResult *res,
                                    gpointer p) {
   g_autoptr(SdiRefreshMonitor) self = p;
@@ -512,10 +533,11 @@ static void manage_refresh_inhibit(SnapdClient *source, GAsyncResult *res,
     return;
   // Check if there's at least one snap not marked as "ignore"
   gboolean show_grouped_notification = FALSE;
-  g_autoptr(GSList) snap_list = NULL;
+  g_autoptr(GListStore) snap_list = g_list_store_new(SNAPD_TYPE_SNAP);
   for (guint i = 0; i < snaps->len; i++) {
     SnapdSnap *snap = snaps->pdata[i];
     const gchar *name = snapd_snap_get_name(snap);
+    g_debug("Received notification for inhibited snap %s", name);
     if (name == NULL)
       continue;
     g_autoptr(SdiSnap) snap_data = add_snap(self, name);
@@ -525,13 +547,14 @@ static void manage_refresh_inhibit(SnapdClient *source, GAsyncResult *res,
     if (!sdi_snap_get_ignored(snap_data)) {
       show_grouped_notification = TRUE;
     }
+    g_list_store_append(snap_list, snap);
     // Check if we have to notify the user because the snap will be
     // force-refreshed soon
-    snap_list = g_slist_prepend(snap_list, snap);
-    sdi_notify_check_forced_refresh(self->notify, snap, snap_data);
+    notify_check_forced_refresh(self->notify, snap, snap_data);
   }
   if (show_grouped_notification) {
-    sdi_notify_pending_refresh(self->notify, snap_list);
+    g_signal_emit_by_name(self, "notify-pending-refresh",
+                          G_LIST_MODEL(snap_list));
   }
 }
 
@@ -645,65 +668,38 @@ void sdi_refresh_monitor_init(SdiRefreshMonitor *self) {
   configure_snapd_monitor(self);
 }
 
-static void ignore_snap_cb(GObject *obj, const gchar *snap_name,
-                           SdiRefreshMonitor *self) {
+/**
+ * This CB must be called whenever the user presses the "Don't remind me
+ * anymore" button in a notification. It will receive one snap name, so if
+ * the notification has several snaps, it must call this method once for each
+ * one.
+ */
+void sdi_refresh_monitor_ignore_snap_cb(SdiRefreshMonitor *self,
+                                        const gchar *snap_name, gpointer data) {
+  g_debug("Ignoring refreshes for %s", snap_name);
   g_autoptr(SdiSnap) snap = add_snap(self, snap_name);
   sdi_snap_set_ignored(snap, TRUE);
-}
-
-static void sdi_refresh_monitor_set_property(GObject *object, guint prop_id,
-                                             const GValue *value,
-                                             GParamSpec *pspec) {
-  SdiRefreshMonitor *self = SDI_REFRESH_MONITOR(object);
-  gpointer p;
-
-  switch (prop_id) {
-  case PROP_NOTIFY:
-    g_clear_object(&self->notify);
-    p = g_value_get_object(value);
-    if (p != NULL) {
-      self->notify = g_object_ref(p);
-      g_signal_connect(self->notify, "ignore-snap-event",
-                       (GCallback)ignore_snap_cb, self);
-    }
-    break;
-  default:
-    G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
-    break;
-  }
-}
-
-static void sdi_refresh_monitor_get_property(GObject *object, guint prop_id,
-                                             GValue *value, GParamSpec *pspec) {
-  SdiRefreshMonitor *self = SDI_REFRESH_MONITOR(object);
-
-  switch (prop_id) {
-  case PROP_NOTIFY:
-    g_value_set_object(value, self->notify);
-    break;
-  default:
-    G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
-    break;
-  }
 }
 
 void sdi_refresh_monitor_class_init(SdiRefreshMonitorClass *klass) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(klass);
 
-  gobject_class->set_property = sdi_refresh_monitor_set_property;
-  gobject_class->get_property = sdi_refresh_monitor_get_property;
   gobject_class->dispose = sdi_refresh_monitor_dispose;
 
-  g_object_class_install_property(
-      gobject_class, PROP_NOTIFY,
-      g_param_spec_object("notify", "notify", "Notify object", SDI_TYPE_NOTIFY,
-                          G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY));
+  g_signal_new("notify-pending-refresh", G_TYPE_FROM_CLASS(klass),
+               G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL, G_TYPE_NONE, 1,
+               G_TYPE_OBJECT);
+  g_signal_new("notify-pending-refresh-forced", G_TYPE_FROM_CLASS(klass),
+               G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL, G_TYPE_NONE, 3,
+               G_TYPE_OBJECT, G_TYPE_BOOLEAN, G_TYPE_INT64);
+  g_signal_new("notify-refresh-complete", G_TYPE_FROM_CLASS(klass),
+               G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL, G_TYPE_NONE, 2,
+               G_TYPE_OBJECT, G_TYPE_STRING);
 }
 
 SdiRefreshMonitor *sdi_refresh_monitor_new(GApplication *application) {
-  g_autoptr(SdiNotify) notify = sdi_notify_new(application);
-  SdiRefreshMonitor *self =
-      g_object_new(SDI_TYPE_REFRESH_MONITOR, "notify", notify, NULL);
+
+  SdiRefreshMonitor *self = g_object_new(SDI_TYPE_REFRESH_MONITOR, NULL);
   self->application = g_object_ref(application);
   g_autofree gchar *unity_object =
       g_strdup_printf("/com/canonical/unity/launcherentry/%d", getpid());

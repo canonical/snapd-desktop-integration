@@ -30,6 +30,7 @@
 
 #include "org.freedesktop.login1.Session.h"
 #include "org.freedesktop.login1.h"
+#include "sdi-notify.h"
 #include "sdi-refresh-monitor.h"
 #include "sdi-theme-monitor.h"
 
@@ -37,6 +38,7 @@ static Login1Manager *login_manager = NULL;
 static SnapdClient *client = NULL;
 static SdiThemeMonitor *theme_monitor = NULL;
 static SdiRefreshMonitor *refresh_monitor = NULL;
+static SdiNotify *notify_manager = NULL;
 
 static gchar *snapd_socket_path = NULL;
 
@@ -137,11 +139,21 @@ static gboolean check_graphical_sessions(gpointer data) {
 
 static void do_startup(GObject *object, gpointer data) {
   GError *error = NULL;
-#ifndef USE_GNOTIFY
-  notify_init("snapd-desktop-integration_snapd-desktop-integration");
-#endif
   client = snapd_client_new();
   refresh_monitor = sdi_refresh_monitor_new(G_APPLICATION(object));
+  notify_manager = sdi_notify_new(G_APPLICATION(object));
+  g_signal_connect_object(refresh_monitor, "notify-pending-refresh",
+                          (GCallback)sdi_notify_pending_refresh, notify_manager,
+                          G_CONNECT_SWAPPED);
+  g_signal_connect_object(refresh_monitor, "notify-pending-refresh-forced",
+                          (GCallback)sdi_notify_pending_refresh_forced,
+                          notify_manager, G_CONNECT_SWAPPED);
+  g_signal_connect_object(refresh_monitor, "notify-refresh-complete",
+                          (GCallback)sdi_notify_refresh_complete,
+                          notify_manager, G_CONNECT_SWAPPED);
+  g_signal_connect_object(notify_manager, "ignore-snap-event",
+                          (GCallback)sdi_refresh_monitor_ignore_snap_cb,
+                          refresh_monitor, G_CONNECT_SWAPPED);
   if (!sdi_refresh_monitor_start(refresh_monitor, &error)) {
     g_message("Failed to export the DBus Desktop Integration API %s",
               error->message);
@@ -168,6 +180,7 @@ static void do_shutdown(GObject *object, gpointer data) {
   g_clear_object(&theme_monitor);
   g_clear_object(&refresh_monitor);
   g_clear_object(&login_manager);
+  g_clear_object(&notify_manager);
 }
 
 static int global_retval = 0;
