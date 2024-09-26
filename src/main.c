@@ -37,7 +37,6 @@ static Login1Manager *login_manager = NULL;
 static SnapdClient *client = NULL;
 static SdiThemeMonitor *theme_monitor = NULL;
 static SdiRefreshMonitor *refresh_monitor = NULL;
-static gboolean running = FALSE;
 
 static gchar *snapd_socket_path = NULL;
 
@@ -152,7 +151,6 @@ static void do_startup(GObject *object, gpointer data) {
 static void do_activate(GObject *object, gpointer data) {
   // because, by default, there are no windows, so the application would quit
   g_application_hold(G_APPLICATION(object));
-  running = TRUE;
 
   if (snapd_socket_path != NULL) {
     snapd_client_set_socket_path(client, snapd_socket_path);
@@ -179,10 +177,7 @@ void sighandler(int v) {
 }
 
 static gboolean close_app(GApplication *application) {
-  if (running) {
-    g_application_release(application);
-    running = FALSE;
-  }
+  g_application_quit(application);
   return G_SOURCE_REMOVE;
 }
 
