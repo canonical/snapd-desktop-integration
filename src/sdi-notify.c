@@ -379,14 +379,17 @@ void sdi_notify_pending_refresh(SdiNotify *self, GSList *snaps) {
   g_autofree gchar *body = NULL;
   g_autoptr(GAppInfo) app_info = NULL;
   g_autoptr(GDesktopAppInfo) app_info2 = NULL;
+  g_autofree gchar *snap_name0 = NULL;
+  g_autofree gchar *snap_name1 = NULL;
+  g_autofree gchar *snap_name2 = NULL;
 
   guint n_snaps = g_slist_length(snaps);
 
   GIcon *icon = NULL;
   if (n_snaps == 1) {
-    g_autofree gchar *snap_name = get_name_from_snap((SnapdSnap *)snaps->data);
+    snap_name0 = get_name_from_snap((SnapdSnap *)snaps->data);
     /// TRANSLATORS: The %s is the name of a snap that has an update available.
-    title = g_strdup_printf(_("Update available for %s"), snap_name);
+    title = g_strdup_printf(_("Update available for %s"), snap_name0);
     body = g_strdup(_("Quit the app to update it now."));
     app_info = sdi_get_desktop_file_from_snap((SnapdSnap *)snaps->data);
     if (app_info != NULL) {
@@ -403,21 +406,20 @@ void sdi_notify_pending_refresh(SdiNotify *self, GSList *snaps) {
                             n_snaps);
     switch (n_snaps) {
     case 2:
+      snap_name0 = get_name_from_snap((SnapdSnap *)snaps->data);
+      snap_name1 = get_name_from_snap((SnapdSnap *)snaps->next->data);
       /// TRANSLATORS: This message is used when there are two pending
-      /// refreshes.
-      body =
-          g_strdup_printf(_("%s and %s will update when you quit them."),
-                          get_name_from_snap((SnapdSnap *)snaps->data),
-                          get_name_from_snap((SnapdSnap *)snaps->next->data));
+      body = g_strdup_printf(_("%s and %s will update when you quit them."),
+                             snap_name0, snap_name1);
       break;
     case 3:
+      snap_name0 = get_name_from_snap((SnapdSnap *)snaps->data);
+      snap_name1 = get_name_from_snap((SnapdSnap *)snaps->next->data);
+      snap_name2 = get_name_from_snap((SnapdSnap *)snaps->next->next->data);
       /// TRANSLATORS: This message is used when there are three pending
       /// refreshes.
-      body = g_strdup_printf(
-          _("%s, %s and %s will update when you quit them."),
-          get_name_from_snap((SnapdSnap *)snaps->data),
-          get_name_from_snap((SnapdSnap *)snaps->next->data),
-          get_name_from_snap((SnapdSnap *)snaps->next->next->data));
+      body = g_strdup_printf(_("%s, %s and %s will update when you quit them."),
+                             snap_name0, snap_name1, snap_name2);
       break;
     default:
       /// TRANSLATORS: This message is used when there are four or more pending
