@@ -200,6 +200,9 @@ static void show_pending_update_notification(SdiNotify *self,
                                  g_object_unref);
   if (allow_to_ignore) {
     g_autoptr(GVariant) snap_list = get_snap_list(snaps);
+    /// TRANSLATORS: Text for a button in a notification. Pressing it
+    /// will inform the program to not notify again that there are
+    /// refreshes for the snaps specified in the notification.
     notify_notification_add_action(
         notification, "app.ignore-notification", _("Don't remind me again"),
         (NotifyActionCallback)app_ignore_snaps_notification,
@@ -224,6 +227,9 @@ static void update_complete_notification(SdiNotify *self, const gchar *title,
   }
 
   if (desktop == NULL) {
+    /// TRANSLATORS: Text for one of the buttons in the notification shown
+    /// after a snap has been refreshed. Pressing it will close the
+    /// notification.
     notify_notification_add_action(notification, "default", _("Close"),
                                    app_close_notification, NULL, NULL);
   } else {
@@ -302,12 +308,24 @@ static void notify_pending_refresh_forced(SdiNotify *self, SnapdSnap *snap,
   GTimeSpan difference = sdi_get_remaining_time_in_seconds(snap);
 
   if (difference > SECONDS_IN_A_DAY) {
+    /// TRANSLATORS: The %s is the name of a snap that is currently running,
+    /// and it will be closed and updated in %ld days if the user doesn't
+    /// close it before. This is shown after the user has been notified several
+    /// times that there is a refresh available for a running snap, but they
+    /// hasn't closed it, to inform they that there is a time limit before the
+    /// snap is forced to quit to refresh it.
     title = g_strdup_printf(_("%s will quit and update in %ld days"), name,
                             difference / SECONDS_IN_A_DAY);
   } else if (difference > SECONDS_IN_AN_HOUR) {
+    /// TRANSLATORS: The %s is the name of a snap that is currently running,
+    /// and it will be closed and updated in %ld hours if the user doesn't
+    /// close it before.
     title = g_strdup_printf(_("%s will quit and update in %ld hours"), name,
                             difference / SECONDS_IN_AN_HOUR);
   } else {
+    /// TRANSLATORS: The %s is the name of a snap that is currently running,
+    /// and it will be closed and updated in %ld minutes if the user doesn't
+    /// close it before.
     title = g_strdup_printf(_("%s will quit and update in %ld minutes"), name,
                             difference / SECONDS_IN_A_MINUTE);
   }
@@ -317,6 +335,8 @@ static void notify_pending_refresh_forced(SdiNotify *self, SnapdSnap *snap,
     icon = g_app_info_get_icon(app_info);
   }
 
+  /// TRANSLATORS: This message is shown below the "%s will quit and update
+  /// in..." message.
   show_pending_update_notification(
       self, title, _("Save your progress and quit now to prevent data loss."),
       icon, g_slist_append(NULL, snap), allow_to_ignore);
@@ -365,6 +385,7 @@ void sdi_notify_pending_refresh(SdiNotify *self, GSList *snaps) {
   GIcon *icon = NULL;
   if (n_snaps == 1) {
     g_autofree gchar *snap_name = get_name_from_snap((SnapdSnap *)snaps->data);
+    /// TRANSLATORS: The %s is the name of a snap that has an update available.
     title = g_strdup_printf(_("Update available for %s"), snap_name);
     body = g_strdup(_("Quit the app to update it now."));
     app_info = sdi_get_desktop_file_from_snap((SnapdSnap *)snaps->data);
@@ -375,17 +396,23 @@ void sdi_notify_pending_refresh(SdiNotify *self, GSList *snaps) {
     // although the case for 1 app is managed outside this, I put it here to
     // ensure that ngettext works as expected, and to ensure that translators
     // know what is going on.
+    /// TRANSLATORS: when there are several updates available, this is the
+    /// message used to notify the user how many updates are.
     title = g_strdup_printf(ngettext("Update available for %d app",
                                      "Updates available for %d apps", n_snaps),
                             n_snaps);
     switch (n_snaps) {
     case 2:
+      /// TRANSLATORS: This message is used when there are two pending
+      /// refreshes.
       body =
           g_strdup_printf(_("%s and %s will update when you quit them."),
                           get_name_from_snap((SnapdSnap *)snaps->data),
                           get_name_from_snap((SnapdSnap *)snaps->next->data));
       break;
     case 3:
+      /// TRANSLATORS: This message is used when there are three pending
+      /// refreshes.
       body = g_strdup_printf(
           _("%s, %s and %s will update when you quit them."),
           get_name_from_snap((SnapdSnap *)snaps->data),
@@ -393,6 +420,8 @@ void sdi_notify_pending_refresh(SdiNotify *self, GSList *snaps) {
           get_name_from_snap((SnapdSnap *)snaps->next->next->data));
       break;
     default:
+      /// TRANSLATORS: This message is used when there are four or more pending
+      /// refreshes.
       body = g_strdup(_("Quit the apps to update them now."));
       break;
     }
