@@ -409,6 +409,7 @@ void sdi_notify_pending_refresh(SdiNotify *self, GSList *snaps) {
       snap_name0 = get_name_from_snap((SnapdSnap *)snaps->data);
       snap_name1 = get_name_from_snap((SnapdSnap *)snaps->next->data);
       /// TRANSLATORS: This message is used when there are two pending
+      /// refreshes.
       body = g_strdup_printf(_("%s and %s will update when you quit them."),
                              snap_name0, snap_name1);
       break;
