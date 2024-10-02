@@ -15,7 +15,7 @@
  *
  */
 
-#include "sdi-refresh-window.h"
+#include "sdi-progress-window.h"
 #include "com.canonical.Unity.LauncherEntry.h"
 #include "sdi-refresh-dialog.h"
 #include <glib/gi18n.h>
@@ -27,7 +27,7 @@
  * being updated is shown. It also updates the progress bar in the dock.
  */
 
-struct _SdiRefreshWindow {
+struct _SdiProgressWindow {
   GObject parent_instance;
 
   GtkWindow *main_window;
@@ -37,7 +37,7 @@ struct _SdiRefreshWindow {
   GHashTable *dialogs;
 };
 
-G_DEFINE_TYPE(SdiRefreshWindow, sdi_refresh_window, G_TYPE_OBJECT)
+G_DEFINE_TYPE(SdiProgressWindow, sdi_progress_window, G_TYPE_OBJECT)
 
 static gboolean contains_child(GtkWidget *parent, GtkWidget *query_child) {
   GtkWidget *child = gtk_widget_get_first_child(parent);
@@ -49,7 +49,7 @@ static gboolean contains_child(GtkWidget *parent, GtkWidget *query_child) {
   return FALSE;
 }
 
-static void remove_dialog(SdiRefreshWindow *self, SdiRefreshDialog *dialog) {
+static void remove_dialog(SdiProgressWindow *self, SdiRefreshDialog *dialog) {
   if (dialog == NULL)
     return;
 
@@ -69,7 +69,7 @@ static void remove_dialog(SdiRefreshWindow *self, SdiRefreshDialog *dialog) {
   }
 }
 
-static void add_dialog_to_main_window(SdiRefreshWindow *self,
+static void add_dialog_to_main_window(SdiProgressWindow *self,
                                       SdiRefreshDialog *dialog) {
   if (self->main_window == NULL) {
     self->main_window = GTK_WINDOW(
@@ -95,9 +95,9 @@ static void add_dialog_to_main_window(SdiRefreshWindow *self,
  * insert into it a new #sdi_refresh_dialog with the snap name, snap icon and
  * progress bar.
  */
-void sdi_refresh_window_begin_refresh(SdiRefreshWindow *self, gchar *snap_name,
-                                      gchar *visible_name, gchar *icon,
-                                      gpointer data) {
+void sdi_progress_window_begin_refresh(SdiProgressWindow *self,
+                                       gchar *snap_name, gchar *visible_name,
+                                       gchar *icon, gpointer data) {
   g_autoptr(SdiRefreshDialog) dialog =
       g_object_ref_sink(sdi_refresh_dialog_new(snap_name, visible_name));
   if (icon != NULL) {
@@ -115,8 +115,8 @@ void sdi_refresh_window_begin_refresh(SdiRefreshWindow *self, gchar *snap_name,
  * refresh dialogs.
  */
 
-void sdi_refresh_window_end_refresh(SdiRefreshWindow *self, gchar *snap_name,
-                                    gpointer data) {
+void sdi_progress_window_end_refresh(SdiProgressWindow *self, gchar *snap_name,
+                                     gpointer data) {
   SdiRefreshDialog *dialog =
       (SdiRefreshDialog *)g_hash_table_lookup(self->dialogs, snap_name);
   if (dialog != NULL) {
@@ -131,11 +131,11 @@ void sdi_refresh_window_end_refresh(SdiRefreshWindow *self, gchar *snap_name,
  * will update the progress bars in a dialog (if it exists; if not, it will
  * be ignored) and in the dock.
  */
-void sdi_refresh_window_update_progress(SdiRefreshWindow *self,
-                                        gchar *snap_name, gchar *desktop_file,
-                                        gchar *task_description,
-                                        guint done_tasks, guint total_tasks,
-                                        gboolean task_done, gpointer data) {
+void sdi_progress_window_update_progress(SdiProgressWindow *self,
+                                         gchar *snap_name, gchar *desktop_file,
+                                         gchar *task_description,
+                                         guint done_tasks, guint total_tasks,
+                                         gboolean task_done, gpointer data) {
   if (desktop_file != NULL) {
     // Update dock progress bar
     g_autoptr(GVariantBuilder) builder =
@@ -164,32 +164,32 @@ void sdi_refresh_window_update_progress(SdiRefreshWindow *self,
   }
 }
 
-static void sdi_refresh_window_dispose(GObject *object) {
-  SdiRefreshWindow *self = SDI_REFRESH_WINDOW(object);
+static void sdi_progress_window_dispose(GObject *object) {
+  SdiProgressWindow *self = SDI_PROGRESS_WINDOW(object);
 
   g_clear_pointer(&self->dialogs, g_hash_table_unref);
   if (self->main_window != NULL) {
     gtk_window_destroy(self->main_window);
     self->main_window = NULL;
   }
-  G_OBJECT_CLASS(sdi_refresh_window_parent_class)->dispose(object);
+  G_OBJECT_CLASS(sdi_progress_window_parent_class)->dispose(object);
 }
 
-static void sdi_refresh_window_class_init(SdiRefreshWindowClass *klass) {
+static void sdi_progress_window_class_init(SdiProgressWindowClass *klass) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(klass);
 
-  gobject_class->dispose = sdi_refresh_window_dispose;
+  gobject_class->dispose = sdi_progress_window_dispose;
 }
 
-static void sdi_refresh_window_init(SdiRefreshWindow *self) {
+static void sdi_progress_window_init(SdiProgressWindow *self) {
   // the key in this table is the snap name; the value is a SdiRefreshDialog
   self->dialogs =
       g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_object_unref);
 }
 
-SdiRefreshWindow *sdi_refresh_window_new(GApplication *application) {
+SdiProgressWindow *sdi_progress_window_new(GApplication *application) {
 
-  SdiRefreshWindow *self = g_object_new(SDI_TYPE_REFRESH_WINDOW, NULL);
+  SdiProgressWindow *self = g_object_new(SDI_TYPE_PROGRESS_WINDOW, NULL);
   self->application = g_object_ref(application);
   g_autofree gchar *unity_object =
       g_strdup_printf("/com/canonical/unity/launcherentry/%d", getpid());

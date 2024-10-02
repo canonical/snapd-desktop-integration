@@ -29,6 +29,7 @@
 #include <unistd.h>
 
 #include "sdi-notify.h"
+#include "sdi-progress-window.h"
 #include "sdi-refresh-monitor.h"
 #include "sdi-snapd-client-factory.h"
 #include "sdi-snapd-monitor.h"
@@ -41,7 +42,7 @@ static SdiThemeMonitor *theme_monitor = NULL;
 static SdiRefreshMonitor *refresh_monitor = NULL;
 static SdiNotify *notify_manager = NULL;
 static SdiSnapdMonitor *snapd_monitor = NULL;
-static SdiRefreshWindow *refresh_window = NULL;
+static SdiRefreshWindow *progress_window = NULL;
 
 static gchar *snapd_socket_path = NULL;
 
@@ -78,13 +79,13 @@ static void do_startup(GObject *object, gpointer data) {
                           (GCallback)sdi_refresh_monitor_notice,
                           refresh_monitor, G_CONNECT_SWAPPED);
 
-  refresh_window = sdi_refresh_window_new(G_APPLICATION(object));
+  progress_window = sdi_progress_window_new(G_APPLICATION(object));
   g_signal_connect_object(refresh_monitor, "begin_refresh",
-                          (GCallback)sdi_refresh_window_begin_refresh,
-                          refresh_window, G_CONNECT_SWAPPED);
+                          (GCallback)sdi_progress_window_begin_refresh,
+                          progress_window, G_CONNECT_SWAPPED);
   g_signal_connect_object(refresh_monitor, "refresh_progress",
-                          (GCallback)sdi_refresh_window_update_progress,
-                          refresh_window, G_CONNECT_SWAPPED);
+                          (GCallback)sdi_progress_window_update_progress,
+                          progress_window, G_CONNECT_SWAPPED);
   g_signal_connect_object(refresh_monitor, "end_refresh",
                           (GCallback)sdi_refresh_window_end_refresh,
                           refresh_window, G_CONNECT_SWAPPED);
@@ -108,7 +109,7 @@ static void do_shutdown(GObject *object, gpointer data) {
   g_clear_object(&client);
   g_clear_object(&theme_monitor);
   g_clear_object(&refresh_monitor);
-  g_clear_object(&refresh_window);
+  g_clear_object(&progress_window);
   g_clear_object(&login_manager);
   g_clear_object(&notify_manager);
   g_clear_object(&snapd_monitor);
