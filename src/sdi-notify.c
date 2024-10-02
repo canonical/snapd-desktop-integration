@@ -371,22 +371,22 @@ static gchar *get_name_from_snap(SnapdSnap *snap) {
   return g_strdup(name);
 }
 
-static gchar *build_body_message_for_two_refreshes(GSList *snaps) {
-  g_autofree gchar *snap_name0 = get_name_from_snap((SnapdSnap *)snaps->data);
-  g_autofree gchar *snap_name1 =
-      get_name_from_snap((SnapdSnap *)snaps->next->data);
+static gchar *build_body_message_for_two_refreshes(SnapdSnap *snap0,
+                                                   SnapdSnap *snap1) {
+  g_autofree gchar *snap_name0 = get_name_from_snap(snap0);
+  g_autofree gchar *snap_name1 = get_name_from_snap(snap1);
   /// TRANSLATORS: This message is used when there are two pending
   /// refreshes.
   return g_strdup_printf(_("%s and %s will update when you quit them."),
                          snap_name0, snap_name1);
 }
 
-static gchar *build_body_message_for_three_refreshes(GSList *snaps) {
-  g_autofree gchar *snap_name0 = get_name_from_snap((SnapdSnap *)snaps->data);
-  g_autofree gchar *snap_name1 =
-      get_name_from_snap((SnapdSnap *)snaps->next->data);
-  g_autofree gchar *snap_name2 =
-      get_name_from_snap((SnapdSnap *)snaps->next->next->data);
+static gchar *build_body_message_for_three_refreshes(SnapdSnap *snap0,
+                                                     SnapdSnap *snap1,
+                                                     SnapdSnap *snap2) {
+  g_autofree gchar *snap_name0 = get_name_from_snap(snap0);
+  g_autofree gchar *snap_name1 = get_name_from_snap(snap1);
+  g_autofree gchar *snap_name2 = get_name_from_snap(snap2);
   /// TRANSLATORS: This message is used when there are three pending
   /// refreshes.
   return g_strdup_printf(_("%s, %s and %s will update when you quit them."),
@@ -425,10 +425,13 @@ void sdi_notify_pending_refresh(SdiNotify *self, GSList *snaps) {
                             n_snaps);
     switch (n_snaps) {
     case 2:
-      body = build_body_message_for_two_refreshes(snaps);
+      body = build_body_message_for_two_refreshes(
+          (SnapdSnap *)snaps->data, (SnapdSnap *)snaps->next->data);
       break;
     case 3:
-      body = build_body_message_for_three_refreshes(snaps);
+      body = build_body_message_for_three_refreshes(
+          (SnapdSnap *)snaps->data, (SnapdSnap *)snaps->next->data,
+          (SnapdSnap *)snaps->next->next->data);
       break;
     default:
       /// TRANSLATORS: This message is used when there are four or more pending
