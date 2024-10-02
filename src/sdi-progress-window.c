@@ -168,10 +168,10 @@ static void sdi_progress_window_dispose(GObject *object) {
   SdiProgressWindow *self = SDI_PROGRESS_WINDOW(object);
 
   g_clear_pointer(&self->dialogs, g_hash_table_unref);
-  if (self->main_window != NULL) {
-    gtk_window_destroy(self->main_window);
-    self->main_window = NULL;
-  }
+  g_clear_pointer(&self->main_window, gtk_window_destroy);
+  g_clear_object(&self->unity_manager);
+  g_clear_object(&self->application);
+
   G_OBJECT_CLASS(sdi_progress_window_parent_class)->dispose(object);
 }
 
