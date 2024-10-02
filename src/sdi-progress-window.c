@@ -16,7 +16,6 @@
  */
 
 #include "sdi-progress-window.h"
-#include "com.canonical.Unity.LauncherEntry.h"
 #include "sdi-refresh-dialog.h"
 #include <glib/gi18n.h>
 #include <gtk/gtk.h>
@@ -24,7 +23,7 @@
 
 /**
  * This class manages the window where the progress bars for each snap
- * being updated is shown. It also updates the progress bar in the dock.
+ * being updated is shown.
  */
 
 struct _SdiProgressWindow {
@@ -33,7 +32,6 @@ struct _SdiProgressWindow {
   GtkWindow *main_window;
   GApplication *application;
   GtkBox *refresh_bar_container;
-  UnityComCanonicalUnityLauncherEntry *unity_manager;
   GHashTable *dialogs;
 };
 
@@ -129,30 +127,13 @@ void sdi_progress_window_end_refresh(SdiProgressWindow *self, gchar *snap_name,
  * #sdi_refresh_monitor object. It will receive the total number of tasks and
  * how many have been done, and if the task has been completed, and with that
  * will update the progress bars in a dialog (if it exists; if not, it will
- * be ignored) and in the dock.
+ * be ignored).
  */
 void sdi_progress_window_update_progress(SdiProgressWindow *self,
                                          gchar *snap_name, gchar *desktop_file,
                                          gchar *task_description,
                                          guint done_tasks, guint total_tasks,
                                          gboolean task_done, gpointer data) {
-  if (desktop_file != NULL) {
-    // Update dock progress bar
-    g_autoptr(GVariantBuilder) builder =
-        g_variant_builder_new(G_VARIANT_TYPE("a{sv}"));
-    g_variant_builder_add(
-        builder, "{sv}", "progress",
-        g_variant_new_double(((gfloat)done_tasks) / ((gfloat)total_tasks)));
-    g_variant_builder_add(builder, "{sv}", "progress-visible",
-                          g_variant_new_boolean(!task_done));
-    g_variant_builder_add(builder, "{sv}", "updating",
-                          g_variant_new_boolean(!task_done));
-
-    g_autoptr(GVariant) values =
-        g_variant_ref_sink(g_variant_builder_end(builder));
-    unity_com_canonical_unity_launcher_entry_emit_update(self->unity_manager,
-                                                         desktop_file, values);
-  }
   if (snap_name != NULL) {
     // Update dialog progress bar
     SdiRefreshDialog *dialog =
@@ -169,7 +150,6 @@ static void sdi_progress_window_dispose(GObject *object) {
 
   g_clear_pointer(&self->dialogs, g_hash_table_unref);
   g_clear_pointer(&self->main_window, gtk_window_destroy);
-  g_clear_object(&self->unity_manager);
   g_clear_object(&self->application);
 
   G_OBJECT_CLASS(sdi_progress_window_parent_class)->dispose(object);
@@ -191,11 +171,5 @@ SdiProgressWindow *sdi_progress_window_new(GApplication *application) {
 
   SdiProgressWindow *self = g_object_new(SDI_TYPE_PROGRESS_WINDOW, NULL);
   self->application = g_object_ref(application);
-  g_autofree gchar *unity_object =
-      g_strdup_printf("/com/canonical/unity/launcherentry/%d", getpid());
-  self->unity_manager = unity_com_canonical_unity_launcher_entry_skeleton_new();
-  g_dbus_interface_skeleton_export(
-      G_DBUS_INTERFACE_SKELETON(self->unity_manager),
-      g_application_get_dbus_connection(application), unity_object, NULL);
   return self;
 }
