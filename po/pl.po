@@ -6,11 +6,12 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: snapd-desktop-integration\n"
-"Report-Msgid-Bugs-To: FULL NAME <EMAIL@ADDRESS>\n"
-"POT-Creation-Date: 2024-09-30 15:37+0200\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-10-08 11:09+0200\n"
 "PO-Revision-Date: 2024-10-02 00:07+0000\n"
 "Last-Translator: Marek Adamski <Unknown>\n"
 "Language-Team: Polish <pl@li.org>\n"
+"Language: pl\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -114,19 +115,33 @@ msgstr "%s zakończy działanie i zaktualizuje się za %ld minut(y)"
 msgid "Save your progress and quit now to prevent data loss."
 msgstr "Zapisz swoje postępy i zakończ teraz, aby zapobiec utracie danych."
 
+#. TRANSLATORS: This message is used when there are two pending
+#. refreshes.
+#: src/sdi-notify.c:380
+#, c-format
+msgid "%s and %s will update when you quit them."
+msgstr "%s i %s zostaną zaktualizowane, gdy je zakończysz."
+
+#. TRANSLATORS: This message is used when there are three pending
+#. refreshes.
+#: src/sdi-notify.c:392
+#, c-format
+msgid "%s, %s and %s will update when you quit them."
+msgstr "%s, %s i %s zostaną zaktualizowane, gdy je zakończysz."
+
 #. TRANSLATORS: The %s is the name of a snap that has an update available.
-#: src/sdi-notify.c:389
+#: src/sdi-notify.c:411
 #, c-format
 msgid "Update available for %s"
 msgstr "Aktualizacja dostępna dla %s"
 
-#: src/sdi-notify.c:390
+#: src/sdi-notify.c:412
 msgid "Quit the app to update it now."
 msgstr "Zakończ program, aby go teraz zaktualizować."
 
 #. TRANSLATORS: when there are several updates available, this is the
 #. message used to notify the user how many updates are.
-#: src/sdi-notify.c:401
+#: src/sdi-notify.c:423
 #, c-format
 msgid "Update available for %d app"
 msgid_plural "Updates available for %d apps"
@@ -134,28 +149,18 @@ msgstr[0] "Aktualizacja dostępna dla %d programu"
 msgstr[1] "Aktualizacje dostępne dla %d programów"
 msgstr[2] "Aktualizacje dostępne dla %d programów"
 
-#: src/sdi-notify.c:409
-#, c-format
-msgid "%s and %s will update when you quit them."
-msgstr "%s i %s zostaną zaktualizowane, gdy je zakończysz."
-
-#: src/sdi-notify.c:417
-#, c-format
-msgid "%s, %s and %s will update when you quit them."
-msgstr "%s, %s i %s zostaną zaktualizowane, gdy je zakończysz."
-
 #. TRANSLATORS: This message is used when there are four or more pending
 #. refreshes.
-#: src/sdi-notify.c:425
+#: src/sdi-notify.c:439
 msgid "Quit the apps to update them now."
 msgstr "Zakończ programy, aby je teraz zaktualizować."
 
-#: src/sdi-notify.c:461
+#: src/sdi-notify.c:475
 #, c-format
 msgid "%s was updated"
 msgstr "Zaktualizowano %s"
 
-#: src/sdi-notify.c:463
+#: src/sdi-notify.c:477
 msgid "You can reopen it now."
 msgstr "Możesz go teraz ponownie otworzyć."
 
