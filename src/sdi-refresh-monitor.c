@@ -93,6 +93,13 @@ static void free_progress_task_data(void *data) {
   g_free(data);
 }
 
+static GTimeSpan get_remaining_time_in_seconds(SnapdSnap *snap) {
+  GDateTime *proceed_time = snapd_snap_get_proceed_time(snap);
+  g_autoptr(GDateTime) now = g_date_time_new_now_local();
+  GTimeSpan difference = g_date_time_difference(proceed_time, now) / 1000000;
+  return difference;
+}
+
 static GPtrArray *get_desktop_filenames_for_snap(const gchar *snap_name) {
   g_autoptr(GDir) desktop_folder =
       g_dir_open("/var/lib/snapd/desktop/applications", 0, NULL);
@@ -499,7 +506,7 @@ static gboolean notify_check_forced_refresh(SdiNotify *self, SnapdSnap *snap,
                                             SdiSnap *snap_data) {
   // Check if we have to show a notification with the time when it will be
   // force-refreshed
-  GTimeSpan next_refresh = sdi_get_remaining_time_in_seconds(snap);
+  GTimeSpan next_refresh = get_remaining_time_in_seconds(snap);
   if ((next_refresh <= TIME_TO_SHOW_REMAINING_TIME_BEFORE_FORCED_REFRESH) &&
       (!sdi_snap_get_ignored(snap_data))) {
     g_signal_emit_by_name(self, "notify-pending-refresh-forced", snap,

@@ -23,6 +23,7 @@
 #include <glib/gi18n.h>
 #include <libnotify/notify.h>
 
+#include "io.snapcraft.PrivilegedDesktopLauncher.h"
 #include "sdi-forced-refresh-time-constants.h"
 #include "sdi-helpers.h"
 #include "sdi-notify.h"
@@ -36,13 +37,6 @@ struct _SdiNotify {
 };
 
 G_DEFINE_TYPE(SdiNotify, sdi_notify, G_TYPE_OBJECT)
-
-static GTimeSpan get_remaining_time_in_seconds(SnapdSnap *snap) {
-  GDateTime *proceed_time = snapd_snap_get_proceed_time(snap);
-  g_autoptr(GDateTime) now = g_date_time_new_now_local();
-  GTimeSpan difference = g_date_time_difference(proceed_time, now) / 1000000;
-  return difference;
-}
 
 static gboolean launch_desktop(GApplication *app, const gchar *desktop_file) {
   g_autofree gchar *full_desktop_path = NULL;
@@ -198,7 +192,6 @@ static void app_launch_updated(NotifyNotification *notification, char *action,
       g_strdup_printf("app-launch-updated %s", data->desktop);
   g_signal_emit_by_name(data->self, "notification-closed", param);
 #endif
-  LaunchUpdatedApp *data = (LaunchUpdatedApp *)user_data;
   launch_desktop(data->self->application, (const gchar *)data->desktop);
   g_object_unref(notification);
 }
