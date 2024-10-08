@@ -1,87 +1,86 @@
-# Interlingue translation for snapd-desktop-integration
-# Copyright (c) 2023 Rosetta Contributors and Canonical Ltd 2023
+# Galician translations for snapd-desktop-integration package.
+# Copyright (C) 2024 THE snapd-desktop-integration'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the snapd-desktop-integration package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2023.
+# Miguel A. Bouzada Fdez. <mbouzada@gmail.com>, 2024.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: snapd-desktop-integration\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2024-10-08 11:09+0200\n"
-"PO-Revision-Date: 2024-08-06 19:39+0000\n"
-"Last-Translator: Silvara <Unknown>\n"
-"Language-Team: Interlingue <ie@li.org>\n"
-"Language: ie\n"
+"PO-Revision-Date: 2024-10-07 21:19+0200\n"
+"Last-Translator: Miguel A. Bouzada <mbouzada@gmail.com>\n"
+"Language-Team: Galician <proxecto@trasno.gal>\n"
+"Language: gl\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2024-10-08 09:00+0000\n"
-"X-Generator: Launchpad (build 6341c735b243a0768c3cb66edf85737937cab327)\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 3.2.2\n"
 
 #: src/sdi-refresh-dialog.c:123
 #, c-format
 msgid "Updating %s to the latest version."
-msgstr "Actualisante %s al ultim version."
+msgstr "Actualizando %s á última versión."
 
 #: src/sdi-theme-monitor.c:66 src/sdi-theme-monitor.c:83
 #: src/sdi-theme-monitor.c:104
 msgid "Installing missing theme snaps:"
-msgstr "Installante mancant snaps de temas:"
+msgstr "Instalando os snaps de temas que faltan:"
 
 #. TRANSLATORS: installing a missing theme snap succeed
 #: src/sdi-theme-monitor.c:68
 msgid "Complete."
-msgstr "Compleet."
+msgstr "Completado."
 
 #. TRANSLATORS: installing a missing theme snap was cancelled by the user
 #: src/sdi-theme-monitor.c:75
 msgid "Canceled by the user."
-msgstr "Anullat del usator."
+msgstr "Cancelado polo usuario."
 
 #. TRANSLATORS: installing a missing theme snap failed
 #: src/sdi-theme-monitor.c:79
 msgid "Failed."
-msgstr "Ne successat."
+msgstr "Produciuse un fallo."
 
 #: src/sdi-theme-monitor.c:138
 msgid "Some required theme snaps are missing."
-msgstr "Alcun besonat snaps de tema es mancat."
+msgstr "Faltan algúns snaps de temas necesarios."
 
 #: src/sdi-theme-monitor.c:139
 msgid "Would you like to install them now?"
-msgstr "Esque vu vole installar les nu?"
+msgstr "Quere instalalos agora?"
 
 #. TRANSLATORS: answer to the question "Would you like to install them
 #. now?" referred to snap themes
 #: src/sdi-theme-monitor.c:148
 msgid "Yes"
-msgstr "Yes"
+msgstr "Si"
 
 #. TRANSLATORS: answer to the question "Would you like to install them
 #. now?" referred to snap themes
 #: src/sdi-theme-monitor.c:153
 msgid "No"
-msgstr "No"
+msgstr "Non"
 
 #: data/resources/sdi-refresh-dialog.ui:51
 msgid "Hide"
-msgstr "Celar"
+msgstr "Agochar"
 
 #: src/sdi-notify.c:192 src/sdi-notify.c:198 src/sdi-notify.c:259
 msgid "Show updates"
-msgstr ""
+msgstr "Amosar as actualizacións"
 
 #: src/sdi-notify.c:207 src/sdi-notify.c:271
 msgid "Don't remind me again"
-msgstr ""
+msgstr "Non volver lembralo"
 
 #. TRANSLATORS: Text for one of the buttons in the notification shown
 #. after a snap has been refreshed. Pressing it will close the
 #. notification.
 #: src/sdi-notify.c:233 src/sdi-notify.c:237
 msgid "Close"
-msgstr ""
+msgstr "Pechar"
 
 #. TRANSLATORS: The %s is the name of a snap that is currently running,
 #. and it will be closed and updated in %ld days if the user doesn't
@@ -92,7 +91,7 @@ msgstr ""
 #: src/sdi-notify.c:317
 #, c-format
 msgid "%s will quit and update in %ld days"
-msgstr ""
+msgstr "%s vai pecharse e actualizarse en %ld días"
 
 #. TRANSLATORS: The %s is the name of a snap that is currently running,
 #. and it will be closed and updated in %ld hours if the user doesn't
@@ -100,7 +99,7 @@ msgstr ""
 #: src/sdi-notify.c:323
 #, c-format
 msgid "%s will quit and update in %ld hours"
-msgstr ""
+msgstr "%s vai pecharse e actualizarse en %ld horas"
 
 #. TRANSLATORS: The %s is the name of a snap that is currently running,
 #. and it will be closed and updated in %ld minutes if the user doesn't
@@ -108,35 +107,35 @@ msgstr ""
 #: src/sdi-notify.c:329
 #, c-format
 msgid "%s will quit and update in %ld minutes"
-msgstr ""
+msgstr "%s vai pecharse e actualizarse en %ld minutos"
 
 #: src/sdi-notify.c:341
 msgid "Save your progress and quit now to prevent data loss."
-msgstr ""
+msgstr "Garde o seu traballo e saia agora para evitar a perda de datos."
 
 #. TRANSLATORS: This message is used when there are two pending
 #. refreshes.
 #: src/sdi-notify.c:380
 #, c-format
 msgid "%s and %s will update when you quit them."
-msgstr ""
+msgstr "%s e %s actualizaranse cando os peche."
 
 #. TRANSLATORS: This message is used when there are three pending
 #. refreshes.
 #: src/sdi-notify.c:392
 #, c-format
 msgid "%s, %s and %s will update when you quit them."
-msgstr ""
+msgstr "%s, %s e %s actualizaranse cando os peche."
 
 #. TRANSLATORS: The %s is the name of a snap that has an update available.
 #: src/sdi-notify.c:411
 #, c-format
 msgid "Update available for %s"
-msgstr ""
+msgstr "Hai unha actualización dispoñíbel para %s"
 
 #: src/sdi-notify.c:412
 msgid "Quit the app to update it now."
-msgstr ""
+msgstr "Peche a aplicación para actualizala agora."
 
 #. TRANSLATORS: when there are several updates available, this is the
 #. message used to notify the user how many updates are.
@@ -144,26 +143,26 @@ msgstr ""
 #, c-format
 msgid "Update available for %d app"
 msgid_plural "Updates available for %d apps"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Hai unha actualización dispoñíbel para %d aplicación"
+msgstr[1] "Hai actualizacións dispoñíbeis para %d aplicacións"
 
 #. TRANSLATORS: This message is used when there are four or more pending
 #. refreshes.
 #: src/sdi-notify.c:439
 msgid "Quit the apps to update them now."
-msgstr ""
+msgstr "Peche as aplicacións para actualizalas agora."
 
 #: src/sdi-notify.c:475
 #, c-format
 msgid "%s was updated"
-msgstr "%s sta actualisat"
+msgstr "%s foi actualizada"
 
 #: src/sdi-notify.c:477
 msgid "You can reopen it now."
-msgstr ""
+msgstr "Xa pode volver abrila."
 
 #. TRANSLATORS: This text is shown as the title of the window that contains
 #. progress bars for each of the snaps being updated.
 #: src/sdi-refresh-monitor.c:178
 msgid "Refreshing snaps"
-msgstr "Refriscante snaps"
+msgstr "Actualizando snaps"

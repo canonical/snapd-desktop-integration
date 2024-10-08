@@ -1,70 +1,168 @@
-# Spanish translation for snapd-desktop-integration
-# Copyright (c) 2023 Rosetta Contributors and Canonical Ltd 2023
+# Spanish translations for snapd-desktop-integration package.
+# Copyright (C) 2024 THE snapd-desktop-integration'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the snapd-desktop-integration package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2023.
+# Miguel A. Bouzada Fdez. <mbouzada@gmail.com>, 2024.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: snapd-desktop-integration\n"
-"Report-Msgid-Bugs-To: FULL NAME <EMAIL@ADDRESS>\n"
-"POT-Creation-Date: 2023-04-06 09:46+0200\n"
-"PO-Revision-Date: 2023-04-20 06:38+0000\n"
-"Last-Translator: Adolfo Jayme Barrientos <fitoschido@gmail.com>\n"
-"Language-Team: Spanish <es@li.org>\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-10-08 11:09+0200\n"
+"PO-Revision-Date: 2024-10-07 21:31+0200\n"
+"Last-Translator: Miguel A. Bouzada <mbouzada@gmail.com>\n"
+"Language-Team: spanish\n"
+"Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Launchpad-Export-Date: 2023-05-01 11:52+0000\n"
-"X-Generator: Launchpad (build 90e2150bef31b411d7bae5c4032c7e320fcaaec8)\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 3.2.2\n"
 
-#: src/refresh_status.c:186
+#: src/sdi-refresh-dialog.c:123
 #, c-format
-msgid "Refreshing “%s” to latest version. Please wait."
-msgstr "Actualizando «%s» a la versión más reciente. Espere."
+msgid "Updating %s to the latest version."
+msgstr "Actualizando %s a la última versión."
 
-#: src/main.c:68 src/main.c:85 src/main.c:106
+#: src/sdi-theme-monitor.c:66 src/sdi-theme-monitor.c:83
+#: src/sdi-theme-monitor.c:104
 msgid "Installing missing theme snaps:"
-msgstr "Instalando los «snaps» de temas faltantes:"
+msgstr "Instalando los snaps de temas que faltan:"
 
 #. TRANSLATORS: installing a missing theme snap succeed
-#: src/main.c:70
+#: src/sdi-theme-monitor.c:68
 msgid "Complete."
 msgstr "Completado."
 
 #. TRANSLATORS: installing a missing theme snap was cancelled by the user
-#: src/main.c:77
+#: src/sdi-theme-monitor.c:75
 msgid "Canceled by the user."
-msgstr "Cancelado por usted."
+msgstr "Cancelado por el usuario."
 
 #. TRANSLATORS: installing a missing theme snap failed
-#: src/main.c:81
+#: src/sdi-theme-monitor.c:79
 msgid "Failed."
-msgstr "Falló."
+msgstr "Se produjo un fallo."
 
-#: src/main.c:140
+#: src/sdi-theme-monitor.c:138
 msgid "Some required theme snaps are missing."
-msgstr "Faltan algunos «snaps» de temas requeridos."
+msgstr "Faltan algunos snaps de temas necesarios."
 
-#: src/main.c:141
+#: src/sdi-theme-monitor.c:139
 msgid "Would you like to install them now?"
 msgstr "¿Quiere instalarlos ahora?"
 
 #. TRANSLATORS: answer to the question "Would you like to install them
 #. now?" referred to snap themes
-#: src/main.c:150
+#: src/sdi-theme-monitor.c:148
 msgid "Yes"
 msgstr "Sí"
 
 #. TRANSLATORS: answer to the question "Would you like to install them
 #. now?" referred to snap themes
-#: src/main.c:155
+#: src/sdi-theme-monitor.c:153
 msgid "No"
 msgstr "No"
 
-#: data/resources/snap_is_being_refreshed.ui:13
-msgid "Snap refresh in progress"
-msgstr "Actualización de «snaps» en curso"
-
-#: data/resources/snap_is_being_refreshed.ui:89
+#: data/resources/sdi-refresh-dialog.ui:51
 msgid "Hide"
 msgstr "Ocultar"
+
+#: src/sdi-notify.c:192 src/sdi-notify.c:198 src/sdi-notify.c:259
+msgid "Show updates"
+msgstr "Mostrar las actualizaciones"
+
+#: src/sdi-notify.c:207 src/sdi-notify.c:271
+msgid "Don't remind me again"
+msgstr "No volver a recordarlo"
+
+#. TRANSLATORS: Text for one of the buttons in the notification shown
+#. after a snap has been refreshed. Pressing it will close the
+#. notification.
+#: src/sdi-notify.c:233 src/sdi-notify.c:237
+msgid "Close"
+msgstr "Cerrar"
+
+#. TRANSLATORS: The %s is the name of a snap that is currently running,
+#. and it will be closed and updated in %ld days if the user doesn't
+#. close it before. This is shown after the user has been notified several
+#. times that there is a refresh available for a running snap, but they
+#. hasn't closed it, to inform they that there is a time limit before the
+#. snap is forced to quit to refresh it.
+#: src/sdi-notify.c:317
+#, c-format
+msgid "%s will quit and update in %ld days"
+msgstr "%s se cerrará y se actualizará en %ld días"
+
+#. TRANSLATORS: The %s is the name of a snap that is currently running,
+#. and it will be closed and updated in %ld hours if the user doesn't
+#. close it before.
+#: src/sdi-notify.c:323
+#, c-format
+msgid "%s will quit and update in %ld hours"
+msgstr "%s se cerrará y se actualizará en %ld horas"
+
+#. TRANSLATORS: The %s is the name of a snap that is currently running,
+#. and it will be closed and updated in %ld minutes if the user doesn't
+#. close it before.
+#: src/sdi-notify.c:329
+#, c-format
+msgid "%s will quit and update in %ld minutes"
+msgstr "%s se cerrará y se actualizará en %ld minutos"
+
+#: src/sdi-notify.c:341
+msgid "Save your progress and quit now to prevent data loss."
+msgstr "Guarde su trabajo y salga ahora para evitar la pérdida de datos."
+
+#. TRANSLATORS: This message is used when there are two pending
+#. refreshes.
+#: src/sdi-notify.c:380
+#, c-format
+msgid "%s and %s will update when you quit them."
+msgstr "%s y %s se actualizarán cuando los cierre."
+
+#. TRANSLATORS: This message is used when there are three pending
+#. refreshes.
+#: src/sdi-notify.c:392
+#, c-format
+msgid "%s, %s and %s will update when you quit them."
+msgstr "%s, %s y %s se actualizarán cuando los cierre."
+
+#. TRANSLATORS: The %s is the name of a snap that has an update available.
+#: src/sdi-notify.c:411
+#, c-format
+msgid "Update available for %s"
+msgstr "Hay una actualización disponible para %s"
+
+#: src/sdi-notify.c:412
+msgid "Quit the app to update it now."
+msgstr "Cierre la aplicación para actualizarla ahora."
+
+#. TRANSLATORS: when there are several updates available, this is the
+#. message used to notify the user how many updates are.
+#: src/sdi-notify.c:423
+#, c-format
+msgid "Update available for %d app"
+msgid_plural "Updates available for %d apps"
+msgstr[0] "Hay una actualización disponible para %d aplicación"
+msgstr[1] "Hay actualizaciones disponibles para %d aplicaciones"
+
+#. TRANSLATORS: This message is used when there are four or more pending
+#. refreshes.
+#: src/sdi-notify.c:439
+msgid "Quit the apps to update them now."
+msgstr "Cierre las aplicaciones para actualizarlas ahora."
+
+#: src/sdi-notify.c:475
+#, c-format
+msgid "%s was updated"
+msgstr "%s ha sido actualizada"
+
+#: src/sdi-notify.c:477
+msgid "You can reopen it now."
+msgstr "Ya puede volver a abrirla."
+
+#. TRANSLATORS: This text is shown as the title of the window that contains
+#. progress bars for each of the snaps being updated.
+#: src/sdi-refresh-monitor.c:178
+msgid "Refreshing snaps"
+msgstr "Actualizando snaps"
