@@ -208,7 +208,6 @@ static void add_dialog_to_main_window(SdiRefreshMonitor *self,
 
 static void begin_application_refresh(GObject *source, GAsyncResult *res,
                                       gpointer p) {
-
   g_autoptr(SnapRefreshData) data = p;
   g_autoptr(SdiRefreshMonitor) self = g_steal_pointer(&data->self);
   g_autoptr(GError) error = NULL;
@@ -702,7 +701,6 @@ void sdi_refresh_monitor_class_init(SdiRefreshMonitorClass *klass) {
 }
 
 SdiRefreshMonitor *sdi_refresh_monitor_new(GApplication *application) {
-
   g_autoptr(SdiNotify) notify = sdi_notify_new(application);
   SdiRefreshMonitor *self =
       g_object_new(SDI_TYPE_REFRESH_MONITOR, "notify", notify, NULL);
@@ -717,7 +715,6 @@ SdiRefreshMonitor *sdi_refresh_monitor_new(GApplication *application) {
 }
 
 gboolean sdi_refresh_monitor_start(SdiRefreshMonitor *self, GError **error) {
-
   g_return_val_if_fail(SDI_IS_REFRESH_MONITOR(self), FALSE);
 
   snapd_notices_monitor_start(self->snapd_monitor, NULL);
