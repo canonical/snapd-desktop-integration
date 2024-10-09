@@ -281,7 +281,6 @@ static void show_pending_update_notification(SdiNotify *self,
                                              const gchar *body, GIcon *icon,
                                              GSList *snaps,
                                              gboolean allow_to_ignore) {
-
   g_autoptr(GNotification) notification = g_notification_new(title);
   g_notification_set_body(notification, body);
   if (icon != NULL) {

@@ -208,7 +208,6 @@ static void set_icon_image(SdiRefreshDialog *self, GdkPixbuf *image) {
 
 void sdi_refresh_dialog_set_icon_from_data(SdiRefreshDialog *self,
                                            GBytes *data) {
-
   g_autoptr(GInputStream) istream = NULL;
   g_autoptr(GdkPixbuf) image = NULL;
   istream = g_memory_input_stream_new_from_bytes(data);
