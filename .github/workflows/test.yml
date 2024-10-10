@@ -17,13 +17,13 @@ jobs:
         name: 'snap'
         path: ${{ steps.snapcraft.outputs.snap}}
   unitary-tests:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v3
       - name: Install dependencies
         run: |
           sudo apt update
-          sudo DEBIAN_FRONTEND=noninteractive apt install -y meson ninja-build jq libgtk-4-dev libnotify-dev libsoup-3.0-dev libjson-glib-dev
+          sudo DEBIAN_FRONTEND=noninteractive apt install -y meson ninja-build jq libgtk-4-dev libnotify-dev libsoup-3.0-dev libjson-glib-dev libpolkit-gobject-1-dev
       - name: Build snapd-glib
         run: |
           git clone https://github.com/snapcore/snapd-glib.git
