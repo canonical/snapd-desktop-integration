@@ -168,7 +168,6 @@ static void sdi_progress_window_init(SdiProgressWindow *self) {
 }
 
 SdiProgressWindow *sdi_progress_window_new(GApplication *application) {
-
   SdiProgressWindow *self = g_object_new(SDI_TYPE_PROGRESS_WINDOW, NULL);
   self->application = g_object_ref(application);
   return self;

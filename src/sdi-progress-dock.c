@@ -82,7 +82,6 @@ static void sdi_progress_dock_class_init(SdiProgressDockClass *klass) {
 static void sdi_progress_dock_init(SdiProgressDock *self) {}
 
 SdiProgressDock *sdi_progress_dock_new(GApplication *application) {
-
   SdiProgressDock *self = g_object_new(SDI_TYPE_PROGRESS_DOCK, NULL);
   self->application = g_object_ref(application);
   g_autofree gchar *unity_object =
