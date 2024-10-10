@@ -1,4 +1,4 @@
-name: build-test
+name: tests
 on:
   pull_request:
   push:
@@ -6,7 +6,7 @@ on:
       - master
 
 jobs:
-  snap:
+  build-snap:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -16,3 +16,19 @@ jobs:
       with:
         name: 'snap'
         path: ${{ steps.snapcraft.outputs.snap}}
+  unitary-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo DEBIAN_FRONTEND=noninteractive apt install -y meson ninja-build jq libsnapd-glib-dev
+      - name: Build
+        run: |
+          meson setup _build
+          ninja -C _build
+      - name: Test theme change
+        run: |
+          ./_build/tests/test-snapd-desktop-integration
+
