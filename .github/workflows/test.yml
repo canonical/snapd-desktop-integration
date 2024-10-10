@@ -23,7 +23,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt update
-          sudo DEBIAN_FRONTEND=noninteractive apt install -y meson ninja-build jq libsnapd-glib-dev
+          sudo DEBIAN_FRONTEND=noninteractive apt install -y meson ninja-build jq libsnapd-glib-dev libgtk-4-dev
       - name: Build
         run: |
           meson setup _build
