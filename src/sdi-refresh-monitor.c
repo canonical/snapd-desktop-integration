@@ -539,7 +539,7 @@ static void notice_cb(GObject *object, SnapdNotice *notice, gboolean first_run,
                       gpointer monitor) {
   SdiRefreshMonitor *self = SDI_REFRESH_MONITOR(monitor);
 
-  g_autoptr(GHashTable) data = snapd_notice_get_last_data(notice);
+  GHashTable *data = snapd_notice_get_last_data2(notice);
   g_autofree gchar *kind = g_strdup(g_hash_table_lookup(data, "kind"));
 
   switch (snapd_notice_get_notice_type(notice)) {
