@@ -1,6 +1,26 @@
 #include "../src/sdi-forced-refresh-time-constants.h"
 #include "../src/sdi-notify.h"
 #include "gtk/gtk.h"
+
+/**
+ * Unitary tests
+ *
+ * Since these tests work with the notifications system, they can't be
+ * easily integrated into CI because they require to be able to show
+ * true notifications. Anyway, this code shouldn't need to be touched
+ * too much, so having to run these tests manually should not be a
+ * problem.
+ *
+ * To run these tests, just run this test program from a command line,
+ * check that each notification has the text specified in the test
+ * description (shown in the terminal),and click where the test description
+ * tells you to click.
+ *
+ * It is strongly recommended to run this test with Valgrind with the
+ * option --leak-check=full, to also detect memory leaks and wrong
+ * memory accesses.
+ */
+
 SdiNotify *notifier = NULL;
 
 typedef struct _testData {
