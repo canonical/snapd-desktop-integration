@@ -705,7 +705,6 @@ void sdi_refresh_monitor_class_init(SdiRefreshMonitorClass *klass) {
 }
 
 SdiRefreshMonitor *sdi_refresh_monitor_new(GApplication *application) {
-
   SdiRefreshMonitor *self = g_object_new(SDI_TYPE_REFRESH_MONITOR, NULL);
   self->application = g_object_ref(application);
   g_autofree gchar *unity_object =
