@@ -10,6 +10,8 @@ snapd_desktop_integration = executable(
   'sdi-snap.c',
   'sdi-refresh-dialog.c',
   'sdi-refresh-monitor.c',
+  'sdi-progress-dock.c',
+  'sdi-progress-window.c',
   'sdi-theme-monitor.c',
   'sdi-helpers.c',
   resources, login_src, login_session_src, unity_launcher_src, desktop_launcher_src,

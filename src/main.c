@@ -30,6 +30,8 @@
 
 #include "org.freedesktop.login1.Session.h"
 #include "org.freedesktop.login1.h"
+#include "sdi-progress-dock.h"
+#include "sdi-progress-window.h"
 #include "sdi-refresh-monitor.h"
 #include "sdi-theme-monitor.h"
 
@@ -37,6 +39,8 @@ static Login1Manager *login_manager = NULL;
 static SnapdClient *client = NULL;
 static SdiThemeMonitor *theme_monitor = NULL;
 static SdiRefreshMonitor *refresh_monitor = NULL;
+static SdiProgressWindow *progress_window = NULL;
+static SdiProgressDock *progress_dock = NULL;
 
 static gchar *snapd_socket_path = NULL;
 
@@ -142,6 +146,20 @@ static void do_startup(GObject *object, gpointer data) {
 #endif
   client = snapd_client_new();
   refresh_monitor = sdi_refresh_monitor_new(G_APPLICATION(object));
+  progress_window = sdi_progress_window_new(G_APPLICATION(object));
+  g_signal_connect_object(refresh_monitor, "begin_refresh",
+                          (GCallback)sdi_progress_window_begin_refresh,
+                          progress_window, G_CONNECT_SWAPPED);
+  g_signal_connect_object(refresh_monitor, "refresh_progress",
+                          (GCallback)sdi_progress_window_update_progress,
+                          progress_window, G_CONNECT_SWAPPED);
+  g_signal_connect_object(refresh_monitor, "end_refresh",
+                          (GCallback)sdi_progress_window_end_refresh,
+                          progress_window, G_CONNECT_SWAPPED);
+  progress_dock = sdi_progress_dock_new(G_APPLICATION(object));
+  g_signal_connect_object(refresh_monitor, "refresh_progress",
+                          (GCallback)sdi_progress_dock_update_progress,
+                          progress_dock, G_CONNECT_SWAPPED);
   if (!sdi_refresh_monitor_start(refresh_monitor, &error)) {
     g_message("Failed to export the DBus Desktop Integration API %s",
               error->message);
@@ -167,6 +185,8 @@ static void do_shutdown(GObject *object, gpointer data) {
   g_clear_object(&client);
   g_clear_object(&theme_monitor);
   g_clear_object(&refresh_monitor);
+  g_clear_object(&progress_window);
+  g_clear_object(&progress_dock);
   g_clear_object(&login_manager);
 }
 
