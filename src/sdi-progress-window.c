@@ -37,6 +37,18 @@ struct _SdiProgressWindow {
 
 G_DEFINE_TYPE(SdiProgressWindow, sdi_progress_window, G_TYPE_OBJECT)
 
+#ifdef DEBUG_TESTS
+
+GHashTable *sdi_progress_window_get_dialogs(SdiProgressWindow *self) {
+  return self->dialogs;
+}
+
+GtkWidget *sdi_progress_window_get_window(SdiProgressWindow *self) {
+  return self->main_window;
+}
+
+#endif
+
 static gboolean contains_child(GtkWidget *parent, GtkWidget *query_child) {
   GtkWidget *child = gtk_widget_get_first_child(parent);
   while (child != NULL) {

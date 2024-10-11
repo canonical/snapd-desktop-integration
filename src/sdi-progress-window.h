@@ -18,6 +18,7 @@
 #pragma once
 
 #include <gio/gio.h>
+#include <gtk/gtk.h>
 
 G_BEGIN_DECLS
 
@@ -40,5 +41,13 @@ void sdi_progress_window_update_progress(SdiProgressWindow *self,
 
 void sdi_progress_window_end_refresh(SdiProgressWindow *self, gchar *snap_name,
                                      gpointer data);
+
+#ifdef DEBUG_TESTS
+
+GHashTable *sdi_progress_window_get_dialogs(SdiProgressWindow *self);
+
+GtkWidget *sdi_progress_window_get_window(SdiProgressWindow *self);
+
+#endif
 
 G_END_DECLS
