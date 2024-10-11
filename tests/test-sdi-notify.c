@@ -39,8 +39,8 @@ gchar *tmpdirpath = NULL;
  */
 
 static void describe_test(TestData *test) {
-  g_assert(test != NULL);
-  g_assert(test->test_number != -1);
+  g_assert_nonnull(test);
+  g_assert_cmpint(test->test_number, !=, -1);
   // g_print("\e[1;1H\e[2J"); // clear screen
   g_print("\n\n\n\n");
   g_print("Test number %d\n", test->test_number);
@@ -63,7 +63,7 @@ static gchar *create_desktop_file(gchar *name, gchar *visible_name,
   g_autofree gchar *filename = g_strdup_printf("%s.desktop", name);
   gchar *desktop_path = g_build_path("/", tmpdirpath, filename, NULL);
   FILE *f = fopen(desktop_path, "w");
-  g_assert(f != NULL);
+  g_assert_nonnull(f);
   fprintf(
       f,
       "[Desktop Entry]\nVersion=1.0\nType=Application\nExec=/usr/bin/xmessage "
