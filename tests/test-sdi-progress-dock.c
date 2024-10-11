@@ -22,7 +22,7 @@ gchar **app_list = NULL;
  */
 
 static void buttons_callback(GtkButton *button, gchar *answer) {
-  g_assert_cmpstr(*answer, ==, 'y');
+  g_assert_cmpstr(answer, ==, "yes");
   g_main_loop_quit(loop);
 }
 
@@ -39,15 +39,15 @@ static void create_window(GApplication *app) {
   gtk_window_set_child(GTK_WINDOW(window), GTK_WIDGET(box));
   gtk_window_present(GTK_WINDOW(window));
 
-  g_signal_connect(yes_button, "clicked", (GCallback)buttons_callback, "y");
-  g_signal_connect(no_button, "clicked", (GCallback)buttons_callback, "n");
+  g_signal_connect(yes_button, "clicked", (GCallback)buttons_callback, "yes");
+  g_signal_connect(no_button, "clicked", (GCallback)buttons_callback, "no");
 }
 
 static void describe_test(TestData *test) {
   g_assert_nonnull(test);
   g_assert_cmpint(test->test_number, !=, -1);
   g_autofree gchar *text = g_strdup_printf(
-      "Test %d\n\nTitle: %s\nDescription: %s\n\nActions: %s", test->test_number,
+      "Test %d; Title: %s\n\nDescription: %s\n\nActions: %s", test->test_number,
       test->title, test->description, test->actions);
   gtk_label_set_label(window_text, text);
 }
