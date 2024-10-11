@@ -31,16 +31,19 @@
 #include "org.freedesktop.login1.Session.h"
 #include "org.freedesktop.login1.h"
 #include "sdi-refresh-monitor.h"
+#include "sdi-snapd-client-factory.h"
+#include "sdi-snapd-monitor.h"
 #include "sdi-theme-monitor.h"
 
 static Login1Manager *login_manager = NULL;
 static SnapdClient *client = NULL;
 static SdiThemeMonitor *theme_monitor = NULL;
 static SdiRefreshMonitor *refresh_monitor = NULL;
+static SdiSnapdMonitor *snapd_monitor = NULL;
 
 static gchar *snapd_socket_path = NULL;
 
-static GOptionEntry entries[] = {{"snapd-socket-path", 0, 0,
+static GOptionEntry entries[] = {{"snapd-socket-path", 0, G_OPTION_FLAG_NONE,
                                   G_OPTION_ARG_FILENAME, &snapd_socket_path,
                                   "Snapd socket path", "PATH"},
                                  {NULL}};
@@ -136,27 +139,28 @@ static gboolean check_graphical_sessions(gpointer data) {
 }
 
 static void do_startup(GObject *object, gpointer data) {
-  GError *error = NULL;
+  sdi_snapd_client_factory_set_custom_path(snapd_socket_path);
 #ifndef USE_GNOTIFY
   notify_init("snapd-desktop-integration_snapd-desktop-integration");
 #endif
-  client = snapd_client_new();
   refresh_monitor = sdi_refresh_monitor_new(G_APPLICATION(object));
-  if (!sdi_refresh_monitor_start(refresh_monitor, &error)) {
-    g_message("Failed to export the DBus Desktop Integration API %s",
-              error->message);
+  snapd_monitor = sdi_snapd_monitor_new();
+  // any notice event received by the #sdi_snapd_monitor object will
+  // be relayed directly to the #sdi_refresh_monitor, which will process
+  // them and decide whether to show a progress bar, a notification, a
+  // dialog with the current progress...
+  g_signal_connect_object(snapd_monitor, "notice-event",
+                          (GCallback)sdi_refresh_monitor_notice,
+                          refresh_monitor, G_CONNECT_SWAPPED);
+  if (!sdi_snapd_monitor_start(snapd_monitor)) {
+    g_message("Failed to start monitor");
   }
 }
 
 static void do_activate(GObject *object, gpointer data) {
   // because, by default, there are no windows, so the application would quit
   g_application_hold(G_APPLICATION(object));
-
-  if (snapd_socket_path != NULL) {
-    snapd_client_set_socket_path(client, snapd_socket_path);
-  } else if (g_getenv("SNAP") != NULL) {
-    snapd_client_set_socket_path(client, "/run/snapd-snap.socket");
-  }
+  client = sdi_snapd_client_factory_new_snapd_client();
 
   theme_monitor = sdi_theme_monitor_new(client);
   sdi_theme_monitor_start(theme_monitor);
@@ -168,6 +172,7 @@ static void do_shutdown(GObject *object, gpointer data) {
   g_clear_object(&theme_monitor);
   g_clear_object(&refresh_monitor);
   g_clear_object(&login_manager);
+  g_clear_object(&snapd_monitor);
 }
 
 static int global_retval = 0;
