@@ -51,3 +51,5 @@ test_sdi_progress_window_executable = executable(
 )
 
 subdir('data')
+
+test('Tests', test_executable)
