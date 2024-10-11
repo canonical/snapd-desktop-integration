@@ -5,7 +5,6 @@ GtkApplicationWindow *window = NULL;
 GtkLabel *window_text = NULL;
 GtkButton *yes_button = NULL;
 GtkButton *no_button = NULL;
-SdiProgressDock *progress_dock;
 static GMainLoop *loop = NULL;
 
 typedef struct _testData {
@@ -16,7 +15,6 @@ typedef struct _testData {
   const void (*test_function)(struct _testData *);
 } TestData;
 
-gchar *tmpdirpath = NULL;
 gchar **app_list = NULL;
 
 /**
@@ -46,8 +44,8 @@ static void create_window(GApplication *app) {
 }
 
 static void describe_test(TestData *test) {
-  g_assert(test != NULL);
-  g_assert(test->test_number != -1);
+  g_assert_nonnull(test);
+  g_assert_cmpint(test->test_number, !=, -1);
   g_autofree gchar *text = g_strdup_printf(
       "Test %d\n\nTitle: %s\nDescription: %s\n\nActions: %s", test->test_number,
       test->title, test->description, test->actions);
@@ -72,6 +70,8 @@ static void wait_for_click() {
   g_main_loop_run(loop);
   g_main_loop_unref(loop);
 }
+
+// these are the actual tests
 
 static void test_progress_bar(TestData *test) {
   describe_test(test);
@@ -153,13 +153,10 @@ static void do_activate(GApplication *app, gpointer data) {
 
 int main(int argc, char **argv) {
   g_test_init(&argc, &argv, NULL);
-  // here we will create any temporary files
-  tmpdirpath = g_dir_make_tmp(NULL, NULL);
 
   g_autoptr(GApplication) app = G_APPLICATION(gtk_application_new(
       "io.snapcraft.SdiProgressDockTest", G_APPLICATION_DEFAULT_FLAGS));
   g_signal_connect(app, "startup", (GCallback)do_startup, NULL);
   g_signal_connect(app, "activate", (GCallback)do_activate, NULL);
   g_application_run(app, argc, argv);
-  g_free(tmpdirpath);
 }
