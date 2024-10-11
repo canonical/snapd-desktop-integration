@@ -50,10 +50,13 @@ static void test_notices_events_are_received_cb(SdiSnapdMonitor *self,
     g_assert_cmpint(snapd_notice_get_notice_type(notice), ==,
                     SNAPD_NOTICE_TYPE_CHANGE_UPDATE);
     // close the socket
-    g_object_unref(
-        data->snapd); // Called twice because there are two references:
-    g_object_unref(data->snapd); // one in snapd, in the calling function, and
-                                 // another in `data`
+    // Called twice because there are two references:
+    // one in the 'snapd' variable, in the calling function, and another one in
+    // `data` struct.
+    g_object_unref(data->snapd);
+    g_object_unref(data->snapd);
+    // we create a new snapd mock, simulating that the daemon died and a new one
+    // was launched
     data->snapd = g_object_ref(mock_snapd_new());
     const gchar *path = mock_snapd_get_socket_path(data->snapd);
     g_assert_true(mock_snapd_start(data->snapd, NULL));
