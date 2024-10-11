@@ -43,7 +43,7 @@ GHashTable *sdi_progress_window_get_dialogs(SdiProgressWindow *self) {
   return self->dialogs;
 }
 
-GtkWidget *sdi_progress_window_get_window(SdiProgressWindow *self) {
+GtkWindow *sdi_progress_window_get_window(SdiProgressWindow *self) {
   return self->main_window;
 }
 

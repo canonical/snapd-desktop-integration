@@ -46,7 +46,7 @@ void sdi_progress_window_end_refresh(SdiProgressWindow *self, gchar *snap_name,
 
 GHashTable *sdi_progress_window_get_dialogs(SdiProgressWindow *self);
 
-GtkWidget *sdi_progress_window_get_window(SdiProgressWindow *self);
+GtkWindow *sdi_progress_window_get_window(SdiProgressWindow *self);
 
 #endif
 

@@ -27,3 +27,5 @@ test_sdi_progress_window_executable = executable(
   dependencies: [gtk_dep, snapd_glib_dep, gio_dep],
   c_args: ['-DDEBUG_TESTS']
 )
+
+test('Tests', test_executable)
