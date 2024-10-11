@@ -100,11 +100,37 @@ static void show_progress_window(gchar *snap_name, gchar *desktop_file) {
       (gchar *)g_app_info_get_display_name(G_APP_INFO(app_info)), icon, NULL);
 }
 
+static int count_progress_childs() {
+  GtkWindow *window =
+      GTK_WINDOW(sdi_progress_window_get_window(progress_window));
+  // to differentiate between window existing and zero elements, and no window
+  if (window == NULL)
+    return -1;
+  GtkWidget *container = gtk_window_get_child(window);
+  g_assert_true(GTK_IS_BOX(container));
+  GtkWidget *child = gtk_widget_get_first_child(container);
+  int counter = 0;
+  while (child != NULL) {
+    counter++;
+    child = gtk_widget_get_next_sibling(child);
+  }
+  return counter;
+}
+
+static int count_hash_childs() {
+  GHashTable *table = sdi_progress_window_get_dialogs(progress_window);
+  g_assert_nonnull(table);
+  return g_hash_table_size(table);
+}
+
 // these are the actual tests
 
 static void test_progress_bar(TestData *test) {
   describe_test(test);
   show_progress_window("A-SNAP", *app_list);
+
+  g_assert_cmpint(count_hash_childs(), ==, 1);
+  g_assert_cmpint(count_progress_childs(), ==, 1);
   gint timeout_id = g_timeout_add(500, (GSourceFunc)set_progress_bar, "A-SNAP");
   wait_for_click();
   g_source_remove(timeout_id);
@@ -113,28 +139,40 @@ static void test_progress_bar(TestData *test) {
 static void test_pulse_bar(TestData *test) {
   describe_test(test);
   disable_buttons_for_seconds(6);
+  g_assert_cmpint(count_hash_childs(), ==, 1);
+  g_assert_cmpint(count_progress_childs(), ==, 1);
   wait_for_click();
 }
 
 static void test_close_bar(TestData *test) {
   describe_test(test);
   sdi_progress_window_end_refresh(progress_window, "A-SNAP", NULL);
+  g_assert_cmpint(count_hash_childs(), ==, 0);
+  g_assert_cmpint(count_progress_childs(), ==, -1);
   gint timeout_id = g_timeout_add(500, (GSourceFunc)set_progress_bar, "A-SNAP");
   wait_for_click();
+  g_assert_cmpint(count_hash_childs(), ==, 0);
+  g_assert_cmpint(count_progress_childs(), ==, -1);
   g_source_remove(timeout_id);
 }
 
 static void test_manual_hide(TestData *test) {
   describe_test(test);
   show_progress_window("B-SNAP", *(app_list + 1));
+  g_assert_cmpint(count_hash_childs(), ==, 1);
+  g_assert_cmpint(count_progress_childs(), ==, 1);
   gint timeout_id = g_timeout_add(500, (GSourceFunc)set_progress_bar, "B-SNAP");
   wait_for_click();
+  g_assert_cmpint(count_hash_childs(), ==, 0);
+  g_assert_cmpint(count_progress_childs(), ==, -1);
   g_source_remove(timeout_id);
 }
 
 static void test_dual_progress_bar1(TestData *test) {
   describe_test(test);
   show_progress_window("C-SNAP", *(app_list + 2));
+  g_assert_cmpint(count_hash_childs(), ==, 1);
+  g_assert_cmpint(count_progress_childs(), ==, 1);
   timeout_id1 = g_timeout_add(500, (GSourceFunc)set_progress_bar, "C-SNAP");
   wait_for_click();
 }
@@ -142,6 +180,8 @@ static void test_dual_progress_bar1(TestData *test) {
 static void test_dual_progress_bar2(TestData *test) {
   describe_test(test);
   show_progress_window("D-SNAP", *(app_list + 3));
+  g_assert_cmpint(count_hash_childs(), ==, 2);
+  g_assert_cmpint(count_progress_childs(), ==, 2);
   timeout_id2 = g_timeout_add(300, (GSourceFunc)set_progress_bar, "D-SNAP");
   wait_for_click();
 }
@@ -149,6 +189,8 @@ static void test_dual_progress_bar2(TestData *test) {
 static void test_dual_progress_bar3(TestData *test) {
   describe_test(test);
   sdi_progress_window_end_refresh(progress_window, "C-SNAP", NULL);
+  g_assert_cmpint(count_hash_childs(), ==, 1);
+  g_assert_cmpint(count_progress_childs(), ==, 1);
   wait_for_click();
   g_source_remove(timeout_id1);
 }
@@ -156,6 +198,8 @@ static void test_dual_progress_bar3(TestData *test) {
 static void test_dual_progress_bar4(TestData *test) {
   describe_test(test);
   sdi_progress_window_end_refresh(progress_window, "D-SNAP", NULL);
+  g_assert_cmpint(count_hash_childs(), ==, 0);
+  g_assert_cmpint(count_progress_childs(), ==, -1);
   wait_for_click();
   g_source_remove(timeout_id2);
 }
