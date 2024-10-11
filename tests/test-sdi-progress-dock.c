@@ -22,7 +22,7 @@ gchar **app_list = NULL;
  */
 
 static void buttons_callback(GtkButton *button, gchar *answer) {
-  g_assert(*answer == 'y');
+  g_assert_cmpstr(*answer, ==, 'y');
   g_main_loop_quit(loop);
 }
 
