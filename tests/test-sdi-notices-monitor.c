@@ -46,7 +46,7 @@ static void test_notices_events_are_received_cb(SdiSnapdMonitor *self,
   data->counter++;
   switch (data->counter) {
   case 1:
-    g_assert(first_set);
+    g_assert_true(first_set);
     g_assert_cmpint(snapd_notice_get_notice_type(notice), ==,
                     SNAPD_NOTICE_TYPE_CHANGE_UPDATE);
     // close the socket
@@ -64,7 +64,7 @@ static void test_notices_events_are_received_cb(SdiSnapdMonitor *self,
     create_notice(data->snapd, "refresh-inhibit");
     break;
   case 2:
-    g_assert(first_set);
+    g_assert_true(first_set);
     g_assert_cmpint(snapd_notice_get_notice_type(notice), ==,
                     SNAPD_NOTICE_TYPE_REFRESH_INHIBIT);
     g_main_loop_quit(data->loop);
