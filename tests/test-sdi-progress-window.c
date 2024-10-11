@@ -8,6 +8,8 @@ GtkLabel *window_text = NULL;
 GtkButton *yes_button = NULL;
 GtkButton *no_button = NULL;
 static GMainLoop *loop = NULL;
+static gint timeout_id1 = 0;
+static gint timeout_id2 = 0;
 
 typedef struct _testData {
   const int test_number;
@@ -124,10 +126,38 @@ static void test_close_bar(TestData *test) {
 
 static void test_manual_hide(TestData *test) {
   describe_test(test);
-  show_progress_window("B-SNAP", *app_list);
+  show_progress_window("B-SNAP", *(app_list + 1));
   gint timeout_id = g_timeout_add(500, (GSourceFunc)set_progress_bar, "B-SNAP");
   wait_for_click();
   g_source_remove(timeout_id);
+}
+
+static void test_dual_progress_bar1(TestData *test) {
+  describe_test(test);
+  show_progress_window("C-SNAP", *(app_list + 2));
+  timeout_id1 = g_timeout_add(500, (GSourceFunc)set_progress_bar, "C-SNAP");
+  wait_for_click();
+}
+
+static void test_dual_progress_bar2(TestData *test) {
+  describe_test(test);
+  show_progress_window("D-SNAP", *(app_list + 3));
+  timeout_id2 = g_timeout_add(300, (GSourceFunc)set_progress_bar, "D-SNAP");
+  wait_for_click();
+}
+
+static void test_dual_progress_bar3(TestData *test) {
+  describe_test(test);
+  sdi_progress_window_end_refresh(progress_window, "C-SNAP", NULL);
+  wait_for_click();
+  g_source_remove(timeout_id1);
+}
+
+static void test_dual_progress_bar4(TestData *test) {
+  describe_test(test);
+  sdi_progress_window_end_refresh(progress_window, "D-SNAP", NULL);
+  wait_for_click();
+  g_source_remove(timeout_id2);
 }
 
 /**
@@ -162,6 +192,35 @@ TestData test_data[] = {
      "disappear and no new window should appear (check below this one). "
      "Confirm that is correct.",
      test_manual_hide},
+    {5, "/progress_window/test_dual_progress_bar_1",
+     "A window with a progress bar must appear with the name and icon of a "
+     "snapped application, growing from 1 to 10 and going back to 1 "
+     "periodically. It must not 'pulse' (move left-to-right and then "
+     "right-to-left softly).\n"
+     "The text in the progress bar should be 'Description for task X (X/10)', "
+     "being X a number between 1 and 10.\nIf no window is shown, check if it "
+     "is below this window.",
+     "Confirm that is correct.", test_dual_progress_bar1},
+    {6, "/progress_window/test_dual_progress_bar_2",
+     "A second progress bar must appear in the same window with the name and "
+     "icon of a "
+     "snapped application, growing from 1 to 10 and going back to 1 "
+     "periodically. It must not 'pulse' (move left-to-right and then "
+     "right-to-left softly).\n"
+     "The text in the progress bar should be 'Description for task X (X/10)', "
+     "being X a number between 1 and 10.\nIf no window is shown, check if it "
+     "is below this window.",
+     "Confirm that is correct.", test_dual_progress_bar2},
+    {7, "/progress_window/test_dual_progress_bar_3",
+     "The first progress bar must disappear, remaining only the second "
+     "progress bar. Neither a new window, nor a new progress bar, should "
+     "appear (check below "
+     "this window just in case).\n",
+     "Confirm that is correct.", test_dual_progress_bar3},
+    {8, "/progress_window/test_dual_progress_bar_4",
+     "The window must disappear and no new window should appear (check below "
+     "this window just in case).\n",
+     "Confirm that is correct.", test_dual_progress_bar4},
     {-1, NULL, NULL, NULL, NULL}};
 
 /**
