@@ -7,6 +7,10 @@
  * See http://www.gnu.org/copyleft/lgpl.html the full text of the license.
  */
 
+/*********************************************************
+ * This is just the same mock-snapd code from snapd-glib *
+ *********************************************************/
+
 #include <ctype.h>
 #include <errno.h>
 #include <string.h>
