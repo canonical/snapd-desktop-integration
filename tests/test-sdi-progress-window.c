@@ -94,10 +94,10 @@ static void disable_buttons_for_seconds(gint seconds) {
 static void show_progress_window(gchar *snap_name, gchar *desktop_file) {
   g_autoptr(GDesktopAppInfo) app_info = g_desktop_app_info_new(desktop_file);
   g_assert_nonnull(app_info);
+  g_autofree gchar *icon = g_desktop_app_info_get_string(app_info, "Icon");
   sdi_progress_window_begin_refresh(
       progress_window, snap_name,
-      (gchar *)g_app_info_get_display_name(G_APP_INFO(app_info)),
-      g_desktop_app_info_get_string(app_info, "Icon"), NULL);
+      (gchar *)g_app_info_get_display_name(G_APP_INFO(app_info)), icon, NULL);
 }
 
 // these are the actual tests
@@ -248,6 +248,7 @@ static void do_startup(GObject *object, gpointer data) {
     }
   }
   app_list = g_strv_builder_end(builder);
+  g_list_free_full(applist, g_object_unref);
 }
 
 static void do_activate(GApplication *app, gpointer data) {
@@ -259,6 +260,7 @@ static void do_activate(GApplication *app, gpointer data) {
   }
   g_test_run();
   g_object_unref(window);
+  g_strfreev(app_list);
 }
 
 int main(int argc, char **argv) {
