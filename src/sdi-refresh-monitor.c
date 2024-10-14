@@ -79,14 +79,14 @@ typedef struct {
   guint done_tasks;
   gdouble old_progress;
   gboolean done;
-  GPtrArray *desktop_files;
+  GStrv desktop_files;
   gchar *snap_name;
   gchar *task_description;
 } SnapProgressTaskData;
 
 static void free_progress_task_data(void *data) {
   SnapProgressTaskData *p = data;
-  g_ptr_array_unref(p->desktop_files);
+  g_strfreev(p->desktop_files);
   g_free(p->snap_name);
   g_free(p->task_description);
   g_free(p);
@@ -99,7 +99,7 @@ static GTimeSpan get_remaining_time_in_seconds(SnapdSnap *snap) {
   return difference;
 }
 
-static GPtrArray *get_desktop_filenames_for_snap(const gchar *snap_name) {
+static GStrv get_desktop_filenames_for_snap(const gchar *snap_name) {
   g_autoptr(GDir) desktop_folder =
       g_dir_open("/var/lib/snapd/desktop/applications", 0, NULL);
   if (desktop_folder == NULL) {
@@ -107,7 +107,7 @@ static GPtrArray *get_desktop_filenames_for_snap(const gchar *snap_name) {
   }
   g_autofree gchar *prefix = g_strdup_printf("%s_", snap_name);
   const gchar *filename;
-  GPtrArray *desktop_files = g_ptr_array_new_with_free_func(g_free);
+  g_autoptr(GStrvBuilder) desktop_files_builder = g_strv_builder_new();
   while ((filename = g_dir_read_name(desktop_folder)) != NULL) {
     if (!g_str_has_prefix(filename, prefix)) {
       continue;
@@ -115,9 +115,9 @@ static GPtrArray *get_desktop_filenames_for_snap(const gchar *snap_name) {
     if (!g_str_has_suffix(filename, ".desktop")) {
       continue;
     }
-    g_ptr_array_add(desktop_files, g_strdup(filename));
+    g_strv_builder_add(desktop_files_builder, filename);
   }
-  return desktop_files;
+  return g_strv_builder_end(desktop_files_builder);
 }
 
 static SnapProgressTaskData *new_progress_task_data(const gchar *snap_name) {
@@ -281,10 +281,8 @@ static void process_inhibited_snaps(SdiRefreshMonitor *self,
  * both the Gtk dialog (if it was previously created due to the emission of
  * a `begin-refresh` signal) and the dock.
  */
-static void update_progress_bars(gpointer key, gpointer value, gpointer data) {
-  SnapProgressTaskData *task_data = value;
-  SdiRefreshMonitor *self = data;
-
+static void update_progress_bars(gpointer key, SnapProgressTaskData *task_data,
+                                 SdiRefreshMonitor *self) {
   if (task_data->total_tasks == 0) {
     return;
   }
@@ -293,18 +291,10 @@ static void update_progress_bars(gpointer key, gpointer value, gpointer data) {
 
   if ((progress != task_data->old_progress) || task_data->done) {
     task_data->old_progress = progress;
-    if (task_data->desktop_files->len != 0) {
-      for (int i = 0; i < task_data->desktop_files->len; i++) {
-        const gchar *desktop_file = task_data->desktop_files->pdata[i];
-        g_signal_emit_by_name(self, "refresh-progress", NULL, desktop_file,
-                              task_data->task_description,
-                              task_data->done_tasks, task_data->total_tasks,
-                              task_data->done);
-      }
-    }
-    g_signal_emit_by_name(self, "refresh-progress", task_data->snap_name, NULL,
-                          task_data->task_description, task_data->done_tasks,
-                          task_data->total_tasks, task_data->done);
+    g_signal_emit_by_name(self, "refresh-progress", task_data->snap_name,
+                          task_data->desktop_files, task_data->task_description,
+                          task_data->done_tasks, task_data->total_tasks,
+                          task_data->done);
   }
   task_data->done_tasks = 0;
   task_data->total_tasks = 0;
@@ -367,7 +357,8 @@ static void process_change_progress(SdiRefreshMonitor *self,
       }
     }
   }
-  g_hash_table_foreach(self->refreshing_snap_list, update_progress_bars, self);
+  g_hash_table_foreach(self->refreshing_snap_list, (GHFunc)update_progress_bars,
+                       self);
   for (GSList *p = snaps_to_remove; p != NULL; p = p->next) {
     g_hash_table_remove(self->refreshing_snap_list, p->data);
   }
@@ -618,9 +609,8 @@ void sdi_refresh_monitor_class_init(SdiRefreshMonitorClass *klass) {
   g_signal_new("end-refresh", G_TYPE_FROM_CLASS(klass), G_SIGNAL_RUN_LAST, 0,
                NULL, NULL, NULL, G_TYPE_NONE, 1, G_TYPE_STRING);
   g_signal_new("refresh-progress", G_TYPE_FROM_CLASS(klass), G_SIGNAL_RUN_LAST,
-               0, NULL, NULL, NULL, G_TYPE_NONE, 6, G_TYPE_STRING,
-               G_TYPE_STRING, G_TYPE_STRING, G_TYPE_UINT, G_TYPE_UINT,
-               G_TYPE_BOOLEAN);
+               0, NULL, NULL, NULL, G_TYPE_NONE, 6, G_TYPE_STRING, G_TYPE_STRV,
+               G_TYPE_STRING, G_TYPE_UINT, G_TYPE_UINT, G_TYPE_BOOLEAN);
 }
 
 SdiRefreshMonitor *sdi_refresh_monitor_new(GApplication *application) {

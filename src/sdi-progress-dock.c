@@ -41,26 +41,29 @@ G_DEFINE_TYPE(SdiProgressDock, sdi_progress_dock, G_TYPE_OBJECT)
  * will update the progress bars in the dock.
  */
 void sdi_progress_dock_update_progress(SdiProgressDock *self, gchar *snap_name,
-                                       gchar *desktop_file,
+                                       GStrv desktop_files,
                                        gchar *task_description,
                                        guint done_tasks, guint total_tasks,
                                        gboolean task_done, gpointer data) {
-  if ((desktop_file != NULL) && (total_tasks != 0)) {
-    // Update dock progress bar
-    g_autoptr(GVariantBuilder) builder =
-        g_variant_builder_new(G_VARIANT_TYPE("a{sv}"));
-    g_variant_builder_add(
-        builder, "{sv}", "progress",
-        g_variant_new_double(((gfloat)done_tasks) / ((gfloat)total_tasks)));
-    g_variant_builder_add(builder, "{sv}", "progress-visible",
-                          g_variant_new_boolean(!task_done));
-    g_variant_builder_add(builder, "{sv}", "updating",
-                          g_variant_new_boolean(!task_done));
+  if ((desktop_files != NULL) && (total_tasks != 0)) {
+    for (gchar **desktop_file = desktop_files; *desktop_file != NULL;
+         desktop_file++) {
+      // Update dock progress bar
+      g_autoptr(GVariantBuilder) builder =
+          g_variant_builder_new(G_VARIANT_TYPE("a{sv}"));
+      g_variant_builder_add(
+          builder, "{sv}", "progress",
+          g_variant_new_double(((gfloat)done_tasks) / ((gfloat)total_tasks)));
+      g_variant_builder_add(builder, "{sv}", "progress-visible",
+                            g_variant_new_boolean(!task_done));
+      g_variant_builder_add(builder, "{sv}", "updating",
+                            g_variant_new_boolean(!task_done));
 
-    g_autoptr(GVariant) values =
-        g_variant_ref_sink(g_variant_builder_end(builder));
-    unity_com_canonical_unity_launcher_entry_emit_update(self->unity_manager,
-                                                         desktop_file, values);
+      g_autoptr(GVariant) values =
+          g_variant_ref_sink(g_variant_builder_end(builder));
+      unity_com_canonical_unity_launcher_entry_emit_update(
+          self->unity_manager, *desktop_file, values);
+    }
   }
 }
 
