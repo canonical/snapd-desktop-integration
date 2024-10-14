@@ -29,7 +29,7 @@ G_DECLARE_FINAL_TYPE(SdiProgressDock, sdi_progress_dock, SDI, PROGRESS_DOCK,
 SdiProgressDock *sdi_progress_dock_new(GApplication *application);
 
 void sdi_progress_dock_update_progress(SdiProgressDock *self, gchar *snap_name,
-                                       gchar *desktop_file,
+                                       GStrv desktop_files,
                                        gchar *task_description,
                                        guint done_tasks, guint total_tasks,
                                        gboolean task_done, gpointer data);

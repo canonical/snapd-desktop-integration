@@ -142,7 +142,7 @@ void sdi_progress_window_end_refresh(SdiProgressWindow *self, gchar *snap_name,
  * be ignored).
  */
 void sdi_progress_window_update_progress(SdiProgressWindow *self,
-                                         gchar *snap_name, gchar *desktop_file,
+                                         gchar *snap_name, GStrv desktop_files,
                                          gchar *task_description,
                                          guint done_tasks, guint total_tasks,
                                          gboolean task_done, gpointer data) {
