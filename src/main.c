@@ -50,11 +50,9 @@ static GOptionEntry entries[] = {{"snapd-socket-path", 0, G_OPTION_FLAG_NONE,
 
 static void do_startup(GObject *object, gpointer data) {
   sdi_snapd_client_factory_set_custom_path(snapd_socket_path);
-#ifndef USE_GNOTIFY
-  notify_init("snapd-desktop-integration_snapd-desktop-integration");
-#endif
 
   refresh_monitor = sdi_refresh_monitor_new(G_APPLICATION(object));
+
   notify_manager = sdi_notify_new(G_APPLICATION(object));
   g_signal_connect_object(refresh_monitor, "notify-pending-refresh",
                           (GCallback)sdi_notify_pending_refresh, notify_manager,
@@ -68,6 +66,7 @@ static void do_startup(GObject *object, gpointer data) {
   g_signal_connect_object(notify_manager, "ignore-snap-event",
                           (GCallback)sdi_refresh_monitor_ignore_snap_cb,
                           refresh_monitor, G_CONNECT_SWAPPED);
+
   snapd_monitor = sdi_snapd_monitor_new();
   // any notice event received by the #sdi_snapd_monitor object will
   // be relayed directly to the #sdi_refresh_monitor, which will process
@@ -76,6 +75,7 @@ static void do_startup(GObject *object, gpointer data) {
   g_signal_connect_object(snapd_monitor, "notice-event",
                           (GCallback)sdi_refresh_monitor_notice,
                           refresh_monitor, G_CONNECT_SWAPPED);
+
   if (!sdi_snapd_monitor_start(snapd_monitor)) {
     g_message("Failed to start monitor");
   }
