@@ -21,4 +21,8 @@
 #include "org.freedesktop.login1.h"
 #include <gtk/gtk.h>
 
+G_BEGIN_DECLS
+
 void sdi_wait_for_graphical_session(void);
+
+G_END_DECLS
