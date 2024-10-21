@@ -34,7 +34,6 @@
 #include "sdi-refresh-monitor.h"
 #include "sdi-snapd-client-factory.h"
 #include "sdi-snapd-monitor.h"
-#include "sdi-refresh-window.h"
 #include "sdi-theme-monitor.h"
 #include "sdi-user-session-helper.h"
 
@@ -90,7 +89,7 @@ static void do_startup(GObject *object, gpointer data) {
                           progress_window, G_CONNECT_SWAPPED);
   g_signal_connect_object(refresh_monitor, "end_refresh",
                           (GCallback)sdi_progress_window_end_refresh,
-                          refresh_window, G_CONNECT_SWAPPED);
+                          progress_window, G_CONNECT_SWAPPED);
   progress_dock = sdi_progress_dock_new(G_APPLICATION(object));
   g_signal_connect_object(refresh_monitor, "refresh_progress",
                           (GCallback)sdi_progress_dock_update_progress,

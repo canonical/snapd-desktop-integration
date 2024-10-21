@@ -38,12 +38,9 @@ enum { PROP_NOTIFY = 1, PROP_LAST };
 struct _SdiRefreshMonitor {
   GObject parent_instance;
 
-  SdiNotify *notify;
   GHashTable *snaps;
   GHashTable *changes;
   SnapdClient *client;
-  guint signal_notice_id;
-  guint signal_error_id;
   GHashTable *refreshing_snap_list;
 };
 
@@ -427,7 +424,8 @@ static void manage_change_update(SnapdClient *source, GAsyncResult *res,
   }
 }
 
-static gboolean notify_check_forced_refresh(SdiNotify *self, SnapdSnap *snap,
+static gboolean notify_check_forced_refresh(SdiRefreshMonitor *self,
+                                            SnapdSnap *snap,
                                             SdiSnap *snap_data) {
   // Check if we have to show a notification with the time when it will be
   // force-refreshed
@@ -501,7 +499,7 @@ static void manage_refresh_inhibit(SnapdClient *source, GAsyncResult *res,
     g_list_store_append(snap_list, snap);
     // Check if we have to notify the user because the snap will be
     // force-refreshed soon
-    notify_check_forced_refresh(self->notify, snap, snap_data);
+    notify_check_forced_refresh(self, snap, snap_data);
   }
   if (show_grouped_notification) {
     g_signal_emit_by_name(self, "notify-pending-refresh",
@@ -542,18 +540,12 @@ void sdi_refresh_monitor_notice(SdiRefreshMonitor *self, SnapdNotice *notice,
   }
 }
 
-SdiNotify *sdi_refresh_monitor_get_notify(SdiRefreshMonitor *self) {
-  g_return_val_if_fail(SDI_IS_REFRESH_MONITOR(self), NULL);
-  return self->notify;
-}
-
 static void sdi_refresh_monitor_dispose(GObject *object) {
   SdiRefreshMonitor *self = SDI_REFRESH_MONITOR(object);
 
   g_clear_pointer(&self->snaps, g_hash_table_unref);
   g_clear_object(&self->client);
   g_clear_pointer(&self->changes, g_hash_table_unref);
-  g_clear_object(&self->notify);
   g_clear_pointer(&self->refreshing_snap_list, g_hash_table_unref);
 
   G_OBJECT_CLASS(sdi_refresh_monitor_parent_class)->dispose(object);
@@ -588,11 +580,6 @@ void sdi_refresh_monitor_class_init(SdiRefreshMonitorClass *klass) {
 
   gobject_class->dispose = sdi_refresh_monitor_dispose;
 
-  g_object_class_install_property(
-      gobject_class, PROP_NOTIFY,
-      g_param_spec_object("notify", "notify", "Notify object", SDI_TYPE_NOTIFY,
-                          G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY));
-
   g_signal_new("notify-pending-refresh", G_TYPE_FROM_CLASS(klass),
                G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL, G_TYPE_NONE, 1,
                G_TYPE_OBJECT);
@@ -606,16 +593,14 @@ void sdi_refresh_monitor_class_init(SdiRefreshMonitorClass *klass) {
   g_signal_new("begin-refresh", G_TYPE_FROM_CLASS(klass), G_SIGNAL_RUN_LAST, 0,
                NULL, NULL, NULL, G_TYPE_NONE, 3, G_TYPE_STRING, G_TYPE_STRING,
                G_TYPE_STRING);
-  g_signal_new("end-refresh", G_TYPE_FROM_CLASS(klass), G_SIGNAL_RUN_LAST, 0,
-               NULL, NULL, NULL, G_TYPE_NONE, 1, G_TYPE_STRING);
   g_signal_new("refresh-progress", G_TYPE_FROM_CLASS(klass), G_SIGNAL_RUN_LAST,
                0, NULL, NULL, NULL, G_TYPE_NONE, 6, G_TYPE_STRING, G_TYPE_STRV,
                G_TYPE_STRING, G_TYPE_UINT, G_TYPE_UINT, G_TYPE_BOOLEAN);
+  g_signal_new("end-refresh", G_TYPE_FROM_CLASS(klass), G_SIGNAL_RUN_LAST, 0,
+               NULL, NULL, NULL, G_TYPE_NONE, 1, G_TYPE_STRING);
 }
 
 SdiRefreshMonitor *sdi_refresh_monitor_new(GApplication *application) {
-  g_autoptr(SdiNotify) notify = sdi_notify_new(application);
-  SdiRefreshMonitor *self =
-      g_object_new(SDI_TYPE_REFRESH_MONITOR, "notify", notify, NULL);
+  SdiRefreshMonitor *self = g_object_new(SDI_TYPE_REFRESH_MONITOR, NULL);
   return self;
 }
