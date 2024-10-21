@@ -117,7 +117,6 @@ static void do_shutdown(GObject *object, gpointer data) {
   g_clear_object(&refresh_monitor);
   g_clear_object(&progress_window);
   g_clear_object(&progress_dock);
-  g_clear_object(&login_manager);
   g_clear_object(&notify_manager);
   g_clear_object(&snapd_monitor);
 }
