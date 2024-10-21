@@ -298,7 +298,7 @@ static void mock_notice_free(MockNotice *notice) {
   g_date_time_unref(notice->last_occurred);
   g_date_time_unref(notice->last_repeated);
   g_hash_table_unref(notice->last_data);
-  g_free(notice);
+  g_slice_free(MockNotice, notice);
 }
 
 static void mock_alias_free(MockAlias *alias) {
