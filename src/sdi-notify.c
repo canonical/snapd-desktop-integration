@@ -298,7 +298,7 @@ static void show_pending_update_notification(SdiNotify *self,
   if (allow_to_ignore) {
     g_autoptr(GVariantBuilder) builder =
         g_variant_builder_new(G_VARIANT_TYPE("as"));
-    for (int i = 0; i != g_list_model_get_n_items(snaps); i++) {
+    for (int i = 0; i < g_list_model_get_n_items(snaps); i++) {
       g_autoptr(SnapdSnap) snap = g_list_model_get_item(snaps, i);
       g_variant_builder_add(builder, "s", snapd_snap_get_name(snap));
     }

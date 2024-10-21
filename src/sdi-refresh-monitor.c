@@ -676,7 +676,7 @@ void sdi_refresh_monitor_init(SdiRefreshMonitor *self) {
 }
 
 /**
- * This CB must be called whenever the user presses the "Don't remind me
+ * This callback must be called whenever the user presses the "Don't remind me
  * anymore" button in a notification. It will receive one snap name, so if
  * the notification has several snaps, it must call this method once for each
  * one.
