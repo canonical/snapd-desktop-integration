@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Canonical Ltd
+ * Copyright (C) 2020-2024 Canonical Ltd
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as
@@ -17,22 +17,16 @@
 
 #pragma once
 
-#include "sdi-snap.h"
-#include <gio/gio.h>
+#include <snapd-glib/snapd-glib.h>
 
 G_BEGIN_DECLS
 
-#define SDI_TYPE_REFRESH_MONITOR sdi_refresh_monitor_get_type()
+#define SDI_TYPE_SNAPD_MONITOR sdi_snapd_monitor_get_type()
 
-G_DECLARE_FINAL_TYPE(SdiRefreshMonitor, sdi_refresh_monitor, SDI,
-                     REFRESH_MONITOR, GObject)
+G_DECLARE_FINAL_TYPE(SdiSnapdMonitor, sdi_snapd_monitor, SDI, SNAPD_MONITOR,
+                     GObject)
 
-SdiRefreshMonitor *sdi_refresh_monitor_new(GApplication *application);
-
-void sdi_refresh_monitor_ignore_snap_cb(SdiRefreshMonitor *self,
-                                        const gchar *snap_name, gpointer data);
-
-void sdi_refresh_monitor_notice(SdiRefreshMonitor *monitor, SnapdNotice *notice,
-                                gboolean first_run, gpointer data);
+SdiSnapdMonitor *sdi_snapd_monitor_new();
+gboolean sdi_snapd_monitor_start(SdiSnapdMonitor *self);
 
 G_END_DECLS

@@ -30,6 +30,8 @@
 
 #include "sdi-notify.h"
 #include "sdi-refresh-monitor.h"
+#include "sdi-snapd-client-factory.h"
+#include "sdi-snapd-monitor.h"
 #include "sdi-theme-monitor.h"
 #include "sdi-user-session-helper.h"
 
@@ -37,18 +39,20 @@ static SnapdClient *client = NULL;
 static SdiThemeMonitor *theme_monitor = NULL;
 static SdiRefreshMonitor *refresh_monitor = NULL;
 static SdiNotify *notify_manager = NULL;
+static SdiSnapdMonitor *snapd_monitor = NULL;
 
 static gchar *snapd_socket_path = NULL;
 
-static GOptionEntry entries[] = {{"snapd-socket-path", 0, 0,
+static GOptionEntry entries[] = {{"snapd-socket-path", 0, G_OPTION_FLAG_NONE,
                                   G_OPTION_ARG_FILENAME, &snapd_socket_path,
                                   "Snapd socket path", "PATH"},
                                  {NULL}};
 
 static void do_startup(GObject *object, gpointer data) {
-  GError *error = NULL;
-  client = snapd_client_new();
+  sdi_snapd_client_factory_set_custom_path(snapd_socket_path);
+
   refresh_monitor = sdi_refresh_monitor_new(G_APPLICATION(object));
+
   notify_manager = sdi_notify_new(G_APPLICATION(object));
   g_signal_connect_object(refresh_monitor, "notify-pending-refresh",
                           (GCallback)sdi_notify_pending_refresh, notify_manager,
@@ -62,21 +66,25 @@ static void do_startup(GObject *object, gpointer data) {
   g_signal_connect_object(notify_manager, "ignore-snap-event",
                           (GCallback)sdi_refresh_monitor_ignore_snap_cb,
                           refresh_monitor, G_CONNECT_SWAPPED);
-  if (!sdi_refresh_monitor_start(refresh_monitor, &error)) {
-    g_message("Failed to export the DBus Desktop Integration API %s",
-              error->message);
+
+  snapd_monitor = sdi_snapd_monitor_new();
+  // any notice event received by the #sdi_snapd_monitor object will
+  // be relayed directly to the #sdi_refresh_monitor, which will process
+  // them and decide whether to show a progress bar, a notification, a
+  // dialog with the current progress...
+  g_signal_connect_object(snapd_monitor, "notice-event",
+                          (GCallback)sdi_refresh_monitor_notice,
+                          refresh_monitor, G_CONNECT_SWAPPED);
+
+  if (!sdi_snapd_monitor_start(snapd_monitor)) {
+    g_message("Failed to start monitor");
   }
 }
 
 static void do_activate(GObject *object, gpointer data) {
   // because, by default, there are no windows, so the application would quit
   g_application_hold(G_APPLICATION(object));
-
-  if (snapd_socket_path != NULL) {
-    snapd_client_set_socket_path(client, snapd_socket_path);
-  } else if (g_getenv("SNAP") != NULL) {
-    snapd_client_set_socket_path(client, "/run/snapd-snap.socket");
-  }
+  client = sdi_snapd_client_factory_new_snapd_client();
 
   theme_monitor = sdi_theme_monitor_new(client);
   sdi_theme_monitor_start(theme_monitor);
@@ -88,6 +96,7 @@ static void do_shutdown(GObject *object, gpointer data) {
   g_clear_object(&theme_monitor);
   g_clear_object(&refresh_monitor);
   g_clear_object(&notify_manager);
+  g_clear_object(&snapd_monitor);
 }
 
 static int global_retval = 0;

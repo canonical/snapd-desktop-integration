@@ -21,4 +21,14 @@ sdi_notify_executable = executable(
   c_args: ['-DDEBUG_TESTS']
 )
 
+test_sdi_notices_monitor = executable(
+  'test-sdi-notices-monitor',
+  'test-sdi-notices-monitor.c',
+  'mock-snapd.c',
+  '../src/sdi-snapd-monitor.c',
+  '../src/sdi-snapd-client-factory.c',
+  dependencies: [gtk_dep, snapd_glib_dep, gio_dep, libsoup_dep, json_glib_dep],
+  c_args: ['-DDEBUG_TESTS']
+)
+
 subdir('data')

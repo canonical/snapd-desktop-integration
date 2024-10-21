@@ -21,4 +21,8 @@
 #include <gio/gdesktopappinfo.h>
 #include <snapd-glib/snapd-glib.h>
 
+G_BEGIN_DECLS
+
 GAppInfo *sdi_get_desktop_file_from_snap(SnapdSnap *snap);
+
+G_END_DECLS
