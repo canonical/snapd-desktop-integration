@@ -10,3 +10,15 @@ test_executable = executable(
 )
 
 test('Tests', test_executable)
+
+sdi_notify_executable = executable(
+  'test-sdi-notify',
+  'test-sdi-notify.c',
+  '../src/sdi-notify.c',
+  '../src/sdi-helpers.c',
+  desktop_launcher_src,
+  dependencies: [gtk_dep, snapd_glib_dep, gio_dep, libnotify_dep],
+  c_args: ['-DDEBUG_TESTS']
+)
+
+subdir('data')

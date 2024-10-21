@@ -31,10 +31,7 @@ SdiRefreshMonitor *sdi_refresh_monitor_new(GApplication *application);
 
 gboolean sdi_refresh_monitor_start(SdiRefreshMonitor *monitor, GError **error);
 
-SdiSnap *
-sdi_refresh_monitor_begin_application_refresh(SdiRefreshMonitor *monitor,
-                                              const gchar *snap_name);
-
-GApplication *sdi_refresh_monitor_get_application(SdiRefreshMonitor *monitor);
+void sdi_refresh_monitor_ignore_snap_cb(SdiRefreshMonitor *self,
+                                        const gchar *snap_name, gpointer data);
 
 G_END_DECLS
