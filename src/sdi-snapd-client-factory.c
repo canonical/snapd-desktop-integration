@@ -29,7 +29,7 @@
 
 static gchar *sdi_snapd_socket_path = NULL;
 
-void sdi_snapd_client_factory_set_custom_path(gchar *path) {
+void sdi_snapd_client_factory_set_custom_path(const gchar *path) {
   g_clear_pointer(&sdi_snapd_socket_path, g_free);
   sdi_snapd_socket_path = g_strdup(path);
 }

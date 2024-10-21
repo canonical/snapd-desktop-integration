@@ -19,5 +19,6 @@
 
 #include <snapd-glib/snapd-glib.h>
 
-void sdi_snapd_client_factory_set_custom_path(gchar *path);
+void sdi_snapd_client_factory_set_custom_path(const gchar *path);
+
 SnapdClient *sdi_snapd_client_factory_new_snapd_client(void);

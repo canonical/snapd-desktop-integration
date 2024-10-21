@@ -467,7 +467,7 @@ static void manage_change_update(SnapdClient *source, GAsyncResult *res,
     if (g_error_matches(error, G_IO_ERROR, G_IO_ERROR_CANCELLED)) {
       return;
     }
-    g_print("Error in manage_change_update: %s\n", error->message);
+    g_debug("Error in manage_change_update: %s\n", error->message);
     return;
   }
   if (change == NULL)
@@ -530,7 +530,7 @@ static void manage_refresh_inhibit(SnapdClient *source, GAsyncResult *res,
     if (g_error_matches(error, G_IO_ERROR, G_IO_ERROR_CANCELLED)) {
       return;
     }
-    g_print("Error in refresh inhibit: %s\n", error->message);
+    g_debug("Error in manage_refresh_inhibit: %s\n", error->message);
     return;
   }
   if (snaps->len == 0)
@@ -541,7 +541,8 @@ static void manage_refresh_inhibit(SnapdClient *source, GAsyncResult *res,
   for (guint i = 0; i < snaps->len; i++) {
     SnapdSnap *snap = snaps->pdata[i];
     const gchar *name = snapd_snap_get_name(snap);
-    g_debug("Received notification for inhibited snap %s", name);
+    g_debug("Received refresh inhibit notification for inhibited snap %s",
+            name);
     if (name == NULL)
       continue;
     g_autoptr(SdiSnap) snap_data = add_snap(self, name);

@@ -68,7 +68,7 @@ static void launch_snapd_monitor_after_error(SdiSnapdMonitor *self) {
 }
 
 static void error_cb(GObject *object, GError *error, SdiSnapdMonitor *self) {
-  g_print("Error %d; %s\n", error->code, error->message);
+  g_debug("Error in sdi-snapd-monitor %d; %s\n", error->code, error->message);
   g_signal_handler_disconnect(self->snapd_monitor, self->signal_notice_id);
   g_signal_handler_disconnect(self->snapd_monitor, self->signal_error_id);
   g_clear_object(&self->snapd_monitor);
