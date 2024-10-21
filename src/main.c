@@ -31,7 +31,7 @@
 #include "sdi-notify.h"
 #include "sdi-refresh-monitor.h"
 #include "sdi-theme-monitor.h"
-#include "sdi-user-session-manager.h"
+#include "sdi-user-session-helper.h"
 
 static SnapdClient *client = NULL;
 static SdiThemeMonitor *theme_monitor = NULL;

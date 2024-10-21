@@ -15,7 +15,7 @@
  *
  */
 
-#include "sdi-user-session-manager.h"
+#include "sdi-user-session-helper.h"
 
 static Login1Manager *login_manager = NULL;
 static guint idle_id = 0;
