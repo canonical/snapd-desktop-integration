@@ -564,7 +564,6 @@ static void manage_refresh_inhibit(SnapdClient *source, GAsyncResult *res,
 
 void sdi_refresh_monitor_notice(SdiRefreshMonitor *self, SnapdNotice *notice,
                                 gboolean first_run, gpointer data) {
-
   GHashTable *notice_data = snapd_notice_get_last_data2(notice);
   g_autofree gchar *kind = g_strdup(g_hash_table_lookup(notice_data, "kind"));
 

@@ -49,8 +49,6 @@ static GOptionEntry entries[] = {{"snapd-socket-path", 0, G_OPTION_FLAG_NONE,
                                  {NULL}};
 
 static void do_startup(GObject *object, gpointer data) {
-  GError *error = NULL;
-
   sdi_snapd_client_factory_set_custom_path(snapd_socket_path);
 #ifndef USE_GNOTIFY
   notify_init("snapd-desktop-integration_snapd-desktop-integration");
