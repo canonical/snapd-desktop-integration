@@ -39,6 +39,9 @@ G_DEFINE_TYPE(SdiProgressWindow, sdi_progress_window, G_TYPE_OBJECT)
 
 #ifdef DEBUG_TESTS
 
+// These methods are only for unitary tests, so they aren't available
+// in "normal" builds.
+
 GHashTable *sdi_progress_window_get_dialogs(SdiProgressWindow *self) {
   return self->dialogs;
 }
@@ -49,7 +52,8 @@ GtkWindow *sdi_progress_window_get_window(SdiProgressWindow *self) {
 
 #endif
 
-static gboolean contains_child(GtkWidget *parent, GtkWidget *query_child) {
+static gboolean check_parent_contains_child(GtkWidget *parent,
+                                            GtkWidget *query_child) {
   GtkWidget *child = gtk_widget_get_first_child(parent);
   while (child != NULL) {
     if (query_child == child)
@@ -59,14 +63,15 @@ static gboolean contains_child(GtkWidget *parent, GtkWidget *query_child) {
   return FALSE;
 }
 
-static void remove_dialog(SdiProgressWindow *self, SdiRefreshDialog *dialog) {
+static void remove_dialog_from_main_window(SdiProgressWindow *self,
+                                           SdiRefreshDialog *dialog) {
   if (dialog == NULL)
     return;
 
   g_hash_table_remove(self->dialogs, sdi_refresh_dialog_get_app_name(dialog));
 
-  if (!contains_child(GTK_WIDGET(self->refresh_bar_container),
-                      GTK_WIDGET(dialog)))
+  if (!check_parent_contains_child(GTK_WIDGET(self->refresh_bar_container),
+                                   GTK_WIDGET(dialog)))
     return;
 
   gtk_box_remove(GTK_BOX(self->refresh_bar_container), GTK_WIDGET(dialog));
@@ -96,7 +101,7 @@ static void add_dialog_to_main_window(SdiProgressWindow *self,
   gtk_box_append(self->refresh_bar_container, GTK_WIDGET(dialog));
   gtk_widget_set_visible(GTK_WIDGET(dialog), TRUE);
   g_signal_connect_swapped(G_OBJECT(dialog), "hide-event",
-                           (GCallback)remove_dialog, self);
+                           (GCallback)remove_dialog_from_main_window, self);
 }
 
 /**
@@ -130,7 +135,7 @@ void sdi_progress_window_end_refresh(SdiProgressWindow *self, gchar *snap_name,
   SdiRefreshDialog *dialog =
       (SdiRefreshDialog *)g_hash_table_lookup(self->dialogs, snap_name);
   if (dialog != NULL) {
-    remove_dialog(self, dialog);
+    remove_dialog_from_main_window(self, dialog);
   }
 }
 

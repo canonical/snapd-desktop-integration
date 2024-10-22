@@ -90,6 +90,7 @@ static void do_startup(GObject *object, gpointer data) {
   g_signal_connect_object(refresh_monitor, "end_refresh",
                           (GCallback)sdi_progress_window_end_refresh,
                           progress_window, G_CONNECT_SWAPPED);
+
   progress_dock = sdi_progress_dock_new(G_APPLICATION(object));
   g_signal_connect_object(refresh_monitor, "refresh_progress",
                           (GCallback)sdi_progress_dock_update_progress,
