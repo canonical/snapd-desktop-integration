@@ -76,7 +76,7 @@ static void test_notices_events_are_received(void) {
   g_autoptr(GMainLoop) loop = g_main_loop_new(NULL, FALSE);
 
   MockSnapd *snapd = mock_snapd_new();
-  AsyncData *data = async_data_new(loop, snapd);
+  g_autoptr(AsyncData) data = async_data_new(loop, snapd);
 
   const gchar *path = mock_snapd_get_socket_path(snapd);
   sdi_snapd_client_factory_set_custom_path((gchar *)path);
@@ -91,6 +91,7 @@ static void test_notices_events_are_received(void) {
 
   sdi_snapd_monitor_start(snapd_monitor);
   g_main_loop_run(loop);
+  g_assert_cmpint(data->counter, ==, 2);
   g_object_unref(data->snapd); // it has two references
 }
 
