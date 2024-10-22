@@ -211,9 +211,8 @@ static void process_inhibited_snaps(SdiRefreshMonitor *self,
     // Only show progress bar if that snap shown an 'inhibited' notification
     // (The notification asking the user to close the application to allow it
     // to be refreshed).
-    if (!sdi_snap_get_inhibited(snap)) {
+    if (!sdi_snap_get_inhibited(snap))
       continue;
-    }
 
     if (done || cancelled) {
       // If the Change is completed, emit the `end-refresh` signal to close
