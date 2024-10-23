@@ -29,6 +29,8 @@
 #include <unistd.h>
 
 #include "sdi-notify.h"
+#include "sdi-progress-dock.h"
+#include "sdi-progress-window.h"
 #include "sdi-refresh-monitor.h"
 #include "sdi-snapd-client-factory.h"
 #include "sdi-snapd-monitor.h"
@@ -40,6 +42,8 @@ static SdiThemeMonitor *theme_monitor = NULL;
 static SdiRefreshMonitor *refresh_monitor = NULL;
 static SdiNotify *notify_manager = NULL;
 static SdiSnapdMonitor *snapd_monitor = NULL;
+static SdiProgressWindow *progress_window = NULL;
+static SdiProgressDock *progress_dock = NULL;
 
 static gchar *snapd_socket_path = NULL;
 
@@ -76,6 +80,22 @@ static void do_startup(GObject *object, gpointer data) {
                           (GCallback)sdi_refresh_monitor_notice,
                           refresh_monitor, G_CONNECT_SWAPPED);
 
+  progress_window = sdi_progress_window_new(G_APPLICATION(object));
+  g_signal_connect_object(refresh_monitor, "begin_refresh",
+                          (GCallback)sdi_progress_window_begin_refresh,
+                          progress_window, G_CONNECT_SWAPPED);
+  g_signal_connect_object(refresh_monitor, "refresh_progress",
+                          (GCallback)sdi_progress_window_update_progress,
+                          progress_window, G_CONNECT_SWAPPED);
+  g_signal_connect_object(refresh_monitor, "end_refresh",
+                          (GCallback)sdi_progress_window_end_refresh,
+                          progress_window, G_CONNECT_SWAPPED);
+
+  progress_dock = sdi_progress_dock_new(G_APPLICATION(object));
+  g_signal_connect_object(refresh_monitor, "refresh_progress",
+                          (GCallback)sdi_progress_dock_update_progress,
+                          progress_dock, G_CONNECT_SWAPPED);
+
   if (!sdi_snapd_monitor_start(snapd_monitor)) {
     g_message("Failed to start monitor");
   }
@@ -95,6 +115,8 @@ static void do_shutdown(GObject *object, gpointer data) {
   g_clear_object(&client);
   g_clear_object(&theme_monitor);
   g_clear_object(&refresh_monitor);
+  g_clear_object(&progress_window);
+  g_clear_object(&progress_dock);
   g_clear_object(&notify_manager);
   g_clear_object(&snapd_monitor);
 }
