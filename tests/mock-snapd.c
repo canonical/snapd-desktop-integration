@@ -7,10 +7,6 @@
  * See http://www.gnu.org/copyleft/lgpl.html the full text of the license.
  */
 
-/*********************************************************
- * This is just the same mock-snapd code from snapd-glib *
- *********************************************************/
-
 #include <ctype.h>
 #include <errno.h>
 #include <string.h>
@@ -294,10 +290,10 @@ static void mock_notice_free(MockNotice *notice) {
   g_free(notice->type);
   g_free(notice->expire_after);
   g_free(notice->repeat_after);
-  g_date_time_unref(notice->first_occurred);
-  g_date_time_unref(notice->last_occurred);
-  g_date_time_unref(notice->last_repeated);
-  g_hash_table_unref(notice->last_data);
+  g_clear_pointer(&notice->first_occurred, g_date_time_unref);
+  g_clear_pointer(&notice->last_occurred, g_date_time_unref);
+  g_clear_pointer(&notice->last_repeated, g_date_time_unref);
+  g_clear_pointer(&notice->last_data, g_hash_table_unref);
   g_slice_free(MockNotice, notice);
 }
 
@@ -408,6 +404,7 @@ static void mock_snap_free(MockSnap *snap) {
   g_free(snap->publisher_validation);
   g_free(snap->revision);
   g_free(snap->status);
+  g_free(snap->proceed_time);
   g_free(snap->store_url);
   g_free(snap->summary);
   g_free(snap->title);
@@ -1678,10 +1675,10 @@ static void mock_task_free(MockTask *task) {
   g_free(task->progress_label);
   g_free(task->spawn_time);
   g_free(task->ready_time);
-  if (task->snap != NULL)
-    mock_snap_free(task->snap);
+  g_clear_pointer(&task->snap, mock_snap_free);
   g_free(task->snap_name);
   g_free(task->error);
+  g_clear_pointer(&task->affected_snaps, g_ptr_array_unref);
   g_slice_free(MockTask, task);
 }
 
@@ -1691,9 +1688,11 @@ static void mock_change_free(MockChange *change) {
   g_free(change->summary);
   g_free(change->spawn_time);
   g_free(change->ready_time);
-  g_list_free_full(change->tasks, (GDestroyNotify)mock_task_free);
-  if (change->data != NULL)
-    json_node_unref(change->data);
+  if (change->tasks) {
+    g_list_free_full(change->tasks, (GDestroyNotify)mock_task_free);
+    change->tasks = NULL;
+  }
+  g_clear_pointer(&change->data, json_node_unref);
   g_slice_free(MockChange, change);
 }
 
@@ -4950,7 +4949,7 @@ static void handle_notices(MockSnapd *self, SoupServerMessage *message,
     }
     guint data_size = g_hash_table_size(notice->last_data);
     if (data_size != 0) {
-      gchar **keys =
+      g_autofree gchar **keys =
           (gchar **)g_hash_table_get_keys_as_array(notice->last_data, NULL);
       json_builder_set_member_name(builder, "last-data");
       json_builder_begin_object(builder);
@@ -5178,8 +5177,11 @@ static void mock_snapd_finalize(GObject *object) {
   g_clear_pointer(&self->sound_theme_status, g_hash_table_unref);
   g_clear_pointer(&self->context, g_main_context_unref);
   g_clear_pointer(&self->loop, g_main_loop_unref);
-  g_list_free_full(self->notices, (GDestroyNotify)mock_notice_free);
-  self->notices = NULL;
+  if (self->notices) {
+    g_list_free_full(self->notices, (GDestroyNotify)mock_notice_free);
+    self->notices = NULL;
+  }
+  g_clear_pointer(&self->notices_parameters, g_free);
 
   g_cond_clear(&self->condition);
   g_mutex_clear(&self->mutex);
