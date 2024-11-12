@@ -7,10 +7,6 @@
  * See http://www.gnu.org/copyleft/lgpl.html the full text of the license.
  */
 
-/*********************************************************
- * This is just the same mock-snapd code from snapd-glib *
- *********************************************************/
-
 #include <ctype.h>
 #include <errno.h>
 #include <string.h>
@@ -23,6 +19,58 @@
 #include <libsoup/soup.h>
 
 #include "mock-snapd.h"
+
+#if !GLIB_CHECK_VERSION(2, 66, 0)
+
+// Transforms an ASCII, one-digit, lowercase hexadecimal number into
+// its value.
+#define HEX_CHAR_TO_NUMBER(c) (((c) < 'a') ? (c) - '0' : ((c) - 'a' + 10))
+
+// a quick&dirty replacement to allow the tests to work, since
+// g_uri_parse_params wasn't added until GLib 2.66
+
+// Replaces IN-PLACE any %XY token with the corresponding 0xXY byte.
+// The passed string is modified, so it must be a memory block that belongs
+// to the calling function.
+static void decode_url_escape_codes(gchar *str) {
+  gchar *from = str;
+  gchar *to = str;
+
+  for (; *from != 0; from++, to++) {
+    if (*from != '%') {
+      *to = *from;
+      continue;
+    }
+    from++; // jump over '%' character
+            // set bit 5 to convert letters to lowercase (numbers are
+            // unaffected)
+    *from |= 32;
+    gchar value = 16 * HEX_CHAR_TO_NUMBER(*from);
+    from++;
+    *from |= 32;
+    value += HEX_CHAR_TO_NUMBER(*from);
+    *to = value;
+  }
+  *to = 0; // ensure to zero-ending the string
+}
+
+GHashTable *g_uri_parse_params(const gchar *params, gssize lenght,
+                               const gchar *separators, int flags,
+                               GError **error) {
+  g_auto(GStrv) param_list = g_strsplit(params, "&", 0);
+  GHashTable *table =
+      g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
+
+  for (GStrv p = param_list; *p != NULL; p++) {
+    g_auto(GStrv) param = g_strsplit(*p, "=", 0);
+    decode_url_escape_codes(param[0]);
+    decode_url_escape_codes(param[1]);
+    g_hash_table_insert(table, g_strdup(param[0]), g_strdup(param[1]));
+  }
+  return table;
+}
+
+#endif
 
 /* For soup 2 pretend to use the new server API */
 #if !SOUP_CHECK_VERSION(2, 99, 2)
@@ -424,6 +472,31 @@ static void mock_snap_free(MockSnap *snap) {
   g_free(snap->snap_path);
   g_free(snap->error);
   g_slice_free(MockSnap, snap);
+}
+
+static gint compare_date_time_with_nanoseconds(GDateTime *date1,
+                                               gint date1_nanoseconds,
+                                               GDateTime *date2,
+                                               gint date2_nanoseconds) {
+  g_return_val_if_fail(date1 != NULL, 0);
+  g_return_val_if_fail(date2 != NULL, 0);
+
+  // first, compare without micro/nanoseconds. This is a must to avoid errors
+  // due to rounding, because the g_date_time objects are created using a
+  // gdouble.
+  gint c = g_date_time_compare(date1, date2);
+  if (c != 0)
+    return c;
+  // now take into account the nanoseconds if available
+  if (date1_nanoseconds == -1)
+    date1_nanoseconds = 1000 * g_date_time_get_microsecond(date1);
+  if (date2_nanoseconds == -1)
+    date2_nanoseconds = 1000 * g_date_time_get_microsecond(date2);
+  if (date1_nanoseconds < date2_nanoseconds)
+    return -1;
+  if (date1_nanoseconds == date2_nanoseconds)
+    return 0;
+  return 1;
 }
 
 MockSnapd *mock_snapd_new(void) { return g_object_new(MOCK_TYPE_SNAPD, NULL); }
@@ -4898,8 +4971,35 @@ static void handle_notices(MockSnapd *self, SoupServerMessage *message,
   g_autoptr(JsonBuilder) builder = json_builder_new();
   json_builder_begin_array(builder);
 
+  g_autoptr(GDateTime) after = NULL;
+  guint after_nanoseconds = -1;
+
+  // Check if the petition has an "after" parameter
+  if (self->notices_parameters != NULL) {
+    g_autoptr(GHashTable) parameters = g_uri_parse_params(
+        self->notices_parameters, -1, "&", G_URI_PARAMS_NONE, NULL);
+    if (g_hash_table_contains(parameters, "after")) {
+      g_autofree gchar *after_str =
+          g_strdup(g_hash_table_lookup(parameters, "after"));
+      after = g_date_time_new_from_iso8601(after_str, NULL);
+      gchar *dot_pos = strchr(after_str, '.');
+      after_nanoseconds = (dot_pos == NULL) ? 0 : atoi(1 + dot_pos);
+    }
+  }
+
+  // Send the notices
   for (GList *link = self->notices; link; link = link->next) {
     MockNotice *notice = link->data;
+
+    // but if there is an "after" parameter, send only those that
+    // happened after the specified date-time
+    if ((after != NULL) && (notice->last_occurred != NULL) &&
+        (compare_date_time_with_nanoseconds(notice->last_occurred,
+                                            notice->last_occurred_nanoseconds,
+                                            after, after_nanoseconds) <= 0)) {
+      continue;
+    }
+
     json_builder_begin_object(builder);
     json_builder_set_member_name(builder, "id");
     json_builder_add_string_value(builder, notice->id);
