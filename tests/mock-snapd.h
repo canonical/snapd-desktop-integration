@@ -43,6 +43,14 @@ typedef struct _MockTask MockTask;
 typedef struct _MockTrack MockTrack;
 typedef struct _MockNotice MockNotice;
 
+#if !GLIB_CHECK_VERSION(2, 66, 0)
+GHashTable *g_uri_parse_params(const gchar *params, gssize lenght,
+                               const gchar *separators, int flags,
+                               GError **error);
+
+#define G_URI_PARAMS_NONE 0
+#endif
+
 MockSnapd *mock_snapd_new(void);
 
 const gchar *mock_snapd_get_socket_path(MockSnapd *snapd);
