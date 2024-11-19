@@ -68,7 +68,7 @@ static gboolean set_progress_bar(gchar *snap_name) {
       g_strdup_printf("Description for task %d", done_tasks);
   sdi_progress_window_update_progress(progress_window, snap_name, NULL,
                                       description, done_tasks, total_tasks,
-                                      FALSE, NULL);
+                                      FALSE);
   done_tasks++;
   if (done_tasks > total_tasks)
     done_tasks = 0;
@@ -98,7 +98,7 @@ static void show_progress_window(gchar *snap_name, gchar *desktop_file) {
   g_autofree gchar *icon = g_desktop_app_info_get_string(app_info, "Icon");
   sdi_progress_window_begin_refresh(
       progress_window, snap_name,
-      (gchar *)g_app_info_get_display_name(G_APP_INFO(app_info)), icon, NULL);
+      (gchar *)g_app_info_get_display_name(G_APP_INFO(app_info)), icon);
 }
 
 static int count_progress_childs() {
@@ -147,7 +147,7 @@ static void test_pulse_bar(TestData *test) {
 
 static void test_close_bar(TestData *test) {
   describe_test(test);
-  sdi_progress_window_end_refresh(progress_window, "A-SNAP", NULL);
+  sdi_progress_window_end_refresh(progress_window, "A-SNAP");
   g_assert_cmpint(count_hash_childs(), ==, 0);
   g_assert_cmpint(count_progress_childs(), ==, -1);
   gint timeout_id = g_timeout_add(500, (GSourceFunc)set_progress_bar, "A-SNAP");
@@ -189,7 +189,7 @@ static void test_dual_progress_bar2(TestData *test) {
 
 static void test_dual_progress_bar3(TestData *test) {
   describe_test(test);
-  sdi_progress_window_end_refresh(progress_window, "C-SNAP", NULL);
+  sdi_progress_window_end_refresh(progress_window, "C-SNAP");
   g_assert_cmpint(count_hash_childs(), ==, 1);
   g_assert_cmpint(count_progress_childs(), ==, 1);
   wait_for_click();
@@ -198,7 +198,7 @@ static void test_dual_progress_bar3(TestData *test) {
 
 static void test_dual_progress_bar4(TestData *test) {
   describe_test(test);
-  sdi_progress_window_end_refresh(progress_window, "D-SNAP", NULL);
+  sdi_progress_window_end_refresh(progress_window, "D-SNAP");
   g_assert_cmpint(count_hash_childs(), ==, 0);
   g_assert_cmpint(count_progress_childs(), ==, -1);
   wait_for_click();

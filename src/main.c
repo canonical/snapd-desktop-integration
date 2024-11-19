@@ -68,7 +68,7 @@ static void do_startup(GObject *object, gpointer data) {
                           (GCallback)sdi_notify_refresh_complete,
                           notify_manager, G_CONNECT_SWAPPED);
   g_signal_connect_object(notify_manager, "ignore-snap-event",
-                          (GCallback)sdi_refresh_monitor_ignore_snap_cb,
+                          (GCallback)sdi_refresh_monitor_ignore_snap,
                           refresh_monitor, G_CONNECT_SWAPPED);
 
   snapd_monitor = sdi_snapd_monitor_new();

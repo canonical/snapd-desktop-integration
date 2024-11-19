@@ -507,7 +507,7 @@ static void manage_refresh_inhibit(SnapdClient *source, GAsyncResult *res,
 }
 
 void sdi_refresh_monitor_notice(SdiRefreshMonitor *self, SnapdNotice *notice,
-                                gboolean first_run, gpointer data) {
+                                gboolean first_run) {
   GHashTable *notice_data = snapd_notice_get_last_data2(notice);
   g_autofree gchar *kind = g_strdup(g_hash_table_lookup(notice_data, "kind"));
 
@@ -567,8 +567,8 @@ void sdi_refresh_monitor_init(SdiRefreshMonitor *self) {
  * the notification has several snaps, it must call this method once for each
  * one.
  */
-void sdi_refresh_monitor_ignore_snap_cb(SdiRefreshMonitor *self,
-                                        const gchar *snap_name, gpointer data) {
+void sdi_refresh_monitor_ignore_snap(SdiRefreshMonitor *self,
+                                     const gchar *snap_name) {
   g_debug("Ignoring refreshes for %s", snap_name);
   g_autoptr(SdiSnap) snap = add_snap(self, snap_name);
   sdi_snap_set_ignored(snap, TRUE);

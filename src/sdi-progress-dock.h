@@ -32,6 +32,6 @@ void sdi_progress_dock_update_progress(SdiProgressDock *self, gchar *snap_name,
                                        GStrv desktop_files,
                                        gchar *task_description,
                                        guint done_tasks, guint total_tasks,
-                                       gboolean task_done, gpointer data);
+                                       gboolean task_done);
 
 G_END_DECLS

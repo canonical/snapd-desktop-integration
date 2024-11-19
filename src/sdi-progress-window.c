@@ -124,7 +124,7 @@ static void add_dialog_to_main_window(SdiProgressWindow *self,
  */
 void sdi_progress_window_begin_refresh(SdiProgressWindow *self,
                                        gchar *snap_name, gchar *visible_name,
-                                       gchar *icon, gpointer data) {
+                                       gchar *icon) {
   g_autoptr(SdiRefreshDialog) dialog =
       g_object_ref_sink(sdi_refresh_dialog_new(snap_name, visible_name));
   if (icon != NULL) {
@@ -142,8 +142,8 @@ void sdi_progress_window_begin_refresh(SdiProgressWindow *self,
  * refresh dialogs.
  */
 
-void sdi_progress_window_end_refresh(SdiProgressWindow *self, gchar *snap_name,
-                                     gpointer data) {
+void sdi_progress_window_end_refresh(SdiProgressWindow *self,
+                                     gchar *snap_name) {
   SdiRefreshDialog *dialog =
       (SdiRefreshDialog *)g_hash_table_lookup(self->dialogs, snap_name);
   if (dialog != NULL) {
@@ -162,7 +162,7 @@ void sdi_progress_window_update_progress(SdiProgressWindow *self,
                                          gchar *snap_name, GStrv desktop_files,
                                          gchar *task_description,
                                          guint done_tasks, guint total_tasks,
-                                         gboolean task_done, gpointer data) {
+                                         gboolean task_done) {
   if (snap_name != NULL) {
     // Update dialog progress bar
     SdiRefreshDialog *dialog =
