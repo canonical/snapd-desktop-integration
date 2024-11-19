@@ -274,11 +274,7 @@ TestData test_data[] = {
 static void do_startup(GObject *object, gpointer data) {
   progress_window = sdi_progress_window_new(G_APPLICATION(object));
 
-  // this gsettings key stores the path to the .desktop files of the programs
-  // in the dock. Since we need to test a progress bar in the dock, we need
-  // that list.
-  g_autoptr(GSettings) settings = g_settings_new("org.gnome.shell");
-  GList *applist = g_app_info_get_all();
+  g_autolist(GAppInfo) applist = g_app_info_get_all();
   g_autoptr(GStrvBuilder) builder = g_strv_builder_new();
   // make a list with only snapped icons
   for (GList *p = applist; p != NULL; p = p->next) {
@@ -291,8 +287,8 @@ static void do_startup(GObject *object, gpointer data) {
       g_strv_builder_add(builder, g_app_info_get_id(p->data));
     }
   }
+  g_assert_null(app_list);
   app_list = g_strv_builder_end(builder);
-  g_list_free_full(applist, g_object_unref);
 }
 
 static void do_activate(GApplication *app, gpointer data) {
