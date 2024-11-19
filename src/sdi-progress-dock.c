@@ -53,7 +53,7 @@ void sdi_progress_dock_update_progress(SdiProgressDock *self, gchar *snap_name,
           g_variant_builder_new(G_VARIANT_TYPE("a{sv}"));
       g_variant_builder_add(
           builder, "{sv}", "progress",
-          g_variant_new_double(((gfloat)done_tasks) / ((gfloat)total_tasks)));
+          g_variant_new_double(done_tasks / ((gfloat)total_tasks)));
       g_variant_builder_add(builder, "{sv}", "progress-visible",
                             g_variant_new_boolean(!task_done));
       g_variant_builder_add(builder, "{sv}", "updating",
