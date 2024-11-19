@@ -30,8 +30,8 @@ static void buttons_callback(GtkButton *button, gchar *answer) {
   g_main_loop_quit(loop);
 }
 
-static void create_window(GApplication *app) {
-  window =
+static GtkApplicationWindow *create_window(GApplication *app) {
+  GtkApplicationWindow *app_window =
       GTK_APPLICATION_WINDOW(gtk_application_window_new(GTK_APPLICATION(app)));
   window_text = GTK_LABEL(gtk_label_new(""));
   gtk_label_set_wrap(window_text, TRUE);
@@ -43,11 +43,12 @@ static void create_window(GApplication *app) {
   gtk_box_append(box, GTK_WIDGET(window_text));
   gtk_box_append(box, GTK_WIDGET(yes_button));
   gtk_box_append(box, GTK_WIDGET(no_button));
-  gtk_window_set_child(GTK_WINDOW(window), GTK_WIDGET(box));
-  gtk_window_present(GTK_WINDOW(window));
+  gtk_window_set_child(GTK_WINDOW(app_window), GTK_WIDGET(box));
+  gtk_window_present(GTK_WINDOW(app_window));
 
   g_signal_connect(yes_button, "clicked", (GCallback)buttons_callback, "yes");
   g_signal_connect(no_button, "clicked", (GCallback)buttons_callback, "no");
+  return app_window;
 }
 
 static void describe_test(TestData *test) {
@@ -292,7 +293,7 @@ static void do_startup(GObject *object, gpointer data) {
 }
 
 static void do_activate(GApplication *app, gpointer data) {
-  create_window(app);
+  window = create_window(app);
 
   // add tests
   for (TestData *test = test_data; test->test_number != -1; test++) {
