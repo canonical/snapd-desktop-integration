@@ -52,8 +52,8 @@ GtkWindow *sdi_progress_window_get_window(SdiProgressWindow *self) {
 
 #endif
 
-static gboolean check_parent_contains_child(GtkWidget *parent,
-                                            GtkWidget *query_child) {
+static gboolean widget_contains_child(GtkWidget *parent,
+                                      GtkWidget *query_child) {
   GtkWidget *child = gtk_widget_get_first_child(parent);
   while (child != NULL) {
     if (query_child == child)
@@ -70,8 +70,8 @@ static void remove_dialog_from_main_window(SdiProgressWindow *self,
 
   g_hash_table_remove(self->dialogs, sdi_refresh_dialog_get_app_name(dialog));
 
-  if (!check_parent_contains_child(GTK_WIDGET(self->refresh_bar_container),
-                                   GTK_WIDGET(dialog)))
+  if (!widget_contains_child(GTK_WIDGET(self->refresh_bar_container),
+                             GTK_WIDGET(dialog)))
     return;
 
   gtk_box_remove(GTK_BOX(self->refresh_bar_container), GTK_WIDGET(dialog));
