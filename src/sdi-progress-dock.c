@@ -35,7 +35,7 @@ struct _SdiProgressDock {
 G_DEFINE_TYPE(SdiProgressDock, sdi_progress_dock, G_TYPE_OBJECT)
 
 /**
- * This callback should be connected to the `update-progress` signal from a
+ * This callback should be connected to the `refresh-progress` signal from a
  * #sdi_refresh_monitor object. It will receive the total number of tasks and
  * how many have been done, and if the task has been completed, and with that
  * will update the progress bars in the dock.
