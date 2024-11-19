@@ -136,7 +136,7 @@ void test_update_available_1(TestData *test) {
   g_autoptr(SnapdSnap) snap = create_snap("test_snap1", apps);
   g_autoptr(GListStore) snaps = g_list_store_new(SNAPD_TYPE_SNAP);
   g_list_store_append(snaps, snap);
-  sdi_notify_pending_refresh(notifier, G_LIST_MODEL(snaps), NULL);
+  sdi_notify_pending_refresh(notifier, G_LIST_MODEL(snaps));
 
   g_autofree gchar *result = wait_for_notification_close(NULL, NULL);
   unlink(desktop_file); // delete desktop file
@@ -154,7 +154,7 @@ void test_update_available_2(TestData *test) {
   g_autoptr(SnapdSnap) snap = create_snap("test_snap2", apps);
   g_autoptr(GListStore) snaps = g_list_store_new(SNAPD_TYPE_SNAP);
   g_list_store_append(snaps, snap);
-  sdi_notify_pending_refresh(notifier, G_LIST_MODEL(snaps), NULL);
+  sdi_notify_pending_refresh(notifier, G_LIST_MODEL(snaps));
 
   g_autofree gchar *result = wait_for_notification_close(NULL, NULL);
   unlink(desktop_file); // delete desktop file
@@ -186,7 +186,7 @@ void test_update_available_3(TestData *test) {
   g_autoptr(SnapdSnap) snap = create_snap("test_snap3", apps);
   g_autoptr(GListStore) snaps = g_list_store_new(SNAPD_TYPE_SNAP);
   g_list_store_append(snaps, snap);
-  sdi_notify_pending_refresh(notifier, G_LIST_MODEL(snaps), NULL);
+  sdi_notify_pending_refresh(notifier, G_LIST_MODEL(snaps));
 
   gint signal_counter = 0;
   gchar *string_list[] = {"test_snap3"};
@@ -219,7 +219,7 @@ void test_update_available_4(TestData *test) {
   g_autoptr(GListStore) snaps = g_list_store_new(SNAPD_TYPE_SNAP);
   g_list_store_append(snaps, snap1);
   g_list_store_append(snaps, snap2);
-  sdi_notify_pending_refresh(notifier, G_LIST_MODEL(snaps), NULL);
+  sdi_notify_pending_refresh(notifier, G_LIST_MODEL(snaps));
 
   gint signal_counter = 0;
   gchar *string_list[] = {"test_snap4_1", "test_snap4_2"};
@@ -257,7 +257,7 @@ void test_update_available_5(TestData *test) {
   g_list_store_append(snaps, snap1);
   g_list_store_append(snaps, snap2);
   g_list_store_append(snaps, snap3);
-  sdi_notify_pending_refresh(notifier, G_LIST_MODEL(snaps), NULL);
+  sdi_notify_pending_refresh(notifier, G_LIST_MODEL(snaps));
 
   gint signal_counter = 0;
   gchar *string_list[] = {"test_snap5_1", "test_snap5_2", "test_snap5_3"};
@@ -301,7 +301,7 @@ void test_update_available_6(TestData *test) {
   g_list_store_append(snaps, snap2);
   g_list_store_append(snaps, snap3);
   g_list_store_append(snaps, snap4);
-  sdi_notify_pending_refresh(notifier, G_LIST_MODEL(snaps), NULL);
+  sdi_notify_pending_refresh(notifier, G_LIST_MODEL(snaps));
 
   gint signal_counter = 0;
   gchar *string_list[] = {"test_snap6_1", "test_snap6_2", "test_snap6_3",
@@ -329,7 +329,7 @@ void test_update_available_7(TestData *test) {
       create_desktop_file("test7", "Test app 7", icon_path);
   g_autoptr(GPtrArray) apps1 = add_app(NULL, "test_app7", desktop_file1);
   g_autoptr(SnapdSnap) snap1 = create_snap("test_snap7", apps1);
-  sdi_notify_refresh_complete(notifier, snap1, "test_snap7", NULL);
+  sdi_notify_refresh_complete(notifier, snap1, "test_snap7");
 
   g_autofree gchar *result = wait_for_notification_close(NULL, NULL);
   unlink(desktop_file1); // delete desktop file
@@ -346,8 +346,8 @@ void test_update_available_8(TestData *test) {
       create_desktop_file("test8", "Test app 8", icon_path);
   g_autoptr(GPtrArray) apps1 = add_app(NULL, "test_app8", desktop_file1);
   g_autoptr(SnapdSnap) snap1 = create_snap("test_snap8", apps1);
-  sdi_notify_pending_refresh_forced(notifier, snap1, SECONDS_IN_A_DAY * 2, TRUE,
-                                    NULL);
+  sdi_notify_pending_refresh_forced(notifier, snap1, SECONDS_IN_A_DAY * 2,
+                                    TRUE);
 
   g_autofree gchar *result = wait_for_notification_close(NULL, NULL);
   unlink(desktop_file1); // delete desktop file
@@ -363,7 +363,7 @@ void test_update_available_9(TestData *test) {
   g_autoptr(GPtrArray) apps1 = add_app(NULL, "test_app9", desktop_file1);
   g_autoptr(SnapdSnap) snap1 = create_snap("test_snap9", apps1);
   sdi_notify_pending_refresh_forced(notifier, snap1, SECONDS_IN_AN_HOUR * 5,
-                                    FALSE, NULL);
+                                    FALSE);
 
   g_autofree gchar *result = wait_for_notification_close(NULL, NULL);
   unlink(desktop_file1); // delete desktop file
@@ -379,7 +379,7 @@ void test_update_available_10(TestData *test) {
   g_autoptr(GPtrArray) apps1 = add_app(NULL, "test_app10", desktop_file1);
   g_autoptr(SnapdSnap) snap1 = create_snap("test_snap10", apps1);
   sdi_notify_pending_refresh_forced(notifier, snap1, SECONDS_IN_A_MINUTE * 13,
-                                    TRUE, NULL);
+                                    TRUE);
 
   gint signal_counter = 0;
   gchar *string_list[] = {"test_snap10"};

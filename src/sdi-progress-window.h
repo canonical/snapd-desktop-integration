@@ -31,16 +31,15 @@ SdiProgressWindow *sdi_progress_window_new(GApplication *application);
 
 void sdi_progress_window_begin_refresh(SdiProgressWindow *self,
                                        gchar *snap_name, gchar *visible_name,
-                                       gchar *icon, gpointer data);
+                                       gchar *icon);
 
 void sdi_progress_window_update_progress(SdiProgressWindow *self,
                                          gchar *snap_name, GStrv desktop_files,
                                          gchar *task_description,
                                          guint done_tasks, guint total_tasks,
-                                         gboolean task_done, gpointer data);
+                                         gboolean task_done);
 
-void sdi_progress_window_end_refresh(SdiProgressWindow *self, gchar *snap_name,
-                                     gpointer data);
+void sdi_progress_window_end_refresh(SdiProgressWindow *self, gchar *snap_name);
 
 #ifdef DEBUG_TESTS
 

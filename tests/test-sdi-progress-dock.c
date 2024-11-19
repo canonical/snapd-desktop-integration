@@ -61,7 +61,7 @@ static gboolean set_progress_bar(gchar *desktop_file) {
   g_auto(GStrv) desktop_files = g_strv_builder_end(desktop_files_builder);
   sdi_progress_dock_update_progress(progress_dock, "snap name", desktop_files,
                                     "a description", done_tasks, total_tasks,
-                                    FALSE, NULL);
+                                    FALSE);
   done_tasks++;
   if (done_tasks >= total_tasks)
     done_tasks = 0;
@@ -95,9 +95,9 @@ static void test_launch_forbidden(TestData *test) {
 static void test_launch_is_enabled(TestData *test) {
   describe_test(test);
   sdi_progress_dock_update_progress(progress_dock, "snap name", app_list,
-                                    "a description", 7, 10, TRUE, NULL);
+                                    "a description", 7, 10, TRUE);
   sdi_progress_dock_update_progress(progress_dock, "snap name2", app_list + 1,
-                                    "a description2", 10, 10, TRUE, NULL);
+                                    "a description2", 10, 10, TRUE);
   wait_for_click();
 }
 

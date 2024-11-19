@@ -29,14 +29,13 @@ G_DECLARE_FINAL_TYPE(SdiNotify, sdi_notify, SDI, NOTIFY, GObject)
 
 SdiNotify *sdi_notify_new(GApplication *application);
 
-void sdi_notify_pending_refresh(SdiNotify *notify, GListModel *snaps,
-                                gpointer data);
+void sdi_notify_pending_refresh(SdiNotify *notify, GListModel *snaps);
 
 void sdi_notify_refresh_complete(SdiNotify *notify, SnapdSnap *snap,
-                                 const gchar *snap_name, gpointer data);
+                                 const gchar *snap_name);
 
 void sdi_notify_pending_refresh_forced(SdiNotify *self, SnapdSnap *snap,
                                        GTimeSpan remaining_time,
-                                       gboolean allow_to_ignore, gpointer data);
+                                       gboolean allow_to_ignore);
 
 G_END_DECLS

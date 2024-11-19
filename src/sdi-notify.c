@@ -329,8 +329,7 @@ static void update_complete_notification(SdiNotify *self, const gchar *title,
 
 void sdi_notify_pending_refresh_forced(SdiNotify *self, SnapdSnap *snap,
                                        GTimeSpan remaining_time,
-                                       gboolean allow_to_ignore,
-                                       gpointer data) {
+                                       gboolean allow_to_ignore) {
   g_return_if_fail(SDI_IS_NOTIFY(self));
   g_return_if_fail(snap != NULL);
 
@@ -414,8 +413,7 @@ static gchar *build_body_message_for_three_refreshes(SnapdSnap *snap0,
                          snap_name0, snap_name1, snap_name2);
 }
 
-void sdi_notify_pending_refresh(SdiNotify *self, GListModel *snaps,
-                                gpointer data) {
+void sdi_notify_pending_refresh(SdiNotify *self, GListModel *snaps) {
   g_return_if_fail(SDI_IS_NOTIFY(self));
   g_return_if_fail(snaps != NULL);
 
@@ -475,7 +473,7 @@ void sdi_notify_pending_refresh(SdiNotify *self, GListModel *snaps,
 }
 
 void sdi_notify_refresh_complete(SdiNotify *self, SnapdSnap *snap,
-                                 const gchar *snap_name, gpointer data) {
+                                 const gchar *snap_name) {
   g_return_if_fail(SDI_IS_NOTIFY(self));
   g_return_if_fail((snap != NULL) || (snap_name != NULL));
 
