@@ -81,18 +81,18 @@ static void do_startup(GObject *object, gpointer data) {
                           refresh_monitor, G_CONNECT_SWAPPED);
 
   progress_window = sdi_progress_window_new(G_APPLICATION(object));
-  g_signal_connect_object(refresh_monitor, "begin_refresh",
+  g_signal_connect_object(refresh_monitor, "begin-refresh",
                           (GCallback)sdi_progress_window_begin_refresh,
                           progress_window, G_CONNECT_SWAPPED);
-  g_signal_connect_object(refresh_monitor, "refresh_progress",
+  g_signal_connect_object(refresh_monitor, "refresh-progress",
                           (GCallback)sdi_progress_window_update_progress,
                           progress_window, G_CONNECT_SWAPPED);
-  g_signal_connect_object(refresh_monitor, "end_refresh",
+  g_signal_connect_object(refresh_monitor, "end-refresh",
                           (GCallback)sdi_progress_window_end_refresh,
                           progress_window, G_CONNECT_SWAPPED);
 
   progress_dock = sdi_progress_dock_new(G_APPLICATION(object));
-  g_signal_connect_object(refresh_monitor, "refresh_progress",
+  g_signal_connect_object(refresh_monitor, "refresh-progress",
                           (GCallback)sdi_progress_dock_update_progress,
                           progress_dock, G_CONNECT_SWAPPED);
 
