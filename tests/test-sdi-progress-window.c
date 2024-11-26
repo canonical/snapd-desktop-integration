@@ -19,7 +19,8 @@ typedef struct _testData {
   const void (*test_function)(struct _testData *);
 } TestData;
 
-gchar **app_list = NULL;
+gchar *app_list[] = {"kicad_kicad.desktop", "simple-scan_simple-scan.desktop",
+                     NULL};
 
 /**
  * Several help functions
@@ -171,7 +172,7 @@ static void test_manual_hide(TestData *test) {
 
 static void test_dual_progress_bar1(TestData *test) {
   describe_test(test);
-  show_progress_window("C-SNAP", *(app_list + 2));
+  show_progress_window("C-SNAP", *(app_list));
   g_assert_cmpint(count_hash_childs(), ==, 1);
   g_assert_cmpint(count_progress_childs(), ==, 1);
   timeout_id1 = g_timeout_add(500, (GSourceFunc)set_progress_bar, "C-SNAP");
@@ -180,7 +181,7 @@ static void test_dual_progress_bar1(TestData *test) {
 
 static void test_dual_progress_bar2(TestData *test) {
   describe_test(test);
-  show_progress_window("D-SNAP", *(app_list + 3));
+  show_progress_window("D-SNAP", *(app_list + 1));
   g_assert_cmpint(count_hash_childs(), ==, 2);
   g_assert_cmpint(count_progress_childs(), ==, 2);
   timeout_id2 = g_timeout_add(300, (GSourceFunc)set_progress_bar, "D-SNAP");
@@ -211,8 +212,8 @@ static void test_dual_progress_bar4(TestData *test) {
 
 TestData test_data[] = {
     {1, "/progress_window/test_progress_bar",
-     "A window with a progress bar must appear with the name and icon of a "
-     "snapped application, growing from 1 to 10 and going back to 1 "
+     "A window with a progress bar must appear with the name and icon of the "
+     "KiCad application, growing from 1 to 10 and going back to 1 "
      "periodically. It must not 'pulse' (move left-to-right and then "
      "right-to-left softly).\n"
      "The text in the progress bar should be 'Description for task X (X/10)', "
@@ -231,15 +232,15 @@ TestData test_data[] = {
      "this window just in case).\n",
      "Confirm that is correct.", test_close_bar},
     {4, "/progress_window/test_manual_hide",
-     "A window with a progress bar must appear with the name and icon of a "
-     "snapped application.",
+     "A window with a progress bar must appear with the name and icon of the "
+     "Simple Scan application.",
      "Click on the 'Hide' button. The window must "
      "disappear and no new window should appear (check below this one). "
      "Confirm that is correct.",
      test_manual_hide},
     {5, "/progress_window/test_dual_progress_bar_1",
-     "A window with a progress bar must appear with the name and icon of a "
-     "snapped application, growing from 1 to 10 and going back to 1 "
+     "A window with a progress bar must appear with the name and icon of the "
+     "KiCad application, growing from 1 to 10 and going back to 1 "
      "periodically. It must not 'pulse' (move left-to-right and then "
      "right-to-left softly).\n"
      "The text in the progress bar should be 'Description for task X (X/10)', "
@@ -248,8 +249,8 @@ TestData test_data[] = {
      "Confirm that is correct.", test_dual_progress_bar1},
     {6, "/progress_window/test_dual_progress_bar_2",
      "A second progress bar must appear in the same window with the name and "
-     "icon of a "
-     "snapped application, growing from 1 to 10 and going back to 1 "
+     "icon of the "
+     "Simple Scan application, growing from 1 to 10 and going back to 1 "
      "periodically. It must not 'pulse' (move left-to-right and then "
      "right-to-left softly).\n"
      "The text in the progress bar should be 'Description for task X (X/10)', "
@@ -275,21 +276,7 @@ TestData test_data[] = {
 static void do_startup(GObject *object, gpointer data) {
   progress_window = sdi_progress_window_new(G_APPLICATION(object));
 
-  g_autolist(GAppInfo) applist = g_app_info_get_all();
-  g_autoptr(GStrvBuilder) builder = g_strv_builder_new();
-  // make a list with only snapped icons
-  for (GList *p = applist; p != NULL; p = p->next) {
-    GAppInfo *app_info = G_APP_INFO(p->data);
-    if (!g_app_info_should_show(app_info)) {
-      continue;
-    }
-    const gchar *command_line = g_app_info_get_commandline(app_info);
-    if (strstr(command_line, "/snapd/") != NULL) {
-      g_strv_builder_add(builder, g_app_info_get_id(p->data));
-    }
-  }
-  g_assert_null(app_list);
-  app_list = g_strv_builder_end(builder);
+  g_assert_nonnull(app_list);
 }
 
 static void do_activate(GApplication *app, gpointer data) {
@@ -301,11 +288,23 @@ static void do_activate(GApplication *app, gpointer data) {
   }
   g_test_run();
   g_object_unref(window);
-  g_strfreev(app_list);
+}
+
+static gchar *get_data_path() {
+  g_autofree gchar *path = g_test_build_filename(G_TEST_BUILT, "data", NULL);
+  return g_canonicalize_filename(path, NULL);
+}
+
+void set_environment() {
+  const gchar *data_dirs = g_getenv("XDG_DATA_DIRS");
+  g_autofree gchar *share_path = get_data_path();
+  g_autofree gchar *newvar = g_strdup_printf("%s:%s", share_path, data_dirs);
+  g_setenv("XDG_DATA_DIRS", newvar, TRUE);
 }
 
 int main(int argc, char **argv) {
   g_test_init(&argc, &argv, NULL);
+  set_environment();
 
   g_autoptr(GApplication) app = G_APPLICATION(gtk_application_new(
       "io.snapcraft.SdiProgressDockTest", G_APPLICATION_DEFAULT_FLAGS));
