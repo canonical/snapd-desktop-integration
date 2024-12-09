@@ -285,7 +285,8 @@ static void update_progress_bars(gpointer key, SnapProgressTaskData *task_data,
   gdouble progress =
       ((gdouble)task_data->done_tasks) / ((gdouble)task_data->total_tasks);
 
-  if (task_data->done || !G_APPROX_VALUE(progress, task_data->old_progress, DBL_EPSILON)) {
+  if (task_data->done ||
+      !G_APPROX_VALUE(progress, task_data->old_progress, DBL_EPSILON)) {
     task_data->old_progress = progress;
     g_signal_emit_by_name(self, "refresh-progress", task_data->snap_name,
                           task_data->desktop_files, task_data->task_description,

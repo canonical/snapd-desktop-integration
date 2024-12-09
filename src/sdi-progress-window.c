@@ -52,27 +52,15 @@ GtkWindow *sdi_progress_window_get_window(SdiProgressWindow *self) {
 
 #endif
 
-static gboolean widget_contains_child(GtkWidget *parent,
-                                      GtkWidget *query_child) {
-  GtkWidget *child = gtk_widget_get_first_child(parent);
-  while (child != NULL) {
-    if (query_child == child)
-      return TRUE;
-    child = gtk_widget_get_next_sibling(child);
-  }
-  return FALSE;
-}
-
 static void remove_dialog_from_main_window(SdiProgressWindow *self,
                                            SdiRefreshDialog *dialog) {
   if (dialog == NULL)
     return;
 
-  g_hash_table_remove(self->dialogs, sdi_refresh_dialog_get_app_name(dialog));
-
-  if (!widget_contains_child(GTK_WIDGET(self->refresh_bar_container),
-                             GTK_WIDGET(dialog)))
+  if (!g_hash_table_remove(self->dialogs,
+                           sdi_refresh_dialog_get_app_name(dialog))) {
     return;
+  }
 
   gtk_box_remove(GTK_BOX(self->refresh_bar_container), GTK_WIDGET(dialog));
   if (gtk_widget_get_first_child(GTK_WIDGET(self->refresh_bar_container)) ==
@@ -124,6 +112,9 @@ static void add_dialog_to_main_window(SdiProgressWindow *self,
 void sdi_progress_window_begin_refresh(SdiProgressWindow *self,
                                        gchar *snap_name, gchar *visible_name,
                                        gchar *icon) {
+  if (g_hash_table_contains(self->dialogs, snap_name)) {
+    return;
+  }
   g_autoptr(SdiRefreshDialog) dialog =
       g_object_ref_sink(sdi_refresh_dialog_new(snap_name, visible_name));
   if (icon != NULL) {
