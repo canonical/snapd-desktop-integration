@@ -77,6 +77,7 @@ static gboolean set_progress_bar(gchar *snap_name) {
 }
 
 static void wait_for_click() {
+  g_assert_null (loop);
   loop = g_main_loop_new(NULL, FALSE);
   g_main_loop_run(loop);
   g_main_loop_unref(loop);
