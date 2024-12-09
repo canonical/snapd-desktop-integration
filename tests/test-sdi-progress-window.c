@@ -80,7 +80,7 @@ static void wait_for_click() {
   g_assert_null (loop);
   loop = g_main_loop_new(NULL, FALSE);
   g_main_loop_run(loop);
-  g_main_loop_unref(loop);
+  g_clear_pointer (&loop, g_main_loop_unref);
 }
 
 static void enable_buttons(gpointer data) {
