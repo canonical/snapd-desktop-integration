@@ -1,4 +1,4 @@
-project('snapd-desktop-integration', 'c', version: '0.9')
+project('snapd-desktop-integration', 'c', version: '0.9', meson_version: '>= 0.64.0')
 
 if get_option('gnotify')
     add_global_arguments('-DUSE_GNOTIFY', language: 'c')
