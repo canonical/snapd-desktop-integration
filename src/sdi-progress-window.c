@@ -79,8 +79,7 @@ static void remove_dialog_from_main_window(SdiProgressWindow *self,
       NULL) {
     // If that was the last dialog in the main window, destroy it, since
     // now it is empty.
-    gtk_window_destroy(self->main_window);
-    self->main_window = NULL;
+    g_clear_pointer (&self->main_window, gtk_window_destroy);
   } else {
     // If there remain dialogs, resize the window to the minimum, to avoid
     // wasting space. This is because currently we expand the main window
