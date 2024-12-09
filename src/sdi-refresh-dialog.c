@@ -154,7 +154,7 @@ void sdi_refresh_dialog_set_percentage_progress(SdiRefreshDialog *self,
   self->message = g_strdup(bar_text);
   gtk_progress_bar_set_fraction(self->progress_bar, percent);
   gtk_progress_bar_set_show_text(self->progress_bar, TRUE);
-  if ((bar_text != NULL) && (bar_text[0] == 0)) {
+  if (bar_text == NULL) {
     gtk_progress_bar_set_text(self->progress_bar, "");
   } else {
     gtk_progress_bar_set_text(self->progress_bar, bar_text);
