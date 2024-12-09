@@ -77,10 +77,10 @@ static gboolean set_progress_bar(gchar *snap_name) {
 }
 
 static void wait_for_click() {
-  g_assert_null (loop);
+  g_assert_null(loop);
   loop = g_main_loop_new(NULL, FALSE);
   g_main_loop_run(loop);
-  g_clear_pointer (&loop, g_main_loop_unref);
+  g_clear_pointer(&loop, g_main_loop_unref);
 }
 
 static void enable_buttons(gpointer data) {
@@ -100,6 +100,7 @@ static void show_progress_window(gchar *snap_name, gchar *desktop_file) {
   g_autofree gchar *icon = g_desktop_app_info_get_string(app_info, "Icon");
   sdi_progress_window_begin_refresh(
       progress_window, snap_name,
+      // GDesktopAppInfo inherits from GAppInfo, so a check is not needed
       (gchar *)g_app_info_get_display_name(G_APP_INFO(app_info)), icon);
 }
 
