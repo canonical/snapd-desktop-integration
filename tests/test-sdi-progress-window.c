@@ -54,7 +54,7 @@ static GtkApplicationWindow *create_window(GApplication *app) {
 
 static void describe_test(TestData *test) {
   g_assert_nonnull(test);
-  g_assert_cmpint(test->test_number, !=, -1);
+  g_assert(test->test_number);
   g_autofree gchar *text = g_strdup_printf(
       "Test %d; Title: %s\n\nDescription: %s\n\nActions: %s", test->test_number,
       test->title, test->description, test->actions);
@@ -269,7 +269,7 @@ TestData test_data[] = {
      "The window must disappear and no new window should appear (check below "
      "this window just in case).\n",
      "Confirm that is correct.", test_dual_progress_bar4},
-    {-1, NULL, NULL, NULL, NULL}};
+    {0, NULL, NULL, NULL, NULL}};
 
 /**
  * GApplication callbacks
@@ -285,7 +285,7 @@ static void do_activate(GApplication *app, gpointer data) {
   window = create_window(app);
 
   // add tests
-  for (TestData *test = test_data; test->test_number != -1; test++) {
+  for (TestData *test = test_data; test->test_number; test++) {
     g_test_add_data_func(test->title, test, (GTestDataFunc)test->test_function);
   }
   g_test_run();
