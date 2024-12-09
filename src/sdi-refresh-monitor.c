@@ -208,22 +208,26 @@ static void process_inhibited_snaps(SdiRefreshMonitor *self,
     g_autoptr(SdiSnap) snap = find_snap(self, snap_name);
     if (snap == NULL)
       continue;
-    // Only show progress bar if that snap shown an 'inhibited' notification
-    // (The notification asking the user to close the application to allow it
-    // to be refreshed).
+    /* Only show progress bar if that snap shown an 'inhibited' notification
+     * (The notification asking the user to close the application to allow it
+     * to be refreshed).
+     */
     if (!sdi_snap_get_inhibited(snap))
       continue;
 
     if (done || cancelled) {
-      // If the Change is completed, emit the `end-refresh` signal to close
-      // any Dialog that belongs to this snap...
+      /* If the Change is completed, emit the `end-refresh` signal to close
+       * any Dialog that belongs to this snap...
+       */
       g_signal_emit_by_name(self, "end-refresh", sdi_snap_get_name(snap));
       remove_snap(self, snap);
-      // and show, if Done, a notification to inform the user that the snap
-      // has been refreshed and they can launch it again.
+      /* and show, if Done, a notification to inform the user that the snap
+       * has been refreshed and they can launch it again.
+       */
       if (done) {
-        // the `data` memory block is freed in the callback, so it must not
-        // use g_autoptr here.
+        /* the `data` memory block is freed in the callback, so it must not
+         * use g_autoptr here.
+         */
         SnapRefreshData *data = snap_refresh_data_new(self, NULL, snap_name);
         snapd_client_get_snap_async(self->client, snap_name, NULL,
                                     show_snap_completed, data);
@@ -238,8 +242,9 @@ static void process_inhibited_snaps(SdiRefreshMonitor *self,
     if (!sdi_snap_get_created_dialog(snap)) {
       // If there's no dialog, get the data for this snap and create it.
       sdi_snap_set_ignored(snap, TRUE);
-      // and mark it as it has a dialog, to avoid creating it again
-      // if the user closes it.
+      /* and mark it as it has a dialog, to avoid creating it again
+       * if the user closes it.
+       */
       sdi_snap_set_created_dialog(snap, TRUE);
 
       g_autoptr(SnapdSnap) client_snap =
@@ -324,11 +329,12 @@ static void process_change_progress(SdiRefreshMonitor *self,
     for (gchar **p = affected_snaps; *p != NULL; p++) {
       gchar *snap_name = *p;
       SnapProgressTaskData *progress_task_data = NULL;
-      // Each Change has one or more Tasks. Each Task has zero or more affected
-      // Snaps. So we must keep a list of affected Snaps, and update the count
-      // of total tasks and done tasks for each snap affected by each task. This
-      // list is kept between Changes because that allows to send notifications
-      // only when there is a change in the progress.
+      /* Each Change has one or more Tasks. Each Task has zero or more affected
+       * Snaps. So we must keep a list of affected Snaps, and update the count
+       * of total tasks and done tasks for each snap affected by each task. This
+       * list is kept between Changes because that allows to send notifications
+       * only when there is a change in the progress.
+       */
       if (!g_hash_table_contains(self->refreshing_snap_list, snap_name)) {
         progress_task_data = new_progress_task_data(snap_name);
         g_hash_table_insert(self->refreshing_snap_list, g_strdup(snap_name),
@@ -347,9 +353,10 @@ static void process_change_progress(SdiRefreshMonitor *self,
             g_strdup(snapd_task_get_summary(task));
       }
       if (done || cancelled) {
-        // If a Change is complete or has been cancelled, we must remove those
-        // snaps from the list. But it must be done after updating the progress
-        // bars.
+        /* If a Change is complete or has been cancelled, we must remove those
+         * snaps from the list. But it must be done after updating the progress
+         * bars.
+         */
         snaps_to_remove = g_slist_prepend(snaps_to_remove, g_strdup(snap_name));
       }
     }
@@ -412,10 +419,11 @@ static void manage_change_update(SnapdClient *source, GAsyncResult *res,
 
   const gchar *change_id = snapd_change_get_id(change);
   if (!done && !cancelled && !g_hash_table_contains(self->changes, change_id)) {
-    // since the "change-update" notice event is sent only when new Tasks
-    // are added to a Change, or when the status of the Change has been
-    // modified, we must request periodically the Change to check which task
-    // is currently active and be able to update the progress bar.
+    /* since the "change-update" notice event is sent only when new Tasks
+     * are added to a Change, or when the status of the Change has been
+     * modified, we must request periodically the Change to check which task
+     * is currently active and be able to update the progress bar.
+     */
     SnapRefreshData *data = snap_refresh_data_new(self, change_id, NULL);
     guint id = g_timeout_add_once(CHANGE_REFRESH_PERIOD,
                                   (GSourceOnceFunc)refresh_change, data);
@@ -427,8 +435,9 @@ static void manage_change_update(SnapdClient *source, GAsyncResult *res,
 static gboolean notify_check_forced_refresh(SdiRefreshMonitor *self,
                                             SnapdSnap *snap,
                                             SdiSnap *snap_data) {
-  // Check if we have to show a notification with the time when it will be
-  // force-refreshed
+  /* Check if we have to show a notification with the time when it will be
+   * force-refreshed.
+   */
   GTimeSpan next_refresh = get_remaining_time_in_seconds(snap);
   if ((next_refresh <= TIME_TO_SHOW_REMAINING_TIME_BEFORE_FORCED_REFRESH) &&
       (!sdi_snap_get_ignored(snap_data))) {
@@ -481,24 +490,27 @@ static void manage_refresh_inhibit(SnapdClient *source, GAsyncResult *res,
     g_autoptr(SdiSnap) snap_data = add_snap(self, name);
     if (snap_data == NULL)
       continue;
-    // Mark this snap as "inhibited"; this is, a notification asking
-    // the user to close it to allow it to be updated has been shown
-    // for this snap, so a dialog with a progress bar should be shown
-    // during refresh. If it wasn't inhibited, only a progress bar
-    // in the dock should be shown.
+    /* Mark this snap as "inhibited"; this is, a notification asking
+     * the user to close it to allow it to be updated has been shown
+     * for this snap, so a dialog with a progress bar should be shown
+     * during refresh. If it wasn't inhibited, only a progress bar
+     * in the dock should be shown.
+     */
     sdi_snap_set_inhibited(snap_data, TRUE);
 
-    // If the user hasn't clicked the "Don't remind me again" button in
-    // a notification, `ignored` property will be TRUE, so no pending
-    // notification should be sent for this specific snap (but if there
-    // are more snaps, then a notification could be sent if any of those
-    // aren't ignored).
+    /* If the user hasn't clicked the "Don't remind me again" button in
+     * a notification, `ignored` property will be TRUE, so no pending
+     * notification should be sent for this specific snap (but if there
+     * are more snaps, then a notification could be sent if any of those
+     * aren't ignored).
+     */
     if (!sdi_snap_get_ignored(snap_data)) {
       show_grouped_notification = TRUE;
     }
     g_list_store_append(snap_list, snap);
-    // Check if we have to notify the user because the snap will be
-    // force-refreshed soon
+    /* Check if we have to notify the user because the snap will be
+     * force-refreshed soon
+     */
     notify_check_forced_refresh(self, snap, snap_data);
   }
   if (show_grouped_notification) {
@@ -555,8 +567,9 @@ void sdi_refresh_monitor_init(SdiRefreshMonitor *self) {
   self->snaps =
       g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_object_unref);
   self->changes = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
-  // the key in this table is the snap name; the value is a SnapProgressTaskData
-  // structure
+  /* the key in this table is the snap name; the value is a SnapProgressTaskData
+   * structure.
+   */
   self->refreshing_snap_list = g_hash_table_new_full(
       g_str_hash, g_str_equal, g_free, free_progress_task_data);
   self->client = sdi_snapd_client_factory_new_snapd_client();

@@ -153,14 +153,15 @@ void sdi_progress_window_update_progress(SdiProgressWindow *self,
                                          gchar *task_description,
                                          guint done_tasks, guint total_tasks,
                                          gboolean task_done) {
-  if (snap_name != NULL) {
-    // Update dialog progress bar
-    SdiRefreshDialog *dialog =
-        (SdiRefreshDialog *)g_hash_table_lookup(self->dialogs, snap_name);
-    if (dialog != NULL) {
-      sdi_refresh_dialog_set_n_tasks_progress(dialog, task_description,
-                                              done_tasks, total_tasks);
-    }
+  if (snap_name == NULL)
+    return;
+
+  // Update dialog progress bar
+  SdiRefreshDialog *dialog =
+      (SdiRefreshDialog *)g_hash_table_lookup(self->dialogs, snap_name);
+  if (dialog != NULL) {
+    sdi_refresh_dialog_set_n_tasks_progress(dialog, task_description,
+                                            done_tasks, total_tasks);
   }
 }
 
