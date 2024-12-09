@@ -287,8 +287,7 @@ static void update_progress_bars(gpointer key, SnapProgressTaskData *task_data,
   if (task_data->total_tasks == 0) {
     return;
   }
-  gdouble progress =
-      task_data->done_tasks / (gdouble) task_data->total_tasks;
+  gdouble progress = task_data->done_tasks / (gdouble)task_data->total_tasks;
 
   if (task_data->done ||
       !G_APPROX_VALUE(progress, task_data->old_progress, DBL_EPSILON)) {
