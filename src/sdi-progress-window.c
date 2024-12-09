@@ -39,8 +39,9 @@ G_DEFINE_TYPE(SdiProgressWindow, sdi_progress_window, G_TYPE_OBJECT)
 
 #ifdef DEBUG_TESTS
 
-// These methods are only for unitary tests, so they aren't available
-// in "normal" builds.
+/* These methods are only for unitary tests, so they aren't available
+ * in "normal" builds.
+ */
 
 GHashTable *sdi_progress_window_get_dialogs(SdiProgressWindow *self) {
   return self->dialogs;
@@ -65,17 +66,19 @@ static void remove_dialog_from_main_window(SdiProgressWindow *self,
   gtk_box_remove(GTK_BOX(self->refresh_bar_container), GTK_WIDGET(dialog));
   if (gtk_widget_get_first_child(GTK_WIDGET(self->refresh_bar_container)) ==
       NULL) {
-    // If that was the last dialog in the main window, destroy it, since
-    // now it is empty.
+    /* If that was the last dialog in the main window, destroy it, since
+     * now it is empty.
+     */
     g_clear_pointer (&self->main_window, gtk_window_destroy);
   } else {
-    // If there remain dialogs, resize the window to the minimum, to avoid
-    // wasting space. This is because currently we expand the main window
-    // if a message is too long, but we don't shrink it when that long
-    // message is replaced by a shorter one, to avoid the window expanding
-    // and shrinking over and over every time a message changes. But when
-    // a refresh has ended and its progress bar disappears, it is legit to
-    // resize the window to the minimum.
+    /* If there remain dialogs, resize the window to the minimum, to avoid
+     * wasting space. This is because currently we expand the main window
+     * if a message is too long, but we don't shrink it when that long
+     * message is replaced by a shorter one, to avoid the window expanding
+     * and shrinking over and over every time a message changes. But when
+     * a refresh has ended and its progress bar disappears, it is legit to
+     * resize the window to the minimum.
+     */
     gtk_window_set_default_size(GTK_WINDOW(self->main_window), 0, 0);
   }
 }
@@ -97,8 +100,9 @@ static void add_dialog_to_main_window(SdiProgressWindow *self,
 
   gtk_box_append(self->refresh_bar_container, GTK_WIDGET(dialog));
   gtk_widget_set_visible(GTK_WIDGET(dialog), TRUE);
-  // the 'hide-event' is emitted by the dialog when the user clicks on the
-  // 'Hide' button in that progress bar dialog.
+  /* the 'hide-event' is emitted by the dialog when the user clicks on the
+   * 'Hide' button in that progress bar dialog.
+   */
   g_signal_connect_swapped(G_OBJECT(dialog), "hide-event",
                            (GCallback)remove_dialog_from_main_window, self);
 }

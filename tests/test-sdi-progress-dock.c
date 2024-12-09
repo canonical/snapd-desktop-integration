@@ -135,9 +135,10 @@ TestData test_data[] = {
 static void do_startup(GObject *object, gpointer data) {
   progress_dock = sdi_progress_dock_new(G_APPLICATION(object));
 
-  // this gsettings key stores the path to the .desktop files of the programs
-  // in the dock. Since we need to test a progress bar in the dock, we need
-  // that list.
+  /* this gsettings key stores the path to the .desktop files of the programs
+   * in the dock. Since we need to test a progress bar in the dock, we need
+   * that list.
+   */
   g_autoptr(GSettings) settings = g_settings_new("org.gnome.shell");
   app_list = g_settings_get_strv(settings, "favorite-apps");
 }

@@ -72,10 +72,11 @@ static void do_startup(GObject *object, gpointer data) {
                           refresh_monitor, G_CONNECT_SWAPPED);
 
   snapd_monitor = sdi_snapd_monitor_new();
-  // any notice event received by the #sdi_snapd_monitor object will
-  // be relayed directly to the #sdi_refresh_monitor, which will process
-  // them and decide whether to show a progress bar, a notification, a
-  // dialog with the current progress...
+  /* any notice event received by the #sdi_snapd_monitor object will
+   * be relayed directly to the #sdi_refresh_monitor, which will process
+   * them and decide whether to show a progress bar, a notification, a
+   * dialog with the current progress...
+   */
   g_signal_connect_object(snapd_monitor, "notice-event",
                           (GCallback)sdi_refresh_monitor_notice,
                           refresh_monitor, G_CONNECT_SWAPPED);
@@ -137,11 +138,12 @@ int main(int argc, char **argv) {
   int pid = fork();
   if (pid != 0) {
     if (pid > 0) {
-      // SIGTERM and SIGINT will be ignored, but
-      // will break WAITPID with a EINTR value in
-      // errno.
-      // This allows the program to always exit with
-      // a NO-ERROR value, and kill the child
+      /* SIGTERM and SIGINT will be ignored, but
+       * will break WAITPID with a EINTR value in
+       * errno.
+       * This allows the program to always exit with
+       * a NO-ERROR value, and kill the child
+       */
       struct sigaction signal_data;
       signal_data.sa_handler = sighandler;
       sigemptyset(&signal_data.sa_mask);
@@ -184,7 +186,8 @@ int main(int argc, char **argv) {
 
   g_application_run(G_APPLICATION(app), argc, argv);
 
-  // since it should never ends, if we reach here, we return 0 as error value to
-  // ensure that systemd will relaunch it.
+  /* since it should never ends, if we reach here, we return 0 as error value to
+   * ensure that systemd will relaunch it.
+   */
   return 0;
 }

@@ -26,17 +26,18 @@ struct _SdiSnap {
   gchar *name;
 
   //* This is set to TRUE if the user clicked the "Ignore" button in a
-  // notification, to avoid new notifications to be shown
+  //* notification, to avoid new notifications to be shown
   gboolean ignored;
 
   //* If a snap is marked as "inhibited", it means that it is waiting for the
-  // user to close the instance to continue the refresh. Non-inhibited snaps
-  // must NOT show a progress bar.
+  //* user to close the instance to continue the refresh. Non-inhibited snaps
+  //* must NOT show a progress bar.
   gboolean inhibited;
 
   //* If a dialog is destroyed for whatever reason (for example, because the top
-  // window containing it is closed) this is set to TRUE to avoid creating again
-  // a progress bar for this snap in the next loop.
+  //* window containing it is closed) this is set to TRUE to avoid creating
+  // again
+  //* a progress bar for this snap in the next loop.
   gboolean hidden;
 
   //* Stores wether a dialog has already been requested or not
