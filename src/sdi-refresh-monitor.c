@@ -347,7 +347,7 @@ static void process_change_progress(SdiRefreshMonitor *self,
       progress_task_data->done = task_done;
       if (task_done) {
         progress_task_data->done_tasks++;
-      } else if ((progress_task_data->task_description == NULL) &&
+      } else if (progress_task_data->task_description == NULL &&
                  g_str_equal("Doing", status)) {
         progress_task_data->task_description =
             g_strdup(snapd_task_get_summary(task));
