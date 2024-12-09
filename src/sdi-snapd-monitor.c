@@ -72,9 +72,10 @@ static void error_cb(GObject *object, GError *error, SdiSnapdMonitor *self) {
   g_signal_handler_disconnect(self->snapd_monitor, self->signal_notice_id);
   g_signal_handler_disconnect(self->snapd_monitor, self->signal_error_id);
   g_clear_object(&self->snapd_monitor);
-  // wait one second to ensure that, in case that the error is because snapd is
-  // being replaced, the new instance has created the new socket, and thus avoid
-  // hundreds of error messages until it appears.
+  /* wait one second to ensure that, in case that the error is because snapd is
+   * being replaced, the new instance has created the new socket, and thus avoid
+   * hundreds of error messages until it appears.
+   */
   g_timeout_add_once(1000, (GSourceOnceFunc)launch_snapd_monitor_after_error,
                      self);
 }

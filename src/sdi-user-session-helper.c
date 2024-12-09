@@ -33,9 +33,10 @@ static gboolean _sdi_session_is_desktop(const gchar *object_path) {
   user_data = org_freedesktop_login1_session_get_user(session);
   if (user_data == NULL) {
     g_message("Failed to read the session user data. Forcing a reload.");
-    // if we can't read the data, we can't know whether we are in a desktop
-    // session or in a text one, so we will assume that we are in a session
-    // desktop to force a reload.
+    /* if we can't read the data, we can't know whether we are in a desktop
+     * session or in a text one, so we will assume that we are in a session
+     * desktop to force a reload.
+     */
     return TRUE;
   }
   user = g_variant_get_child_value(user_data, 0);
@@ -68,9 +69,10 @@ static gboolean _sdi_check_graphical_sessions(GMainLoop *loop) {
       login_manager, &sessions, NULL, NULL);
 
   if (got_session_list) {
-    // check if there is already a graphical session opened for us, in which
-    // case we must just exit and let systemd to relaunch us, because it means
-    // that we run too early and the desktop wasn't still ready
+    /* check if there is already a graphical session opened for us, in which
+     * case we must just exit and let systemd to relaunch us, because it means
+     * that we run too early and the desktop wasn't still ready.
+     */
     for (int i = 0; i < g_variant_n_children(sessions); i++) {
       GVariant *session = g_variant_get_child_value(sessions, i);
       if (session == NULL) {
@@ -92,8 +94,9 @@ static gboolean _sdi_check_graphical_sessions(GMainLoop *loop) {
               "interface is connected). Forcing a reload.");
     g_main_loop_quit(loop);
   }
-  idle_id = 0; // we are already removing it here, so g_source_remove should not
-               // be called
+  idle_id = 0; /* we are already removing it here, so g_source_remove should not
+                * be called
+                */
   return G_SOURCE_REMOVE;
 }
 
@@ -115,20 +118,22 @@ void sdi_wait_for_graphical_session(void) {
       "/org/freedesktop/login1", NULL, NULL);
   guint session_new_id = g_signal_connect(login_manager, "session-new",
                                           G_CALLBACK(new_session), loop);
-  // Check if we are already in a graphical session to avoid race conditions
-  // between the signals being connected and the main loop being run. This is
-  // a must because, sometimes, snapd-desktop-integration is launched "too
-  // quickly" and the desktop isn't ready, so gtk_init_check() fails but the
-  // session IS a graphical one. For that cases we do check if there is a
-  // graphical session active, and if that's the case, we must exit to let
-  // systemd relaunch us again, this time being able to get access to the
-  // session.
+  /* Check if we are already in a graphical session to avoid race conditions
+   * between the signals being connected and the main loop being run. This is
+   * a must because, sometimes, snapd-desktop-integration is launched "too
+   * quickly" and the desktop isn't ready, so gtk_init_check() fails but the
+   * session IS a graphical one. For that cases we do check if there is a
+   * graphical session active, and if that's the case, we must exit to let
+   * systemd relaunch us again, this time being able to get access to the
+   * session.
+   */
   idle_id = g_idle_add((GSourceFunc)_sdi_check_graphical_sessions, loop);
   g_main_loop_run(loop);
   g_signal_handler_disconnect(login_manager, session_new_id);
   if (idle_id != 0)
     g_source_remove(idle_id);
-  // login_manager is used in _sdi_check_graphical_session, so we can't make it
-  // local and use g_autoptr
+  /* login_manager is used in _sdi_check_graphical_session, so we can't make it
+   * local and use g_autoptr
+   */
   g_clear_object(&login_manager);
 }
