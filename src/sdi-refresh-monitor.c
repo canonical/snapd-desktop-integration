@@ -370,8 +370,7 @@ static void process_change_progress(SdiRefreshMonitor *self,
 
 static gboolean cancelled_change_status(const gchar *status) {
   return g_str_equal(status, "Undoing") || g_str_equal(status, "Undone") ||
-         g_str_equal(status, "Undo") || g_str_equal(status, "Error") ||
-         g_str_equal(status, "Abort");
+         g_str_equal(status, "Undo") || g_str_equal(status, "Error");
 }
 
 static gboolean valid_working_change_status(const gchar *status) {
