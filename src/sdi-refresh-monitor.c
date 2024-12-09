@@ -448,7 +448,8 @@ static void update_dock_snaps(SdiRefreshMonitor *self, SnapdChange *change,
 
 static gboolean cancelled_change_status(const gchar *status) {
   return g_str_equal(status, "Undoing") || g_str_equal(status, "Undone") ||
-         g_str_equal(status, "Undo") || g_str_equal(status, "Error");
+         g_str_equal(status, "Undo") || g_str_equal(status, "Error") ||
+         g_str_equal(status, "Abort");
 }
 
 static gboolean valid_working_change_status(const gchar *status) {
