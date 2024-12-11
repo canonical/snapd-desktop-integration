@@ -15,6 +15,4 @@ jobs:
 
       - name: Verify formatting
         run: |
-          passed=true
-          for file in src/*.[ch] tests/*.[ch]; do clang-format $file > $file.formatted ; echo $file ; diff $file $file.formatted ; if [ $? != 0 ]; then passed=false ; fi ; rm $file.formatted ; done
-          if [ $passed = false ]; then exit 1; fi
+          ./format-source.sh check
