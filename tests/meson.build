@@ -9,6 +9,7 @@ test_executable = executable(
   dependencies: [gio_dep, gio_unix_dep, json_glib_dep, libsoup_dep],
   c_args: COVERAGE_C_ARGS,
   link_args: COVERAGE_LINK_ARGS,
+  install: false,
 )
 
 test('Tests', test_executable)
@@ -22,6 +23,7 @@ sdi_notify_executable = executable(
   dependencies: [gtk_dep, snapd_glib_dep, gio_dep, libnotify_dep],
   c_args: ['-DDEBUG_TESTS'] + COVERAGE_C_ARGS,
   link_args: COVERAGE_LINK_ARGS,
+  install: false,
 )
 
 test_sdi_notices_monitor = executable(
@@ -33,6 +35,7 @@ test_sdi_notices_monitor = executable(
   dependencies: [gtk_dep, snapd_glib_dep, gio_dep, libsoup_dep, json_glib_dep],
   c_args: ['-DDEBUG_TESTS'] + COVERAGE_C_ARGS,
   link_args: COVERAGE_LINK_ARGS,
+  install: false,
 )
 
 test_sdi_empty = executable(
@@ -49,6 +52,7 @@ test_sdi_empty = executable(
   dependencies: [gtk_dep, snapd_glib_dep, gio_dep, libnotify_dep, libsoup_dep, json_glib_dep],
   c_args: ['-DDEBUG_TESTS'] + COVERAGE_C_ARGS,
   link_args: COVERAGE_LINK_ARGS,
+  install: false,
 )
 
 subdir('data')
