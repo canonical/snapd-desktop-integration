@@ -3,9 +3,6 @@ conf.set_quoted('DAEMON_BUILDDIR', daemon_builddir)
 configure_file(output: 'config.h',
                configuration: conf)
 
-COVERAGE_LINK_ARGS = ['-lgcov', '--coverage']
-COVERAGE_C_ARGS = ['-fprofile-arcs', '-ftest-coverage', '-fPIC', '-O0']
-
 test_executable = executable(
   'test-snapd-desktop-integration',
   'test-snapd-desktop-integration.c',

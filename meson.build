@@ -17,6 +17,14 @@ json_glib_dep = dependency ('json-glib-1.0')
 
 add_global_arguments('-DGETTEXT_PACKAGE="@0@"'.format (meson.project_name()), language:'c')
 
+if get_option('add-coverage')
+    COVERAGE_C_ARGS = ['-fprofile-arcs', '-ftest-coverage', '-fPIC', '-O0']
+    COVERAGE_LINK_ARGS = ['-lgcov', '--coverage']
+else
+    COVERAGE_C_ARGS = []
+    COVERAGE_LINK_ARGS = []
+endif
+
 subdir('data')
 subdir('po')
 subdir('src')

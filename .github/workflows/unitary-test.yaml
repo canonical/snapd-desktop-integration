@@ -39,17 +39,22 @@ jobs:
             git log -1 --format=%ct $1
           }
 
+          CHECK_COVERAGE_DATES () {
+            for FILE in "${@:3}"; do
+              if [[ $(COMMIT_TIMESTAMP $FILE) > $(COMMIT_TIMESTAMP coverage/$1) ]]; then
+                echo $FILE has been modified. You must run *$2* to update coverage
+                exit 1
+              fi
+            done
+          }
+
           # Check if the prebuilt COBERTURA.XML files are up-to-date
-          for FILE in tests/test-sdi-notify.c src/sdi-notify.c src/sdi-helpers.c; do
-            if [[ $(COMMIT_TIMESTAMP $FILE) > $(COMMIT_TIMESTAMP coverage/cobertura-notify.xml) ]]; then
-              echo $FILE has been modified. You must run *run-test-sdi-notify.sh* to update coverage
-              exit 1
-            fi
-          done
+          CHECK_COVERAGE_DATES cobertura-notify.xml run-test-sdi-notify.sh tests/test-sdi-notify.c src/sdi-notify.c src/sdi-helpers.c
+          CHECK_COVERAGE_DATES cobertura-theme-change.xml run-test-theme-change.sh tests/test-snapd-desktop-integration.c src/sdi-theme-monitor.c src/sdi-theme-monitor.h src/main.c
 
           gcovr _build --cobertura coverage/cobertura-tests.xml
           # merge the prebuilt COBERTURA.XML files with the newly generated
-          gcovr --cobertura-add-tracefile coverage/cobertura-tests.xml --cobertura-add-tracefile coverage/cobertura-notify.xml --cobertura coverage/cobertura.xml
+          gcovr --cobertura-add-tracefile coverage/cobertura-tests.xml --cobertura-add-tracefile coverage/cobertura-theme-change.xml --cobertura-add-tracefile coverage/cobertura-notify.xml --cobertura coverage/cobertura.xml
 
       - name: Upload coverage reports
         uses: actions/upload-artifact@v4
