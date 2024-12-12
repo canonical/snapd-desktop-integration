@@ -12,14 +12,11 @@ There are several unitary tests for the code, although some of them can't be
 run automatically, and require the user/developer to run them. These are:
 
 - tests/test-sdi-notices-monitor
-- tests/test-snapd-desktop-integration
 
-The first one requires the developer to manually click on several notifications.
+It requires the developer to manually click on several notifications.
 
-The second one has some requirements that can't be fulfilled in the CI containers.
-
-To run each test, use the `run-test-XXXX` scripts located at the root folder.
-These scripts will automagically compile the source code with coverage support,
+To run the test, use the `run-test-sdi-notify.sh` script located at the root folder.
+This script will automagically compile the source code with coverage support,
 launch the test, and update the coverage XML file.
 
 When a commit is sent to GitHub, the CI runs the automatic unitary tests,

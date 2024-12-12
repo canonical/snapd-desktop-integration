@@ -24,7 +24,7 @@ jobs:
           cd ..
       - name: Build
         run: |
-          meson setup _build
+          meson setup _build -Dadd-coverage=true
           ninja -C _build
       - name: Test theme change
         run: |
@@ -50,11 +50,10 @@ jobs:
 
           # Check if the prebuilt COBERTURA.XML files are up-to-date
           CHECK_COVERAGE_DATES cobertura-notify.xml run-test-sdi-notify.sh tests/test-sdi-notify.c src/sdi-notify.c src/sdi-helpers.c
-          CHECK_COVERAGE_DATES cobertura-theme-change.xml run-test-theme-change.sh tests/test-snapd-desktop-integration.c src/sdi-theme-monitor.c src/sdi-theme-monitor.h src/main.c
 
           gcovr _build --cobertura coverage/cobertura-tests.xml
           # merge the prebuilt COBERTURA.XML files with the newly generated
-          gcovr --cobertura-add-tracefile coverage/cobertura-tests.xml --cobertura-add-tracefile coverage/cobertura-theme-change.xml --cobertura-add-tracefile coverage/cobertura-notify.xml --cobertura coverage/cobertura.xml
+          gcovr --cobertura-add-tracefile coverage/cobertura-tests.xml --cobertura-add-tracefile coverage/cobertura-notify.xml --cobertura coverage/cobertura.xml
 
       - name: Upload coverage reports
         uses: actions/upload-artifact@v4
