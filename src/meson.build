@@ -17,7 +17,7 @@ snapd_desktop_integration = executable(
   'sdi-snapd-client-factory.c',
   resources, login_src, login_session_src, unity_launcher_src, desktop_launcher_src,
   dependencies: [gtk_dep, snapd_glib_dep, libnotify_dep],
-  install: not get_option('add-coverage'),
+  install: DO_INSTALL,
   c_args: COVERAGE_C_ARGS,
   link_args: ['-rdynamic'] + COVERAGE_LINK_ARGS,
 )

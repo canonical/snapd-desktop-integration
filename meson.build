@@ -20,12 +20,19 @@ add_global_arguments('-DGETTEXT_PACKAGE="@0@"'.format (meson.project_name()), la
 if get_option('add-coverage')
     COVERAGE_C_ARGS = ['-fprofile-arcs', '-ftest-coverage', '-fPIC', '-O0']
     COVERAGE_LINK_ARGS = ['-lgcov', '--coverage']
+    # don't allow to do install if coverage is enabled
+    DO_INSTALL = false
 else
     COVERAGE_C_ARGS = []
     COVERAGE_LINK_ARGS = []
+    DO_INSTALL = true
 endif
 
 subdir('data')
 subdir('po')
 subdir('src')
 subdir('tests')
+
+if (not DO_INSTALL)
+    message('\x1B[0;31mCoverage option detected. Install is disabled\x1B[0m')
+endif

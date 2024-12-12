@@ -5,4 +5,4 @@ option('gnotify',
 option('add-coverage',
        type : 'boolean',
        value : false,
-       description : 'Compile the daemon with profiling and coverage options')
+       description : 'Compile the daemon with profiling and coverage options. It disables "install".')
