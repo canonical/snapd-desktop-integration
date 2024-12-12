@@ -38,21 +38,4 @@ test_sdi_notices_monitor = executable(
   install: false,
 )
 
-test_sdi_empty = executable(
-  'test-sdi-empty',
-  'test-sdi-empty.c',
-  'mock-snapd.c',
-  '../src/sdi-refresh-dialog.c',
-  '../src/sdi-refresh-monitor.c',
-  '../src/sdi-snap.c',
-  '../src/sdi-snapd-monitor.c',
-  '../src/sdi-snapd-client-factory.c',
-  '../src/sdi-helpers.c',
-  resources, desktop_launcher_src, unity_launcher_src,
-  dependencies: [gtk_dep, snapd_glib_dep, gio_dep, libnotify_dep, libsoup_dep, json_glib_dep],
-  c_args: ['-DDEBUG_TESTS'] + COVERAGE_C_ARGS,
-  link_args: COVERAGE_LINK_ARGS,
-  install: false,
-)
-
 subdir('data')
