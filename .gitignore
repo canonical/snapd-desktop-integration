@@ -1,3 +1,6 @@
 *~
 *.snap
-/build
+/_build
+refresh_crtl_c.txt
+refresh_of_one_cancelled_by_launching.txt
+refresh_of_two.txt

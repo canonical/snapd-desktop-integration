@@ -7,6 +7,9 @@ test_executable = executable(
   'test-snapd-desktop-integration',
   'test-snapd-desktop-integration.c',
   dependencies: [gio_dep, gio_unix_dep, json_glib_dep, libsoup_dep],
+  c_args: COVERAGE_C_ARGS,
+  link_args: COVERAGE_LINK_ARGS,
+  install: false,
 )
 
 test('Tests', test_executable)
@@ -18,7 +21,9 @@ sdi_notify_executable = executable(
   '../src/sdi-helpers.c',
   desktop_launcher_src,
   dependencies: [gtk_dep, snapd_glib_dep, gio_dep, libnotify_dep],
-  c_args: ['-DDEBUG_TESTS']
+  c_args: ['-DDEBUG_TESTS'] + COVERAGE_C_ARGS,
+  link_args: COVERAGE_LINK_ARGS,
+  install: false,
 )
 
 test_sdi_notices_monitor = executable(
@@ -28,7 +33,9 @@ test_sdi_notices_monitor = executable(
   '../src/sdi-snapd-monitor.c',
   '../src/sdi-snapd-client-factory.c',
   dependencies: [gtk_dep, snapd_glib_dep, gio_dep, libsoup_dep, json_glib_dep],
-  c_args: ['-DDEBUG_TESTS']
+  c_args: ['-DDEBUG_TESTS'] + COVERAGE_C_ARGS,
+  link_args: COVERAGE_LINK_ARGS,
+  install: false,
 )
 
 subdir('data')

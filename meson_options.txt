@@ -2,3 +2,7 @@ option('gnotify',
        type : 'boolean',
        value : false,
        description : 'Use Gio Notify instead of libnotify')
+option('add-coverage',
+       type : 'boolean',
+       value : false,
+       description : 'Compile the daemon with profiling and coverage options. It disables "install".')

@@ -13,7 +13,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt update
-          sudo DEBIAN_FRONTEND=noninteractive apt install -y meson ninja-build jq libgtk-4-dev libnotify-dev libsoup-3.0-dev libjson-glib-dev libpolkit-gobject-1-dev weston
+          sudo DEBIAN_FRONTEND=noninteractive apt install -y meson ninja-build jq libgtk-4-dev libnotify-dev libsoup-3.0-dev libjson-glib-dev libpolkit-gobject-1-dev weston gcovr
       - name: Build snapd-glib
         run: |
           git clone https://github.com/snapcore/snapd-glib.git
@@ -24,7 +24,7 @@ jobs:
           cd ..
       - name: Build
         run: |
-          meson setup _build
+          meson setup _build -Dadd-coverage=true
           ninja -C _build
       - name: Test theme change
         run: |
@@ -33,3 +33,30 @@ jobs:
       - name: Test notices monitor
         run: |
           ./_build/tests/test-sdi-notices-monitor
+      - name: Coverage
+        run: |
+          COMMIT_TIMESTAMP () {
+            git log -1 --format=%ct $1
+          }
+
+          CHECK_COVERAGE_DATES () {
+            for FILE in "${@:3}"; do
+              if [[ $(COMMIT_TIMESTAMP $FILE) > $(COMMIT_TIMESTAMP coverage/$1) ]]; then
+                echo $FILE has been modified. You must run *$2* to update coverage
+                exit 1
+              fi
+            done
+          }
+
+          # Check if the prebuilt COBERTURA.XML files are up-to-date
+          CHECK_COVERAGE_DATES cobertura-notify.xml run-test-sdi-notify.sh tests/test-sdi-notify.c src/sdi-notify.c src/sdi-helpers.c
+
+          gcovr _build --cobertura coverage/cobertura-tests.xml
+          # merge the prebuilt COBERTURA.XML files with the newly generated
+          gcovr --cobertura-add-tracefile coverage/cobertura-tests.xml --cobertura-add-tracefile coverage/cobertura-notify.xml --cobertura coverage/cobertura.xml
+
+      - name: Upload coverage reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: tics-coverage-reports
+          path: coverage/cobertura.xml
