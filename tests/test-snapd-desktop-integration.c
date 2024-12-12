@@ -417,7 +417,9 @@ int main(int argc, char **argv) {
 
   g_main_loop_run(loop);
 
+  g_print("Tests passed\n");
   if (dbus_subprocess != NULL) {
+    g_print("Killing subprocesses\n");
     g_subprocess_force_exit(dbus_subprocess);
   }
 
