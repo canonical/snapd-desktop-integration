@@ -13,7 +13,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt update
-          sudo DEBIAN_FRONTEND=noninteractive apt install -y meson ninja-build jq libgtk-4-dev libnotify-dev libsoup-3.0-dev libjson-glib-dev libpolkit-gobject-1-dev
+          sudo DEBIAN_FRONTEND=noninteractive apt install -y meson ninja-build jq libgtk-4-dev libnotify-dev libsoup-3.0-dev libjson-glib-dev libpolkit-gobject-1-dev weston
       - name: Build snapd-glib
         run: |
           git clone https://github.com/snapcore/snapd-glib.git
@@ -27,5 +27,9 @@ jobs:
           meson setup _build
           ninja -C _build
       - name: Test theme change
+        run: |
+          # can't use XVFB because gtk_settings uses Xsettings by default, but we need to use keyfile backend
+          weston --config=$PWD/tests/weston-test-theme-change.ini --socket=wl-test-env
+      - name: Test notices monitor
         run: |
           ./_build/tests/test-sdi-notices-monitor
