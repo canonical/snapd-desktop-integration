@@ -1,5 +1,7 @@
 #include "../src/sdi-notify.h"
 #include "gtk/gtk.h"
+#include "mock-fdo-notifications.h"
+#include <sys/stat.h>
 
 /**
  * Unitary tests
@@ -22,35 +24,12 @@
 
 SdiNotify *notifier = NULL;
 
-typedef struct _testData {
-  const int test_number;
-  const char *title;
-  const char *description;
-  const char *actions;
-  const char *expected_results;
-  const void (*test_function)(struct _testData *);
-} TestData;
-
 gchar *tmpdirpath = NULL;
+MockFdoNotifications *mock_notifications = NULL;
 
 /**
  * Several help functions
  */
-
-static void describe_test(TestData *test) {
-  g_assert_nonnull(test);
-  g_assert_cmpint(test->test_number, !=, -1);
-  // g_print("\e[1;1H\e[2J"); // clear screen
-  g_print("\n\n\n\n");
-  g_print("Test number %d\n", test->test_number);
-  g_print("  Title: %s\n", test->title);
-  g_print("  Description: %s\n\n", test->description);
-  g_print("  Actions: %s\n", test->actions);
-  if (test->expected_results != NULL) {
-    g_print("  Expected results: %s\n", test->expected_results);
-  }
-  g_print("Waiting for actions\n");
-}
 
 static gchar *get_data_path(gchar *resource_name) {
   g_autofree gchar *path =
@@ -61,14 +40,14 @@ static gchar *get_data_path(gchar *resource_name) {
 static gchar *create_desktop_file(gchar *name, gchar *visible_name,
                                   gchar *icon) {
   g_autofree gchar *filename = g_strdup_printf("%s.desktop", name);
-  gchar *desktop_path = g_build_path("/", tmpdirpath, filename, NULL);
+  gchar *desktop_path =
+      g_build_filename(tmpdirpath, "applications", filename, NULL);
   FILE *f = fopen(desktop_path, "w");
   g_assert_nonnull(f);
-  fprintf(
-      f,
-      "[Desktop Entry]\nVersion=1.0\nType=Application\nExec=/usr/bin/xmessage "
-      "This is application %s\n",
-      visible_name);
+  fprintf(f,
+          "[Desktop Entry]\nVersion=1.0\nType=Application\nExec=/bin/ls "
+          "This is application %s\n",
+          visible_name);
   if (visible_name != NULL) {
     fprintf(f, "Name=%s\n", visible_name);
   }
@@ -94,6 +73,17 @@ static GPtrArray *add_app(GPtrArray *array, gchar *name, gchar *desktop_file) {
 
 static SnapdSnap *create_snap(gchar *snap_name, GPtrArray *apps) {
   return g_object_new(SNAPD_TYPE_SNAP, "apps", apps, "name", snap_name, NULL);
+}
+
+static gboolean has_action(GStrv actions, gchar *action, gchar *text) {
+  gchar **p;
+  for (p = actions; *p != NULL; p += 2) {
+    if (g_str_equal(*p, action) &&
+        ((text == NULL) || g_str_equal(*(p + 1), text))) {
+      return TRUE;
+    }
+  }
+  return FALSE;
 }
 
 static gchar *wait_for_notification_close_cb(GObject *self, gchar *param,
@@ -125,9 +115,7 @@ static gchar *wait_for_notification_close() {
  * Test functions
  */
 
-void test_update_available_1(TestData *test) {
-  describe_test(test);
-
+void test_update_available_1() {
   g_autofree gchar *icon_path = get_data_path("icon1.svg");
   g_autofree gchar *desktop_file =
       create_desktop_file("test1", "Test app 1", icon_path);
@@ -138,14 +126,28 @@ void test_update_available_1(TestData *test) {
   g_list_store_append(snaps, snap);
   sdi_notify_pending_refresh(notifier, G_LIST_MODEL(snaps));
 
+  MockNotificationsData *data =
+      mock_fdo_notifications_wait_for_notification(mock_notifications, 1000);
+  g_assert_nonnull(data);
+
+  g_assert_cmpstr(data->title, ==, "Update available for Test app 1");
+  g_assert_cmpstr(data->body, ==, "Quit the app to update it now.");
+  g_assert_true(g_str_has_suffix(data->icon_path, "/icon1.svg"));
+  g_assert_cmpint(g_strv_length(data->actions), ==, 6);
+  g_assert_true(has_action(data->actions, "app.show-updates", "Show updates"));
+  g_assert_true(has_action(data->actions, "default", NULL));
+  g_assert_true(has_action(data->actions, "app.ignore-notification",
+                           "Don't remind me again"));
+
+  mock_fdo_notifications_send_action(mock_notifications, data->uid,
+                                     "app.show-updates");
+
   g_autofree gchar *result = wait_for_notification_close(NULL, NULL);
   unlink(desktop_file); // delete desktop file
   g_assert_cmpstr(result, ==, "show-updates");
 }
 
-void test_update_available_2(TestData *test) {
-  describe_test(test);
-
+void test_update_available_2() {
   g_autofree gchar *icon_path = get_data_path("icon1.svg");
   g_autofree gchar *desktop_file =
       create_desktop_file("test2", "Test app 2", icon_path);
@@ -155,6 +157,21 @@ void test_update_available_2(TestData *test) {
   g_autoptr(GListStore) snaps = g_list_store_new(SNAPD_TYPE_SNAP);
   g_list_store_append(snaps, snap);
   sdi_notify_pending_refresh(notifier, G_LIST_MODEL(snaps));
+
+  MockNotificationsData *data =
+      mock_fdo_notifications_wait_for_notification(mock_notifications, 1000);
+  g_assert_nonnull(data);
+
+  g_assert_cmpstr(data->title, ==, "Update available for Test app 2");
+  g_assert_cmpstr(data->body, ==, "Quit the app to update it now.");
+  g_assert_true(g_str_has_suffix(data->icon_path, "/icon1.svg"));
+  g_assert_cmpint(g_strv_length(data->actions), ==, 6);
+  g_assert_true(has_action(data->actions, "app.show-updates", "Show updates"));
+  g_assert_true(has_action(data->actions, "default", NULL));
+  g_assert_true(has_action(data->actions, "app.ignore-notification",
+                           "Don't remind me again"));
+
+  mock_fdo_notifications_send_action(mock_notifications, data->uid, "default");
 
   g_autofree gchar *result = wait_for_notification_close(NULL, NULL);
   unlink(desktop_file); // delete desktop file
@@ -175,9 +192,7 @@ static void test_ignore_event_cb(GObject *self, gchar *value, gpointer data) {
   *external_counter = counter;
 }
 
-void test_update_available_3(TestData *test) {
-  describe_test(test);
-
+void test_update_available_3() {
   g_autofree gchar *icon_path = get_data_path("icon1.svg");
   g_autofree gchar *desktop_file =
       create_desktop_file("test3", "Test app 3", icon_path);
@@ -187,6 +202,22 @@ void test_update_available_3(TestData *test) {
   g_autoptr(GListStore) snaps = g_list_store_new(SNAPD_TYPE_SNAP);
   g_list_store_append(snaps, snap);
   sdi_notify_pending_refresh(notifier, G_LIST_MODEL(snaps));
+
+  MockNotificationsData *data =
+      mock_fdo_notifications_wait_for_notification(mock_notifications, 1000);
+  g_assert_nonnull(data);
+
+  g_assert_cmpstr(data->title, ==, "Update available for Test app 3");
+  g_assert_cmpstr(data->body, ==, "Quit the app to update it now.");
+  g_assert_true(g_str_has_suffix(data->icon_path, "/icon1.svg"));
+  g_assert_cmpint(g_strv_length(data->actions), ==, 6);
+  g_assert_true(has_action(data->actions, "app.show-updates", "Show updates"));
+  g_assert_true(has_action(data->actions, "default", NULL));
+  g_assert_true(has_action(data->actions, "app.ignore-notification",
+                           "Don't remind me again"));
+
+  mock_fdo_notifications_send_action(mock_notifications, data->uid,
+                                     "app.ignore-notification");
 
   gint signal_counter = 0;
   gchar *string_list[] = {"test_snap3"};
@@ -203,9 +234,7 @@ void test_update_available_3(TestData *test) {
   g_assert_cmpint(signal_counter, ==, 1);
 }
 
-void test_update_available_4(TestData *test) {
-  describe_test(test);
-
+void test_update_available_4() {
   g_autofree gchar *icon_path = get_data_path("icon1.svg");
   g_autofree gchar *desktop_file1 =
       create_desktop_file("test4_1", "Test app 4_1", icon_path);
@@ -228,6 +257,24 @@ void test_update_available_4(TestData *test) {
   gint sid = g_signal_connect(notifier, "ignore-snap-event",
                               (GCallback)test_ignore_event_cb, &signal_counter);
 
+  MockNotificationsData *data =
+      mock_fdo_notifications_wait_for_notification(mock_notifications, 1000);
+  g_assert_nonnull(data);
+
+  g_assert_cmpstr(data->title, ==, "Updates available for 2 apps");
+  g_assert_cmpstr(
+      data->body, ==,
+      "Test app 4_1 and Test app 4_2 will update when you quit them.");
+  g_assert_true(g_str_has_suffix(data->icon_path, "/app-center.png"));
+  g_assert_cmpint(g_strv_length(data->actions), ==, 6);
+  g_assert_true(has_action(data->actions, "app.show-updates", "Show updates"));
+  g_assert_true(has_action(data->actions, "default", NULL));
+  g_assert_true(has_action(data->actions, "app.ignore-notification",
+                           "Don't remind me again"));
+
+  mock_fdo_notifications_send_action(mock_notifications, data->uid,
+                                     "app.ignore-notification");
+
   g_autofree gchar *result = wait_for_notification_close(NULL, NULL);
   unlink(desktop_file1); // delete desktop file
   unlink(desktop_file2); // delete desktop file
@@ -236,9 +283,7 @@ void test_update_available_4(TestData *test) {
   g_assert_cmpint(signal_counter, ==, 2);
 }
 
-void test_update_available_5(TestData *test) {
-  describe_test(test);
-
+void test_update_available_5() {
   g_autofree gchar *icon_path = get_data_path("icon1.svg");
   g_autofree gchar *desktop_file1 =
       create_desktop_file("test5_1", "Test app 5_1", icon_path);
@@ -266,6 +311,24 @@ void test_update_available_5(TestData *test) {
   gint sid = g_signal_connect(notifier, "ignore-snap-event",
                               (GCallback)test_ignore_event_cb, &signal_counter);
 
+  MockNotificationsData *data =
+      mock_fdo_notifications_wait_for_notification(mock_notifications, 1000);
+  g_assert_nonnull(data);
+
+  g_assert_cmpstr(data->title, ==, "Updates available for 3 apps");
+  g_assert_cmpstr(data->body, ==,
+                  "Test app 5_1, Test app 5_2 and Test app 5_3 will update "
+                  "when you quit them.");
+  g_assert_true(g_str_has_suffix(data->icon_path, "/app-center.png"));
+  g_assert_cmpint(g_strv_length(data->actions), ==, 6);
+  g_assert_true(has_action(data->actions, "app.show-updates", "Show updates"));
+  g_assert_true(has_action(data->actions, "default", NULL));
+  g_assert_true(has_action(data->actions, "app.ignore-notification",
+                           "Don't remind me again"));
+
+  mock_fdo_notifications_send_action(mock_notifications, data->uid,
+                                     "app.ignore-notification");
+
   g_autofree gchar *result = wait_for_notification_close(NULL, NULL);
   unlink(desktop_file1); // delete desktop file
   unlink(desktop_file2); // delete desktop file
@@ -275,9 +338,7 @@ void test_update_available_5(TestData *test) {
   g_assert_cmpint(signal_counter, ==, 3);
 }
 
-void test_update_available_6(TestData *test) {
-  describe_test(test);
-
+void test_update_available_6() {
   g_autofree gchar *icon_path = get_data_path("icon1.svg");
   g_autofree gchar *desktop_file1 =
       create_desktop_file("test6_1", "Test app 6_1", icon_path);
@@ -311,6 +372,22 @@ void test_update_available_6(TestData *test) {
   gint sid = g_signal_connect(notifier, "ignore-snap-event",
                               (GCallback)test_ignore_event_cb, &signal_counter);
 
+  MockNotificationsData *data =
+      mock_fdo_notifications_wait_for_notification(mock_notifications, 1000);
+  g_assert_nonnull(data);
+
+  g_assert_cmpstr(data->title, ==, "Updates available for 4 apps");
+  g_assert_cmpstr(data->body, ==, "Quit the apps to update them now.");
+  g_assert_true(g_str_has_suffix(data->icon_path, "/app-center.png"));
+  g_assert_cmpint(g_strv_length(data->actions), ==, 6);
+  g_assert_true(has_action(data->actions, "app.show-updates", "Show updates"));
+  g_assert_true(has_action(data->actions, "default", NULL));
+  g_assert_true(has_action(data->actions, "app.ignore-notification",
+                           "Don't remind me again"));
+
+  mock_fdo_notifications_send_action(mock_notifications, data->uid,
+                                     "app.ignore-notification");
+
   g_autofree gchar *result = wait_for_notification_close(NULL, NULL);
   unlink(desktop_file1); // delete desktop file
   unlink(desktop_file2); // delete desktop file
@@ -321,15 +398,25 @@ void test_update_available_6(TestData *test) {
   g_assert_cmpint(signal_counter, ==, 4);
 }
 
-void test_update_available_7(TestData *test) {
-  describe_test(test);
-
+void test_update_available_7() {
   g_autofree gchar *icon_path = get_data_path("icon1.svg");
   g_autofree gchar *desktop_file1 =
       create_desktop_file("test7", "Test app 7", icon_path);
   g_autoptr(GPtrArray) apps1 = add_app(NULL, "test_app7", desktop_file1);
   g_autoptr(SnapdSnap) snap1 = create_snap("test_snap7", apps1);
   sdi_notify_refresh_complete(notifier, snap1, "test_snap7");
+
+  MockNotificationsData *data =
+      mock_fdo_notifications_wait_for_notification(mock_notifications, 1000);
+  g_assert_nonnull(data);
+
+  g_assert_cmpstr(data->title, ==, "Test app 7 was updated");
+  g_assert_cmpstr(data->body, ==, "You can reopen it now.");
+  g_assert_true(g_str_has_suffix(data->icon_path, "/icon1.svg"));
+  g_assert_cmpint(g_strv_length(data->actions), ==, 2);
+  g_assert_true(has_action(data->actions, "default", NULL));
+
+  mock_fdo_notifications_send_action(mock_notifications, data->uid, "default");
 
   g_autofree gchar *result = wait_for_notification_close(NULL, NULL);
   unlink(desktop_file1); // delete desktop file
@@ -338,9 +425,7 @@ void test_update_available_7(TestData *test) {
   g_assert_cmpstr(result, ==, expected);
 }
 
-void test_update_available_8(TestData *test) {
-  describe_test(test);
-
+void test_update_available_8() {
   g_autofree gchar *icon_path = get_data_path("icon1.svg");
   g_autofree gchar *desktop_file1 =
       create_desktop_file("test8", "Test app 8", icon_path);
@@ -348,15 +433,28 @@ void test_update_available_8(TestData *test) {
   g_autoptr(SnapdSnap) snap1 = create_snap("test_snap8", apps1);
   sdi_notify_pending_refresh_forced(notifier, snap1, SECONDS_IN_A_DAY * 2,
                                     TRUE);
+  MockNotificationsData *data =
+      mock_fdo_notifications_wait_for_notification(mock_notifications, 1000);
+  g_assert_nonnull(data);
+
+  g_assert_cmpstr(data->title, ==, "Test app 8 will quit and update in 2 days");
+  g_assert_cmpstr(data->body, ==,
+                  "Save your progress and quit now to prevent data loss.");
+  g_assert_true(g_str_has_suffix(data->icon_path, "/icon1.svg"));
+  g_assert_cmpint(g_strv_length(data->actions), ==, 6);
+  g_assert_true(has_action(data->actions, "default", NULL));
+  g_assert_true(has_action(data->actions, "app.show-updates", "Show updates"));
+  g_assert_true(has_action(data->actions, "app.ignore-notification",
+                           "Don't remind me again"));
+
+  mock_fdo_notifications_send_action(mock_notifications, data->uid, "default");
 
   g_autofree gchar *result = wait_for_notification_close(NULL, NULL);
   unlink(desktop_file1); // delete desktop file
   g_assert_cmpstr(result, ==, "show-updates");
 }
 
-void test_update_available_9(TestData *test) {
-  describe_test(test);
-
+void test_update_available_9() {
   g_autofree gchar *icon_path = get_data_path("icon1.svg");
   g_autofree gchar *desktop_file1 =
       create_desktop_file("test9", "Test app 9", icon_path);
@@ -365,14 +463,26 @@ void test_update_available_9(TestData *test) {
   sdi_notify_pending_refresh_forced(notifier, snap1, SECONDS_IN_AN_HOUR * 5,
                                     FALSE);
 
+  MockNotificationsData *data =
+      mock_fdo_notifications_wait_for_notification(mock_notifications, 1000);
+  g_assert_nonnull(data);
+
+  g_assert_cmpstr(data->title, ==,
+                  "Test app 9 will quit and update in 5 hours");
+  g_assert_cmpstr(data->body, ==,
+                  "Save your progress and quit now to prevent data loss.");
+  g_assert_true(g_str_has_suffix(data->icon_path, "/icon1.svg"));
+  g_assert_cmpint(g_strv_length(data->actions), ==, 4);
+  g_assert_true(has_action(data->actions, "default", NULL));
+  g_assert_true(has_action(data->actions, "app.show-updates", "Show updates"));
+
+  mock_fdo_notifications_send_action(mock_notifications, data->uid, "default");
   g_autofree gchar *result = wait_for_notification_close(NULL, NULL);
   unlink(desktop_file1); // delete desktop file
   g_assert_cmpstr(result, ==, "show-updates");
 }
 
-void test_update_available_10(TestData *test) {
-  describe_test(test);
-
+void test_update_available_10() {
   g_autofree gchar *icon_path = get_data_path("icon1.svg");
   g_autofree gchar *desktop_file1 =
       create_desktop_file("test10", "Test app 10", icon_path);
@@ -388,6 +498,24 @@ void test_update_available_10(TestData *test) {
   gint sid = g_signal_connect(notifier, "ignore-snap-event",
                               (GCallback)test_ignore_event_cb, &signal_counter);
 
+  MockNotificationsData *data =
+      mock_fdo_notifications_wait_for_notification(mock_notifications, 1000);
+  g_assert_nonnull(data);
+
+  g_assert_cmpstr(data->title, ==,
+                  "Test app 10 will quit and update in 13 minutes");
+  g_assert_cmpstr(data->body, ==,
+                  "Save your progress and quit now to prevent data loss.");
+  g_assert_true(g_str_has_suffix(data->icon_path, "/icon1.svg"));
+  g_assert_cmpint(g_strv_length(data->actions), ==, 6);
+  g_assert_true(has_action(data->actions, "default", NULL));
+  g_assert_true(has_action(data->actions, "app.show-updates", "Show updates"));
+  g_assert_true(has_action(data->actions, "app.ignore-notification",
+                           "Don't remind me again"));
+
+  mock_fdo_notifications_send_action(mock_notifications, data->uid,
+                                     "app.ignore-notification");
+
   g_autofree gchar *result = wait_for_notification_close(NULL, NULL);
   unlink(desktop_file1); // delete desktop file
   g_signal_handler_disconnect(notifier, sid);
@@ -396,87 +524,17 @@ void test_update_available_10(TestData *test) {
 }
 
 /**
- * Each test must have an entry in test_data
+ * Notify emulator callbacks
  */
 
-TestData test_data[] = {
-    {1, "/update_available/test1",
-     "A notification with an icon that consists on a pale pink circle with a T "
-     "inside, and the text 'Update available for Test app 1', 'Quit the app to "
-     "update now' will appear, with two buttons: 'Show updates' and 'Don't "
-     "remind me again'.",
-     "Press the button 'Show updates'", NULL, test_update_available_1},
-    {2, "/update_available/test2",
-     "A notification with an icon that consists on a pale pink circle with a T "
-     "inside, and the text 'Update available for Test app 2', 'Quit the app to "
-     "update now' will appear, with two buttons: 'Show updates' and 'Don't "
-     "remind me again'.",
-     "Press the notification itself (but not the 'close' button) to launch the "
-     "default action.",
-     NULL, test_update_available_2},
-    {3, "/update_available/test3",
-     "A notification with an icon that consists on a pale pink circle with a T "
-     "inside, and the text 'Update available for Test app 3', 'Quit the app to "
-     "update now' will appear, with two buttons: 'Show updates' and 'Don't "
-     "remind me again'.",
-     "Press the 'Don't remind me again' button.", NULL,
-     test_update_available_3},
-    {4, "/update_available/test4",
-     "A notification with the app store icon (an orange bag with an A), and "
-     "the text 'Updates available for 2 apps' 'Test app 4_1 and Test app 4_2 "
-     "will update when you quit them.' will appear, with two buttons: 'Show "
-     "updates' and 'Don't remind me again'.",
-     "Press the 'Don't remind me again' button.", NULL,
-     test_update_available_4},
-    {5, "/update_available/test5",
-     "A notification with the app store icon (an orange bag with an A), and "
-     "the text 'Updates available for 3 apps' 'Test app 5_1, Test app 5_2 and "
-     "Test app 5_3 "
-     "will update when you quit them.' will appear, with two buttons: 'Show "
-     "updates' and 'Don't remind me again'.",
-     "Press the 'Don't remind me again' button.", NULL,
-     test_update_available_5},
-    {6, "/update_available/test6",
-     "A notification with the app store icon (an orange bag with an A), and "
-     "the text 'Updates available for 4 apps' 'Quit the apps to update them "
-     "now.' will appear, with two buttons: 'Show "
-     "updates' and 'Don't remind me again'.",
-     "Press the 'Don't remind me again' button.", NULL,
-     test_update_available_6},
-    {7, "/update_done/test7",
-     "A notification with an icon that consists on a pale pink circle with a T "
-     "inside, and the text 'Test app 7 was updated', 'You can reopen it now.' "
-     "will appear.",
-     "Click on the notification.", NULL, test_update_available_7},
-    {8, "/update_forced/test8",
-     "A notification with an icon that consists on a pale pink circle with a T "
-     "inside, and the text 'Test app 8 will quit and update in 2 days', 'Save "
-     "your progress and quit now to prevent data loss' will appear, with two "
-     "buttons: 'Show updates' and 'Don't "
-     "remind me again'.",
-     "Click on the notification.", NULL, test_update_available_8},
-    {9, "/update_forced/test9",
-     "A notification with an icon that consists on a pale pink circle with a T "
-     "inside, and the text 'Test app 9 will quit and update in 2 days', 'Save "
-     "your progress and quit now to prevent data loss' will appear, with one "
-     "button: 'Show updates'",
-     "Click on the 'Show updates' button.", NULL, test_update_available_9},
-    {10, "/update_forced/test10",
-     "A notification with an icon that consists on a pale pink circle with a T "
-     "inside, and the text 'Test app 10 will quit and update in 2 days', 'Save "
-     "your progress and quit now to prevent data loss' will appear, with two "
-     "buttons: 'Show updates' and 'Don't "
-     "remind me again'.",
-     "Click on the 'Don't remind me again' button.", NULL,
-     test_update_available_10},
-    {-1, NULL, NULL, NULL, NULL, NULL}};
+void run_tests() { g_print("Listo\n"); }
 
 /**
  * GApplication callbacks
  */
 
-static void do_startup(GObject *object, gpointer data) {
-  notifier = sdi_notify_new(G_APPLICATION(object));
+static void do_startup(GApplication *app, gpointer data) {
+  notifier = sdi_notify_new(app);
 }
 
 static void do_activate(GObject *object, gpointer data) {
@@ -484,17 +542,50 @@ static void do_activate(GObject *object, gpointer data) {
   g_application_hold(G_APPLICATION(object));
 
   // add tests
-  for (TestData *test = test_data; test->test_number != -1; test++) {
-    g_test_add_data_func(test->title, test, (GTestDataFunc)test->test_function);
-  }
+  g_test_add_func("/update_available/test1", test_update_available_1);
+  g_test_add_func("/update_available/test2", test_update_available_2);
+  g_test_add_func("/update_available/test3", test_update_available_3);
+  g_test_add_func("/update_available/test4", test_update_available_4);
+  g_test_add_func("/update_available/test5", test_update_available_5);
+  g_test_add_func("/update_available/test6", test_update_available_6);
+  g_test_add_func("/update_done/test7", test_update_available_7);
+  g_test_add_func("/update_forced/test8", test_update_available_8);
+  g_test_add_func("/update_forced/test9", test_update_available_9);
+  g_test_add_func("/update_forced/test10", test_update_available_10);
+
   g_test_run();
   g_application_release(G_APPLICATION(object));
 }
 
 int main(int argc, char **argv) {
+  GError *error = NULL;
+  setenv("LANG", "en_US", TRUE); // to ensure that string comparison is correct
+  if (!mock_fdo_notifications_setup_session_bus(&error)) {
+    g_error("Failed to set up a new dbus-daemon for the emulation: %s",
+            error->message);
+  }
+
+  mock_notifications = mock_fdo_notifications_new();
+  mock_fdo_notifications_run(mock_notifications, argc, argv);
+
   g_test_init(&argc, &argv, NULL);
   // here we will create any temporary files
   tmpdirpath = g_dir_make_tmp(NULL, NULL);
+
+  // This is needed to ensure that the gtk libraries can find the .desktop files
+  g_autofree gchar *applications_path =
+      g_build_filename(tmpdirpath, "applications", NULL);
+  gchar *xdg_data_dirs = getenv("XDG_DATA_DIRS");
+  g_autofree gchar *new_xdg_data_dirs =
+      g_strdup_printf("%s%s%s", tmpdirpath, xdg_data_dirs ? ":" : "",
+                      xdg_data_dirs ? xdg_data_dirs : "");
+  mkdir(applications_path, 0777);
+  setenv("XDG_DATA_DIRS", new_xdg_data_dirs, TRUE);
+
+  // and since we cannot guarantee that the snap-store is installed, we fake it
+  g_autofree gchar *icon_store_path = get_data_path("app-center.png");
+  g_autofree gchar *store_desktop_file = create_desktop_file(
+      "snap-store_snap-store", "Snap Store", icon_store_path);
 
   g_autoptr(GApplication) app = g_application_new("io.snapcraft.SdiNotifyTest",
                                                   G_APPLICATION_DEFAULT_FLAGS);
@@ -502,4 +593,5 @@ int main(int argc, char **argv) {
   g_signal_connect(app, "activate", (GCallback)do_activate, NULL);
   g_application_run(app, argc, argv);
   g_free(tmpdirpath);
+  return 0;
 }
