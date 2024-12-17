@@ -35,7 +35,7 @@ static void wait_for_events(guint timeout, guint changes) {
       g_timeout_add_once(timeout, (GSourceOnceFunc)timeoutCB, NULL);
   do {
     g_main_context_iteration(context, TRUE);
-  } while ((timeout_id != 0) && (current_changes & changes) != changes);
+  } while (timeout_id != 0 && (current_changes & changes) != changes);
   g_clear_handle_id(&timeout_id, g_source_remove);
 }
 
