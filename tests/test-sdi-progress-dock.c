@@ -36,9 +36,7 @@ static void wait_for_events(guint timeout, guint changes) {
   do {
     g_main_context_iteration(context, TRUE);
   } while ((timeout_id != 0) && (current_changes & changes) != changes);
-  if (timeout_id != 0) {
-    g_clear_handle_id(&timeout_id, g_source_remove);
-  }
+  g_clear_handle_id(&timeout_id, g_source_remove);
 }
 
 // these are the actual tests
