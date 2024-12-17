@@ -17,6 +17,7 @@ test('Tests', test_executable)
 sdi_notify_executable = executable(
   'test-sdi-notify',
   'test-sdi-notify.c',
+  'mock-fdo-notifications.c',
   '../src/sdi-notify.c',
   '../src/sdi-helpers.c',
   desktop_launcher_src,
