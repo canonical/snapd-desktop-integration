@@ -12,12 +12,13 @@ There are several unitary tests for the code, although some of them can't be
 run automatically, and require the user/developer to run them. These are:
 
 - tests/test-sdi-notices-monitor
+- tests/test-sdi-notices-progress-window
 
 It requires the developer to manually click on several notifications.
 
-To run the test, use the `run-test-sdi-notify.sh` script located at the root folder.
-This script will automagically compile the source code with coverage support,
-launch the test, and update the coverage XML file.
+To run the tests, use the `run-test-sdi-notify.sh` and `run-test-sdi-progress-window`
+scripts located at the root folder. These scripts will automagically compile the
+source code with coverage support, launch the test, and update the coverage XML file.
 
 When a commit is sent to GitHub, the CI runs the automatic unitary tests,
 generates the corresponding coverage file, and merges it with the ones generated

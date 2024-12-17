@@ -13,12 +13,12 @@ set -e
 
 ./format-source.sh check
 
-FOLDER=.build_test_notify
+FOLDER=.build_test_progress_window
 
 rm -rf ${FOLDER}
 meson setup ${FOLDER} -Dadd-coverage=true
 ninja -C ${FOLDER}
 echo Running the test
-./${FOLDER}/tests/test-sdi-notify
-gcovr ${FOLDER} --cobertura coverage/cobertura-notify.xml
+./${FOLDER}/tests/test-sdi-progress-window
+gcovr ${FOLDER} --cobertura coverage/cobertura-progress-window.xml
 rm -rf ${FOLDER}

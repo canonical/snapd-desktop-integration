@@ -38,14 +38,9 @@ enum { PROP_NOTIFY = 1, PROP_LAST };
 struct _SdiRefreshMonitor {
   GObject parent_instance;
 
-  SdiNotify *notify;
   GHashTable *snaps;
   GHashTable *changes;
   SnapdClient *client;
-  GtkWindow *main_window;
-  GApplication *application;
-  GtkBox *refresh_bar_container;
-  UnityComCanonicalUnityLauncherEntry *unity_manager;
   GHashTable *refreshing_snap_list;
 };
 
@@ -81,13 +76,17 @@ typedef struct {
   guint done_tasks;
   gdouble old_progress;
   gboolean done;
-  GPtrArray *desktop_files;
+  GStrv desktop_files;
+  gchar *snap_name;
+  gchar *task_description;
 } SnapProgressTaskData;
 
 static void free_progress_task_data(void *data) {
   SnapProgressTaskData *p = data;
-  g_ptr_array_unref(p->desktop_files);
-  g_free(data);
+  g_strfreev(p->desktop_files);
+  g_free(p->snap_name);
+  g_free(p->task_description);
+  g_free(p);
 }
 
 static GTimeSpan get_remaining_time_in_seconds(SnapdSnap *snap) {
@@ -97,7 +96,7 @@ static GTimeSpan get_remaining_time_in_seconds(SnapdSnap *snap) {
   return difference;
 }
 
-static GPtrArray *get_desktop_filenames_for_snap(const gchar *snap_name) {
+static GStrv get_desktop_filenames_for_snap(const gchar *snap_name) {
   g_autoptr(GDir) desktop_folder =
       g_dir_open("/var/lib/snapd/desktop/applications", 0, NULL);
   if (desktop_folder == NULL) {
@@ -105,7 +104,7 @@ static GPtrArray *get_desktop_filenames_for_snap(const gchar *snap_name) {
   }
   g_autofree gchar *prefix = g_strdup_printf("%s_", snap_name);
   const gchar *filename;
-  GPtrArray *desktop_files = g_ptr_array_new_with_free_func(g_free);
+  g_autoptr(GStrvBuilder) desktop_files_builder = g_strv_builder_new();
   while ((filename = g_dir_read_name(desktop_folder)) != NULL) {
     if (!g_str_has_prefix(filename, prefix)) {
       continue;
@@ -113,9 +112,9 @@ static GPtrArray *get_desktop_filenames_for_snap(const gchar *snap_name) {
     if (!g_str_has_suffix(filename, ".desktop")) {
       continue;
     }
-    g_ptr_array_add(desktop_files, g_strdup(filename));
+    g_strv_builder_add(desktop_files_builder, filename);
   }
-  return desktop_files;
+  return g_strv_builder_end(desktop_files_builder);
 }
 
 static SnapProgressTaskData *new_progress_task_data(const gchar *snap_name) {
@@ -123,6 +122,7 @@ static SnapProgressTaskData *new_progress_task_data(const gchar *snap_name) {
   retval->old_progress = -1;
   retval->done = FALSE;
   retval->desktop_files = get_desktop_filenames_for_snap(snap_name);
+  retval->snap_name = g_strdup(snap_name);
   return retval;
 }
 
@@ -144,125 +144,10 @@ static SdiSnap *add_snap(SdiRefreshMonitor *self, const gchar *snap_name) {
   return g_steal_pointer(&snap);
 }
 
-static gboolean contains_child(GtkWidget *parent, GtkWidget *query_child) {
-  GtkWidget *child = gtk_widget_get_first_child(parent);
-  while (child != NULL) {
-    if (query_child == child)
-      return TRUE;
-    child = gtk_widget_get_next_sibling(child);
-  }
-  return FALSE;
-}
-
-static void remove_dialog(SdiRefreshMonitor *self, SdiRefreshDialog *dialog) {
-  if (dialog == NULL)
-    return;
-
-  if (!contains_child(GTK_WIDGET(self->refresh_bar_container),
-                      GTK_WIDGET(dialog)))
-    return;
-
-  gtk_box_remove(GTK_BOX(self->refresh_bar_container), GTK_WIDGET(dialog));
-  if (gtk_widget_get_first_child(GTK_WIDGET(self->refresh_bar_container)) ==
-      NULL) {
-    gtk_window_destroy(self->main_window);
-    self->main_window = NULL;
-  } else {
-    gtk_window_set_default_size(GTK_WINDOW(self->main_window), 0, 0);
-  }
-}
-
 static void remove_snap(SdiRefreshMonitor *self, SdiSnap *snap) {
   if (snap == NULL)
     return;
-  g_autoptr(SdiRefreshDialog) dialog = sdi_snap_get_dialog(snap);
-  remove_dialog(self, dialog);
   g_hash_table_remove(self->snaps, sdi_snap_get_name(snap));
-}
-
-void close_dialog_cb(SdiRefreshDialog *dialog, SdiRefreshMonitor *self) {
-  g_autofree gchar *snap_name =
-      g_strdup(sdi_refresh_dialog_get_app_name(dialog));
-  g_autoptr(SdiSnap) snap = find_snap(self, snap_name);
-  sdi_snap_set_manually_hidden(snap, TRUE);
-  remove_dialog(self, dialog);
-  sdi_snap_set_dialog(snap, NULL);
-}
-
-static void add_dialog_to_main_window(SdiRefreshMonitor *self,
-                                      SdiRefreshDialog *dialog) {
-  if (self->main_window == NULL) {
-    self->main_window = GTK_WINDOW(
-        gtk_application_window_new(GTK_APPLICATION(self->application)));
-    gtk_window_set_deletable(self->main_window, FALSE);
-    self->refresh_bar_container =
-        GTK_BOX(gtk_box_new(GTK_ORIENTATION_VERTICAL, 0));
-    gtk_window_set_child(self->main_window,
-                         GTK_WIDGET(self->refresh_bar_container));
-    /// TRANSLATORS: This text is shown as the title of the window that contains
-    /// progress bars for each of the snaps being updated.
-    gtk_window_set_title(GTK_WINDOW(self->main_window), _("Refreshing snaps"));
-    gtk_window_present(GTK_WINDOW(self->main_window));
-    gtk_window_set_default_size(GTK_WINDOW(self->main_window), 0, 0);
-  }
-  gtk_box_append(self->refresh_bar_container, GTK_WIDGET(dialog));
-  gtk_widget_set_visible(GTK_WIDGET(dialog), TRUE);
-  g_signal_connect(G_OBJECT(dialog), "hide-event", (GCallback)close_dialog_cb,
-                   self);
-}
-
-static void begin_application_refresh(GObject *source, GAsyncResult *res,
-                                      gpointer p) {
-  g_autoptr(SnapRefreshData) data = p;
-  g_autoptr(SdiRefreshMonitor) self = g_steal_pointer(&data->self);
-  g_autoptr(GError) error = NULL;
-
-  g_autoptr(SnapdSnap) snap =
-      snapd_client_get_snap_finish(SNAPD_CLIENT(source), res, &error);
-
-  if ((error != NULL) &&
-      g_error_matches(error, G_IO_ERROR, G_IO_ERROR_CANCELLED)) {
-    return;
-  }
-
-  if ((error != NULL) || (snap == NULL)) {
-    // Snapd doesn't have the patch to allow to access GET_SNAPS/{name}; use
-    // generic data
-    g_autoptr(SdiSnap) sdi_snap = add_snap(self, data->snap_name);
-    g_autoptr(SdiRefreshDialog) dialog = sdi_snap_get_dialog(sdi_snap);
-    // This check is a must, in case the call is too slow and the timer call
-    // this twice. It would be rare, because the timer is 1/3 of a second,
-    // but... just in case.
-    if (dialog == NULL) {
-      dialog = g_object_ref(
-          sdi_refresh_dialog_new(data->snap_name, data->snap_name));
-      add_dialog_to_main_window(self, dialog);
-      sdi_snap_set_dialog(sdi_snap, dialog);
-    }
-    return;
-  }
-
-  g_autoptr(SdiSnap) sdi_snap = add_snap(self, snapd_snap_get_name(snap));
-  g_autoptr(SdiRefreshDialog) dialog = sdi_snap_get_dialog(sdi_snap);
-
-  if (dialog == NULL) {
-    const gchar *snap_name = snapd_snap_get_name(snap);
-    const gchar *visible_name = NULL;
-    g_autoptr(GAppInfo) app_info = sdi_get_desktop_file_from_snap(snap);
-    g_autofree gchar *icon = NULL;
-    if (app_info != NULL) {
-      visible_name = g_app_info_get_display_name(G_APP_INFO(app_info));
-      icon =
-          g_desktop_app_info_get_string(G_DESKTOP_APP_INFO(app_info), "Icon");
-    }
-    if (visible_name == NULL)
-      visible_name = snap_name;
-    dialog = g_object_ref(sdi_refresh_dialog_new(snap_name, visible_name));
-    if (icon != NULL)
-      sdi_refresh_dialog_set_icon_image(dialog, icon);
-    add_dialog_to_main_window(self, dialog);
-    sdi_snap_set_dialog(sdi_snap, dialog);
-  }
 }
 
 static void show_snap_completed(GObject *source, GAsyncResult *res,
@@ -299,8 +184,17 @@ static gboolean status_is_done(const gchar *status) {
   return done;
 }
 
-static void update_inhibited_snaps(SdiRefreshMonitor *self, SnapdChange *change,
-                                   gboolean done, gboolean cancelled) {
+/** this function is called if a change is from an inhibited snap (one that was
+ * running when a refresh was available). It decides if a dialog with the
+ * current progress (percentage, current task, name and icon...) is required for
+ * this specific change, in which case it will emit the `begin-refresh` signal,
+ * which should be connected to a #sdi-refresh-window object. It also decides if
+ * a Change has been completed or cancelled and any dialog that corresponds to
+ * it should be closed, in which case an ènd-refresh` signal will be emitted,
+ * and a dialog will be shown. */
+static void process_inhibited_snaps(SdiRefreshMonitor *self,
+                                    SnapdChange *change, gboolean done,
+                                    gboolean cancelled) {
   SnapdAutorefreshChangeData *change_data =
       SNAPD_AUTOREFRESH_CHANGE_DATA(snapd_change_get_data(change));
 
@@ -312,98 +206,109 @@ static void update_inhibited_snaps(SdiRefreshMonitor *self, SnapdChange *change,
   for (gchar **p = snap_names; *p != NULL; p++) {
     gchar *snap_name = *p;
     g_autoptr(SdiSnap) snap = find_snap(self, snap_name);
-    // Only show progress bar if that snap shown an 'inhibited' notification
     if (snap == NULL)
       continue;
-
+    /* Only show progress bar if that snap shown an 'inhibited' notification
+     * (The notification asking the user to close the application to allow it
+     * to be refreshed).
+     */
     if (!sdi_snap_get_inhibited(snap))
       continue;
 
     if (done || cancelled) {
+      /* If the Change is completed, emit the `end-refresh` signal to close
+       * any Dialog that belongs to this snap...
+       */
+      g_signal_emit_by_name(self, "end-refresh", sdi_snap_get_name(snap));
       remove_snap(self, snap);
-      SnapRefreshData *data = snap_refresh_data_new(self, NULL, snap_name);
+      /* and show, if Done, a notification to inform the user that the snap
+       * has been refreshed and they can launch it again.
+       */
       if (done) {
+        g_autoptr(SnapRefreshData) data =
+            snap_refresh_data_new(self, NULL, snap_name);
         snapd_client_get_snap_async(self->client, snap_name, NULL,
-                                    show_snap_completed, data);
+                                    show_snap_completed,
+                                    g_steal_pointer(&data));
       }
       continue;
     }
 
-    if (sdi_snap_get_hidden(snap) || sdi_snap_get_manually_hidden(snap)) {
+    if (sdi_snap_get_hidden(snap)) {
       continue;
     }
 
-    g_autoptr(SdiRefreshDialog) dialog = sdi_snap_get_dialog(snap);
-    if (dialog == NULL) {
-      // if there's no dialog, get the data for this snap and create
-      // it avoid refresh notifications while the progress dialog is shown
+    if (!sdi_snap_get_created_dialog(snap)) {
+      // If there's no dialog, get the data for this snap and create it.
       sdi_snap_set_ignored(snap, TRUE);
-      SnapRefreshData *data = snap_refresh_data_new(self, NULL, snap_name);
-      snapd_client_get_snap_async(self->client, snap_name, NULL,
-                                  begin_application_refresh, data);
-      continue;
-    }
+      /* and mark it as it has a dialog, to avoid creating it again
+       * if the user closes it.
+       */
+      sdi_snap_set_created_dialog(snap, TRUE);
 
-    // if there's already a dialog for this snap, just refresh the
-    // progress bar
-    GPtrArray *tasks = snapd_change_get_tasks(change);
-    gsize done = 0;
-    g_autoptr(SnapdTask) current_task = NULL;
-    for (guint i = 0; i < tasks->len; i++) {
-      SnapdTask *task = (SnapdTask *)tasks->pdata[i];
-      const gchar *status = snapd_task_get_status(task);
-      if (status_is_done(status)) {
-        done++;
-      } else if ((current_task == NULL) && g_str_equal("Doing", status)) {
-        current_task = g_object_ref(task);
+      g_autoptr(SnapdSnap) client_snap =
+          snapd_client_get_snap_sync(self->client, snap_name, NULL, NULL);
+
+      if (client_snap == NULL) {
+        // If no snap data is received, use default data and no icon
+        g_signal_emit_by_name(self, "begin-refresh", snap_name, snap_name,
+                              NULL);
+      } else {
+        // If we have snap data, we can use "pretty names" and icons
+        const gchar *snap_name = snapd_snap_get_name(client_snap);
+        const gchar *visible_name = NULL;
+        g_autoptr(GAppInfo) app_info =
+            sdi_get_desktop_file_from_snap(client_snap);
+        g_autofree gchar *icon = NULL;
+        if (app_info != NULL) {
+          visible_name = g_app_info_get_display_name(G_APP_INFO(app_info));
+          icon = g_desktop_app_info_get_string(G_DESKTOP_APP_INFO(app_info),
+                                               "Icon");
+        }
+        if (visible_name == NULL)
+          visible_name = snap_name;
+        g_signal_emit_by_name(self, "begin-refresh", snap_name, visible_name,
+                              icon);
       }
-    }
-    if (current_task != NULL) {
-      sdi_refresh_dialog_set_n_tasks_progress(
-          dialog, snapd_task_get_summary(current_task), done, tasks->len);
     }
   }
 }
 
-static void update_dock_bar(gpointer key, gpointer value, gpointer data) {
-  SnapProgressTaskData *task_data = value;
-  SdiRefreshMonitor *self = data;
-
+/**
+ * This method sends a `refresh-progress` signal with the progress values for
+ * each snap/desktop file. This signal should be connected to a
+ * #sdi-refresh-window object, responsible of updating the progress bar in
+ * both the Gtk dialog (if it was previously created due to the emission of
+ * a `begin-refresh` signal) and the dock.
+ */
+static void update_progress_bars(gpointer key, SnapProgressTaskData *task_data,
+                                 SdiRefreshMonitor *self) {
   if (task_data->total_tasks == 0) {
     return;
   }
-  gdouble progress =
-      ((gdouble)task_data->done_tasks) / ((gdouble)task_data->total_tasks);
+  gdouble progress = task_data->done_tasks / (gdouble)task_data->total_tasks;
+
+  if (task_data->done ||
+      !G_APPROX_VALUE(progress, task_data->old_progress, DBL_EPSILON)) {
+    task_data->old_progress = progress;
+    g_signal_emit_by_name(self, "refresh-progress", task_data->snap_name,
+                          task_data->desktop_files, task_data->task_description,
+                          task_data->done_tasks, task_data->total_tasks,
+                          task_data->done);
+  }
   task_data->done_tasks = 0;
   task_data->total_tasks = 0;
-  if ((progress == task_data->old_progress) && !task_data->done) {
-    return;
-  }
-  task_data->old_progress = progress;
-  if (task_data->desktop_files->len == 0) {
-    return;
-  }
-  g_autoptr(GVariantBuilder) builder =
-      g_variant_builder_new(G_VARIANT_TYPE("a{sv}"));
-  g_variant_builder_add(builder, "{sv}", "progress",
-                        g_variant_new_double(progress));
-  g_variant_builder_add(builder, "{sv}", "progress-visible",
-                        g_variant_new_boolean(!task_data->done));
-  g_variant_builder_add(builder, "{sv}", "updating",
-                        g_variant_new_boolean(!task_data->done));
-
-  g_autoptr(GVariant) values =
-      g_variant_ref_sink(g_variant_builder_end(builder));
-
-  for (int i = 0; i < task_data->desktop_files->len; i++) {
-    const gchar *desktop_file = task_data->desktop_files->pdata[i];
-    unity_com_canonical_unity_launcher_entry_emit_update(self->unity_manager,
-                                                         desktop_file, values);
-  }
 }
 
-static void update_dock_snaps(SdiRefreshMonitor *self, SnapdChange *change,
-                              gboolean done, gboolean cancelled) {
+/**
+ * This method gets a Change object and analyzes its tasks to count how many
+ * are, how many have already been done, and which description text has the
+ * task that is currently being done. All this info is used to calculate the
+ * current progress percentage for each snap being refreshed.
+ */
+static void process_change_progress(SdiRefreshMonitor *self,
+                                    SnapdChange *change, gboolean done,
+                                    gboolean cancelled) {
   GPtrArray *tasks = snapd_change_get_tasks(change);
   GSList *snaps_to_remove = NULL;
 
@@ -417,10 +322,17 @@ static void update_dock_snaps(SdiRefreshMonitor *self, SnapdChange *change,
     if (affected_snaps == NULL) {
       continue;
     }
-    gboolean task_done = status_is_done(snapd_task_get_status(task));
+    const gchar *status = snapd_task_get_status(task);
+    gboolean task_done = status_is_done(status);
     for (gchar **p = affected_snaps; *p != NULL; p++) {
       gchar *snap_name = *p;
       SnapProgressTaskData *progress_task_data = NULL;
+      /* Each Change has one or more Tasks. Each Task has zero or more affected
+       * Snaps. So we must keep a list of affected Snaps, and update the count
+       * of total tasks and done tasks for each snap affected by each task. This
+       * list is kept between Changes because that allows to send notifications
+       * only when there is a change in the progress.
+       */
       if (!g_hash_table_contains(self->refreshing_snap_list, snap_name)) {
         progress_task_data = new_progress_task_data(snap_name);
         g_hash_table_insert(self->refreshing_snap_list, g_strdup(snap_name),
@@ -433,13 +345,22 @@ static void update_dock_snaps(SdiRefreshMonitor *self, SnapdChange *change,
       progress_task_data->done = task_done;
       if (task_done) {
         progress_task_data->done_tasks++;
+      } else if (progress_task_data->task_description == NULL &&
+                 g_str_equal("Doing", status)) {
+        progress_task_data->task_description =
+            g_strdup(snapd_task_get_summary(task));
       }
       if (done || cancelled) {
+        /* If a Change is complete or has been cancelled, we must remove those
+         * snaps from the list. But it must be done after updating the progress
+         * bars.
+         */
         snaps_to_remove = g_slist_prepend(snaps_to_remove, g_strdup(snap_name));
       }
     }
   }
-  g_hash_table_foreach(self->refreshing_snap_list, update_dock_bar, self);
+  g_hash_table_foreach(self->refreshing_snap_list, (GHFunc)update_progress_bars,
+                       self);
   for (GSList *p = snaps_to_remove; p != NULL; p = p->next) {
     g_hash_table_remove(self->refreshing_snap_list, p->data);
   }
@@ -457,6 +378,11 @@ static gboolean valid_working_change_status(const gchar *status) {
          g_str_equal(status, "Done");
 }
 
+/**
+ * This method manages the "change-update" type notices. These notices
+ * include a change ID, which is requested here. That change contains
+ * a set of tasks that will be, are being, or have been, done.
+ */
 static void manage_change_update(SnapdClient *source, GAsyncResult *res,
                                  gpointer p) {
   g_autoptr(SdiRefreshMonitor) self = p;
@@ -485,13 +411,17 @@ static void manage_change_update(SnapdClient *source, GAsyncResult *res,
   }
 
   if (g_str_equal(snapd_change_get_kind(change), "auto-refresh")) {
-    update_inhibited_snaps(self, change, done, cancelled);
+    process_inhibited_snaps(self, change, done, cancelled);
   }
-  update_dock_snaps(self, change, done, cancelled);
+  process_change_progress(self, change, done, cancelled);
 
   const gchar *change_id = snapd_change_get_id(change);
   if (!done && !cancelled && !g_hash_table_contains(self->changes, change_id)) {
-    // refresh periodically this data, until the snap has been refreshed
+    /* since the "change-update" notice event is sent only when new Tasks
+     * are added to a Change, or when the status of the Change has been
+     * modified, we must request periodically the Change to check which task
+     * is currently active and be able to update the progress bar.
+     */
     SnapRefreshData *data = snap_refresh_data_new(self, change_id, NULL);
     guint id = g_timeout_add_once(CHANGE_REFRESH_PERIOD,
                                   (GSourceOnceFunc)refresh_change, data);
@@ -500,10 +430,12 @@ static void manage_change_update(SnapdClient *source, GAsyncResult *res,
   }
 }
 
-static gboolean notify_check_forced_refresh(SdiNotify *self, SnapdSnap *snap,
+static gboolean notify_check_forced_refresh(SdiRefreshMonitor *self,
+                                            SnapdSnap *snap,
                                             SdiSnap *snap_data) {
-  // Check if we have to show a notification with the time when it will be
-  // force-refreshed
+  /* Check if we have to show a notification with the time when it will be
+   * force-refreshed.
+   */
   GTimeSpan next_refresh = get_remaining_time_in_seconds(snap);
   if ((next_refresh <= TIME_TO_SHOW_REMAINING_TIME_BEFORE_FORCED_REFRESH) &&
       (!sdi_snap_get_ignored(snap_data))) {
@@ -519,6 +451,13 @@ static gboolean notify_check_forced_refresh(SdiNotify *self, SnapdSnap *snap,
   return FALSE;
 }
 
+/**
+ * This method manages the "refresh-inhibit" type notices.
+ * It decides wether it should show a notification to the user
+ * to inform they that there are one or more snaps that have
+ * pending updates but can't be refreshed because there are
+ * running instances of them.
+ */
 static void manage_refresh_inhibit(SnapdClient *source, GAsyncResult *res,
                                    gpointer p) {
   g_autoptr(SdiRefreshMonitor) self = p;
@@ -549,14 +488,28 @@ static void manage_refresh_inhibit(SnapdClient *source, GAsyncResult *res,
     g_autoptr(SdiSnap) snap_data = add_snap(self, name);
     if (snap_data == NULL)
       continue;
+    /* Mark this snap as "inhibited"; this is, a notification asking
+     * the user to close it to allow it to be updated has been shown
+     * for this snap, so a dialog with a progress bar should be shown
+     * during refresh. If it wasn't inhibited, only a progress bar
+     * in the dock should be shown.
+     */
     sdi_snap_set_inhibited(snap_data, TRUE);
+
+    /* If the user hasn't clicked the "Don't remind me again" button in
+     * a notification, `ignored` property will be TRUE, so no pending
+     * notification should be sent for this specific snap (but if there
+     * are more snaps, then a notification could be sent if any of those
+     * aren't ignored).
+     */
     if (!sdi_snap_get_ignored(snap_data)) {
       show_grouped_notification = TRUE;
     }
     g_list_store_append(snap_list, snap);
-    // Check if we have to notify the user because the snap will be
-    // force-refreshed soon
-    notify_check_forced_refresh(self->notify, snap, snap_data);
+    /* Check if we have to notify the user because the snap will be
+     * force-refreshed soon
+     */
+    notify_check_forced_refresh(self, snap, snap_data);
   }
   if (show_grouped_notification) {
     g_signal_emit_by_name(self, "notify-pending-refresh",
@@ -565,7 +518,7 @@ static void manage_refresh_inhibit(SnapdClient *source, GAsyncResult *res,
 }
 
 void sdi_refresh_monitor_notice(SdiRefreshMonitor *self, SnapdNotice *notice,
-                                gboolean first_run, gpointer data) {
+                                gboolean first_run) {
   GHashTable *notice_data = snapd_notice_get_last_data2(notice);
   g_autofree gchar *kind = g_strdup(g_hash_table_lookup(notice_data, "kind"));
 
@@ -597,24 +550,13 @@ void sdi_refresh_monitor_notice(SdiRefreshMonitor *self, SnapdNotice *notice,
   }
 }
 
-SdiNotify *sdi_refresh_monitor_get_notify(SdiRefreshMonitor *self) {
-  g_return_val_if_fail(SDI_IS_REFRESH_MONITOR(self), NULL);
-  return self->notify;
-}
-
 static void sdi_refresh_monitor_dispose(GObject *object) {
   SdiRefreshMonitor *self = SDI_REFRESH_MONITOR(object);
 
   g_clear_pointer(&self->snaps, g_hash_table_unref);
   g_clear_object(&self->client);
   g_clear_pointer(&self->changes, g_hash_table_unref);
-  g_clear_object(&self->notify);
-  g_clear_object(&self->application);
   g_clear_pointer(&self->refreshing_snap_list, g_hash_table_unref);
-  if (self->main_window != NULL) {
-    gtk_window_destroy(self->main_window);
-    self->main_window = NULL;
-  }
 
   G_OBJECT_CLASS(sdi_refresh_monitor_parent_class)->dispose(object);
 }
@@ -623,8 +565,9 @@ void sdi_refresh_monitor_init(SdiRefreshMonitor *self) {
   self->snaps =
       g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_object_unref);
   self->changes = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
-  // the key in this table is the snap name; the value is a SnapProgressTaskData
-  // structure
+  /* the key in this table is the snap name; the value is a SnapProgressTaskData
+   * structure.
+   */
   self->refreshing_snap_list = g_hash_table_new_full(
       g_str_hash, g_str_equal, g_free, free_progress_task_data);
   self->client = sdi_snapd_client_factory_new_snapd_client();
@@ -636,8 +579,8 @@ void sdi_refresh_monitor_init(SdiRefreshMonitor *self) {
  * the notification has several snaps, it must call this method once for each
  * one.
  */
-void sdi_refresh_monitor_ignore_snap_cb(SdiRefreshMonitor *self,
-                                        const gchar *snap_name, gpointer data) {
+void sdi_refresh_monitor_ignore_snap(SdiRefreshMonitor *self,
+                                     const gchar *snap_name) {
   g_debug("Ignoring refreshes for %s", snap_name);
   g_autoptr(SdiSnap) snap = add_snap(self, snap_name);
   sdi_snap_set_ignored(snap, TRUE);
@@ -657,16 +600,18 @@ void sdi_refresh_monitor_class_init(SdiRefreshMonitorClass *klass) {
   g_signal_new("notify-refresh-complete", G_TYPE_FROM_CLASS(klass),
                G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL, G_TYPE_NONE, 2,
                G_TYPE_OBJECT, G_TYPE_STRING);
+
+  g_signal_new("begin-refresh", G_TYPE_FROM_CLASS(klass), G_SIGNAL_RUN_LAST, 0,
+               NULL, NULL, NULL, G_TYPE_NONE, 3, G_TYPE_STRING, G_TYPE_STRING,
+               G_TYPE_STRING);
+  g_signal_new("refresh-progress", G_TYPE_FROM_CLASS(klass), G_SIGNAL_RUN_LAST,
+               0, NULL, NULL, NULL, G_TYPE_NONE, 6, G_TYPE_STRING, G_TYPE_STRV,
+               G_TYPE_STRING, G_TYPE_UINT, G_TYPE_UINT, G_TYPE_BOOLEAN);
+  g_signal_new("end-refresh", G_TYPE_FROM_CLASS(klass), G_SIGNAL_RUN_LAST, 0,
+               NULL, NULL, NULL, G_TYPE_NONE, 1, G_TYPE_STRING);
 }
 
 SdiRefreshMonitor *sdi_refresh_monitor_new(GApplication *application) {
   SdiRefreshMonitor *self = g_object_new(SDI_TYPE_REFRESH_MONITOR, NULL);
-  self->application = g_object_ref(application);
-  g_autofree gchar *unity_object =
-      g_strdup_printf("/com/canonical/unity/launcherentry/%d", getpid());
-  self->unity_manager = unity_com_canonical_unity_launcher_entry_skeleton_new();
-  g_dbus_interface_skeleton_export(
-      G_DBUS_INTERFACE_SKELETON(self->unity_manager),
-      g_application_get_dbus_connection(application), unity_object, NULL);
   return self;
 }

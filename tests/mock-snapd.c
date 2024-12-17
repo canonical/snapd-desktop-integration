@@ -4991,8 +4991,9 @@ static void handle_notices(MockSnapd *self, SoupServerMessage *message,
   for (GList *link = self->notices; link; link = link->next) {
     MockNotice *notice = link->data;
 
-    // but if there is an "after" parameter, send only those that
-    // happened after the specified date-time
+    /* but if there is an "after" parameter, send only those that
+     * happened after the specified date-time
+     */
     if ((after != NULL) && (notice->last_occurred != NULL) &&
         (compare_date_time_with_nanoseconds(notice->last_occurred,
                                             notice->last_occurred_nanoseconds,
