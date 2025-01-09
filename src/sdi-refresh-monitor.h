@@ -27,7 +27,7 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE(SdiRefreshMonitor, sdi_refresh_monitor, SDI,
                      REFRESH_MONITOR, GObject)
 
-SdiRefreshMonitor *sdi_refresh_monitor_new(GApplication *application);
+SdiRefreshMonitor *sdi_refresh_monitor_new();
 
 void sdi_refresh_monitor_ignore_snap(SdiRefreshMonitor *self,
                                      const gchar *snap_name);
