@@ -23,7 +23,6 @@
 #include <unistd.h>
 
 #include "com.canonical.Unity.LauncherEntry.h"
-#include "sdi-forced-refresh-time-constants.h"
 #include "sdi-helpers.h"
 #include "sdi-notify.h"
 #include "sdi-snapd-client-factory.h"

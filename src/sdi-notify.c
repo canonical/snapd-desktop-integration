@@ -24,7 +24,6 @@
 #include <libnotify/notify.h>
 
 #include "io.snapcraft.PrivilegedDesktopLauncher.h"
-#include "sdi-forced-refresh-time-constants.h"
 #include "sdi-helpers.h"
 #include "sdi-notify.h"
 
