@@ -1,9 +1,13 @@
 name: Run code quality scan
 on:
-  pull-request:
+  pull_request:
   push:
     branches:
       - master
+
+concurrency:
+  group: tics
+  cancel-in-progress: false
 
 jobs:
   unitary-tests:
