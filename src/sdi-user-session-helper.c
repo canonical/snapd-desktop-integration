@@ -20,7 +20,7 @@
 static Login1Manager *login_manager = NULL;
 static guint idle_id = 0;
 
-static gboolean _sdi_session_is_desktop(const gchar *object_path) {
+static gboolean sdi_session_is_desktop(const gchar *object_path) {
   g_autoptr(OrgFreedesktopLogin1Session) session = NULL;
   g_autoptr(GVariant) user = NULL;
   // these values belongs to the session proxy, so they must not be freed
@@ -61,7 +61,7 @@ static gboolean _sdi_session_is_desktop(const gchar *object_path) {
   return FALSE;
 }
 
-static gboolean _sdi_check_graphical_sessions(GMainLoop *loop) {
+static gboolean sdi_check_graphical_sessions(GMainLoop *loop) {
   GVariant *sessions = NULL;
   gboolean got_session_list;
 
@@ -82,7 +82,7 @@ static gboolean _sdi_check_graphical_sessions(GMainLoop *loop) {
       const gchar *session_object =
           g_variant_get_string(session_object_variant, NULL);
       g_message("Checking session %s...", session_object);
-      if (_sdi_session_is_desktop(session_object)) {
+      if (sdi_session_is_desktop(session_object)) {
         g_message("Is a desktop session! Forcing a reload.");
         g_main_loop_quit(loop);
       }
@@ -104,7 +104,7 @@ static void new_session(Login1Manager *manager, const gchar *session_id,
                         const gchar *object_path, GMainLoop *loop) {
   g_message("Detected new session %s at %s\n", session_id, object_path);
 
-  if (_sdi_session_is_desktop(object_path)) {
+  if (sdi_session_is_desktop(object_path)) {
     g_message("The new session is of desktop type. Relaunching "
               "snapd-desktop-integration.");
     g_main_loop_quit(loop);
@@ -127,7 +127,7 @@ void sdi_wait_for_graphical_session(void) {
    * systemd relaunch us again, this time being able to get access to the
    * session.
    */
-  idle_id = g_idle_add((GSourceFunc)_sdi_check_graphical_sessions, loop);
+  idle_id = g_idle_add((GSourceFunc)sdi_check_graphical_sessions, loop);
   g_main_loop_run(loop);
   g_signal_handler_disconnect(login_manager, session_new_id);
   if (idle_id != 0)

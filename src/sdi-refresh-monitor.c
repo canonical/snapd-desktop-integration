@@ -15,12 +15,13 @@
  *
  */
 
+#include "sdi-refresh-monitor.h"
+
 #include <glib/gi18n.h>
 #include <gtk/gtk.h>
 #include <snapd-glib/snapd-glib.h>
 #include <unistd.h>
 
-#include "sdi-refresh-monitor.h"
 #include "com.canonical.Unity.LauncherEntry.h"
 #include "sdi-forced-refresh-time-constants.h"
 #include "sdi-helpers.h"
