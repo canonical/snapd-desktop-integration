@@ -1,14 +1,9 @@
 name: Run code quality scan
 on:
-  workflow_dispatch:
-  # FIXME put on hold until infrastructure limits are sorted. Until
-  # then we only run weekly on Sundays.
-  # push:
-  #   branches:
-  #     - main
-  schedule:
-  # Run every Sunday on 8am
-  - cron: "0 8 * * 0"
+  pull-request:
+  push:
+    branches:
+      - master
 
 
 concurrency:
