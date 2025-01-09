@@ -140,6 +140,8 @@ MockTask *mock_change_add_task(MockChange *change, const gchar *kind);
 
 void mock_task_set_snap_name(MockTask *task, const gchar *snap_name);
 
+const gchar *mock_task_get_status(MockTask *task);
+
 void mock_task_set_status(MockTask *task, const gchar *status);
 
 void mock_task_set_progress(MockTask *task, int done, int total);
@@ -378,7 +380,14 @@ void mock_snap_set_proceed_time(MockSnap *snap, const gchar *proceed_time);
 
 void mock_change_add_data(MockChange *change, JsonNode *data);
 
+void mock_change_set_force_data(MockChange *change, gboolean force_data);
+
+const gchar *mock_change_get_status(MockChange *change);
+
+void mock_change_set_status(MockChange *change, const gchar *status);
+
 void mock_change_set_kind(MockChange *change, const gchar *kind);
+
 MockNotice *mock_snapd_add_notice(MockSnapd *snapd, const gchar *id,
                                   const gchar *key, const gchar *type);
 
@@ -397,6 +406,8 @@ void mock_notice_set_repeat_after(MockNotice *notice,
 
 void mock_notice_add_data_pair(MockNotice *notice, const gchar *entry,
                                const gchar *data);
+
+void mock_notice_set_key(MockNotice *notice, const gchar *key);
 
 gchar *mock_snapd_get_notices_parameters(MockSnapd *snapd);
 

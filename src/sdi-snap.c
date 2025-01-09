@@ -34,40 +34,11 @@ struct _SdiSnap {
   // must NOT show a progress bar.
   gboolean inhibited;
 
-  // If a dialog is destroyed for whatever reason (for example, because the top
-  // window containing it is closed) this is set to TRUE to avoid creating
-  // again
-  // a progress bar for this snap in the next loop.
-  gboolean hidden;
-
   // Stores wether a dialog has already been requested or not
   gboolean created_dialog;
-
-  // Every time a notification is shown, this value is updated to the remaining
-  GTimeSpan last_remaining_time;
 };
 
 G_DEFINE_TYPE(SdiSnap, sdi_snap, G_TYPE_OBJECT)
-
-gboolean sdi_snap_get_hidden(SdiSnap *self) {
-  g_return_val_if_fail(SDI_IS_SNAP(self), FALSE);
-  return self->hidden;
-}
-
-void sdi_snap_set_hidden(SdiSnap *self, gboolean hidden) {
-  g_return_if_fail(SDI_IS_SNAP(self));
-  self->hidden = hidden;
-}
-
-GTimeSpan sdi_snap_get_last_remaining_time(SdiSnap *self) {
-  g_return_val_if_fail(SDI_IS_SNAP(self), G_MAXINT64);
-  return self->last_remaining_time;
-}
-
-void sdi_snap_set_last_remaining_time(SdiSnap *self, GTimeSpan time) {
-  g_return_if_fail(SDI_IS_SNAP(self));
-  self->last_remaining_time = time;
-}
 
 gboolean sdi_snap_get_created_dialog(SdiSnap *self) {
   g_return_val_if_fail(SDI_IS_SNAP(self), FALSE);
@@ -141,7 +112,8 @@ static void sdi_snap_dispose(GObject *object) {
   G_OBJECT_CLASS(sdi_snap_parent_class)->dispose(object);
 }
 
-void sdi_snap_init(SdiSnap *self) { self->last_remaining_time = G_MAXINT64; }
+// This method is required by GObject, but there's nothing we have to do in it.
+void sdi_snap_init(SdiSnap *self) {}
 
 void sdi_snap_class_init(SdiSnapClass *klass) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(klass);

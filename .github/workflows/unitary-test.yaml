@@ -34,4 +34,4 @@ jobs:
         run: |
           ./_build/tests/test-sdi-notices-monitor
           ./_build/tests/test-sdi-progress-dock
-
+          ./_build/tests/test-refresh-monitor
