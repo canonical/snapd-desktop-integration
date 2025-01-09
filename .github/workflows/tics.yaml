@@ -38,6 +38,7 @@ jobs:
           ./_build/tests/test-sdi-notices-monitor
           ./_build/tests/test-sdi-progress-dock
           ./_build/tests/test-sdi-notify
+          ./_build/tests/test-refresh-monitor
       - name: Coverage
         run: |
           COMMIT_TIMESTAMP () {

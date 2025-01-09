@@ -22,6 +22,12 @@
 
 G_BEGIN_DECLS
 
+// The folder where the snaps .desktop files are stored.
+// It must be possible to change it for the tests
+#ifndef SNAPS_DESKTOP_FILES_FOLDER
+#define SNAPS_DESKTOP_FILES_FOLDER "/var/lib/snapd/desktop/applications"
+#endif
+
 #define SDI_TYPE_REFRESH_MONITOR sdi_refresh_monitor_get_type()
 
 G_DECLARE_FINAL_TYPE(SdiRefreshMonitor, sdi_refresh_monitor, SDI,
