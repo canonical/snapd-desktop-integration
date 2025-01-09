@@ -1,0 +1,85 @@
+name: Run code quality scan
+on:
+  workflow_dispatch:
+  # FIXME put on hold until infrastructure limits are sorted. Until
+  # then we only run weekly on Sundays.
+  # push:
+  #   branches:
+  #     - main
+  schedule:
+  # Run every Sunday on 8am
+  - cron: "0 8 * * 0"
+
+
+concurrency:
+  group: tics
+  cancel-in-progress: false
+
+jobs:
+  unitary-tests:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo DEBIAN_FRONTEND=noninteractive apt install -y meson ninja-build jq libgtk-4-dev libnotify-dev libsoup-3.0-dev libjson-glib-dev libpolkit-gobject-1-dev weston gcovr
+      - name: Build snapd-glib
+        run: |
+          git clone https://github.com/snapcore/snapd-glib.git
+          cd snapd-glib
+          meson setup _build --prefix=/usr -Ddocs=false -Dintrospection=false -Dvala-bindings=false -Dqt5=false -Dqt6=false -Dqml-bindings=false -Dtests=false -Dexamples=false
+          ninja -C _build
+          sudo ninja -C _build install
+          cd ..
+      - name: Build
+        run: |
+          meson setup _build -Dadd-coverage=true
+          ninja -C _build
+      - name: Test theme change
+        run: |
+          # can't use XVFB because gtk_settings uses Xsettings by default, but we need to use keyfile backend
+          weston --config=$PWD/tests/weston-test-theme-change.ini --socket=wl-test-env
+      - name: Test notices monitor
+        run: |
+          ./_build/tests/test-sdi-notices-monitor
+          ./_build/tests/test-sdi-progress-dock
+      - name: Coverage
+        run: |
+          COMMIT_TIMESTAMP () {
+            git log -1 --format=%ct $1
+          }
+
+          CHECK_COVERAGE_DATES () {
+            for FILE in "${@:3}"; do
+              echo "Comparing $FILE $(COMMIT_TIMESTAMP $FILE) and coverage/$1 $(COMMIT_TIMESTAMP coverage/$1)"
+              if [[ $(COMMIT_TIMESTAMP $FILE) > $(COMMIT_TIMESTAMP coverage/$1) ]]; then
+                echo $FILE has been modified. You must run *$2* to update coverage
+                exit 1
+              fi
+            done
+          }
+
+          # Check if the prebuilt COBERTURA.XML files are up-to-date
+          CHECK_COVERAGE_DATES cobertura-notify.xml run-test-sdi-notify.sh tests/test-sdi-notify.c src/sdi-notify.c src/sdi-helpers.c
+          CHECK_COVERAGE_DATES cobertura-progress-window.xml run-test-sdi-progress-window.sh tests/test-sdi-progress-window.c src/sdi-progress-window.c src/sdi-refresh-dialog.c
+
+          gcovr _build --cobertura coverage/cobertura-tests.xml
+          # merge the prebuilt COBERTURA.XML files with the newly generated
+          gcovr --cobertura-add-tracefile coverage/cobertura-notify.xml --cobertura-add-tracefile coverage/cobertura-progress-window.xml --cobertura-add-tracefile coverage/cobertura-tests.xml --cobertura coverage/cobertura.xml
+
+      - name: Upload coverage reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: tics-coverage-reports
+          path: coverage/cobertura.xml
+          # Keep for a bit longer to allow investigation on older workflow runs
+          retention-days: 7
+      - name: Run TICS scan
+        uses: tiobe/tics-github-action@88cb795a736d2ca885753bec6ed2c8b03e3f892f # v3
+        with:
+          mode: qserver
+          project: snapd-desktop-integration
+          viewerUrl: https://canonical.tiobe.com/tiobeweb/TICS/api/cfg?name=default
+          ticsAuthToken: ${{ secrets.TICS_AUTH_TOKEN }}
+          installTics: true
