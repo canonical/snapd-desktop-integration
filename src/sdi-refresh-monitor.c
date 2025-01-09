@@ -146,8 +146,9 @@ static SdiSnap *add_snap(SdiRefreshMonitor *self, const gchar *snap_name) {
 }
 
 static void remove_snap(SdiRefreshMonitor *self, SdiSnap *snap) {
-  if (snap == NULL)
+  if (snap == NULL) {
     return;
+  }
   g_hash_table_remove(self->snaps, sdi_snap_get_name(snap));
 }
 
@@ -163,11 +164,12 @@ static void show_snap_completed(GObject *source, GAsyncResult *res,
       (g_error_matches(error, G_IO_ERROR, G_IO_ERROR_CANCELLED))) {
     return;
   }
-  if ((error == NULL) && (snap != NULL))
+  if ((error == NULL) && (snap != NULL)) {
     g_signal_emit_by_name(self, "notify-refresh-complete", snap, NULL);
-  else
+  } else {
     g_signal_emit_by_name(self, "notify-refresh-complete", NULL,
                           data->snap_name);
+  }
 }
 
 static void refresh_change(gpointer p) {

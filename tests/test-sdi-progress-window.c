@@ -72,8 +72,9 @@ static gboolean set_progress_bar(gchar *snap_name) {
                                       description, done_tasks, total_tasks,
                                       FALSE);
   done_tasks++;
-  if (done_tasks > total_tasks)
+  if (done_tasks > total_tasks) {
     done_tasks = 0;
+  }
   return G_SOURCE_CONTINUE;
 }
 
@@ -110,8 +111,9 @@ static int count_progress_childs() {
   GtkWindow *window =
       GTK_WINDOW(sdi_progress_window_get_window(progress_window));
   // to differentiate between window existing and zero elements, and no window
-  if (window == NULL)
+  if (window == NULL) {
     return -1;
+  }
   GtkWidget *container = gtk_window_get_child(window);
   g_assert_true(GTK_IS_BOX(container));
   GtkWidget *child = gtk_widget_get_first_child(container);

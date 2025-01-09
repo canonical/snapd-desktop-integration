@@ -130,8 +130,9 @@ void sdi_wait_for_graphical_session(void) {
   idle_id = g_idle_add((GSourceFunc)sdi_check_graphical_sessions, loop);
   g_main_loop_run(loop);
   g_signal_handler_disconnect(login_manager, session_new_id);
-  if (idle_id != 0)
+  if (idle_id != 0) {
     g_source_remove(idle_id);
+  }
   /* login_manager is used in _sdi_check_graphical_session, so we can't make it
    * local and use g_autoptr
    */

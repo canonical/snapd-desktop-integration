@@ -45,8 +45,9 @@ void sdi_progress_dock_update_progress(SdiProgressDock *self, gchar *snap_name,
                                        gchar *task_description,
                                        guint done_tasks, guint total_tasks,
                                        gboolean task_done) {
-  if (desktop_files == NULL || total_tasks == 0)
+  if (desktop_files == NULL || total_tasks == 0) {
     return;
+  }
   for (gchar **desktop_file = desktop_files; *desktop_file != NULL;
        desktop_file++) {
     // Update dock progress bar

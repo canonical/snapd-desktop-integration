@@ -100,8 +100,9 @@ static void sdi_notify_action_ignore(GActionGroup *action_group,
 #ifndef USE_GNOTIFY
 
 static GVariant *get_snap_list(GListModel *snaps) {
-  if (snaps == NULL)
+  if (snaps == NULL) {
     return NULL;
+  }
   g_autoptr(GVariantBuilder) builder =
       g_variant_builder_new(G_VARIANT_TYPE("as"));
   for (int i = 0; i < g_list_model_get_n_items(snaps); i++) {
@@ -119,8 +120,9 @@ static gchar *get_icon_name_from_gicon(GIcon *icon) {
   if (G_IS_THEMED_ICON(icon)) {
     GThemedIcon *themed_icon = G_THEMED_ICON(icon);
     const gchar *const *names = g_themed_icon_get_names(themed_icon);
-    if (names == NULL)
+    if (names == NULL) {
       return NULL;
+    }
     return g_strdup(names[0]);
   }
 
@@ -492,11 +494,13 @@ void sdi_notify_refresh_complete(SdiNotify *self, SnapdSnap *snap,
       icon = g_app_info_get_icon(app_info);
       desktop = g_desktop_app_info_get_filename(G_DESKTOP_APP_INFO(app_info));
     }
-    if (name == NULL)
+    if (name == NULL) {
       name = snapd_snap_get_name(snap);
+    }
   }
-  if (name == NULL)
+  if (name == NULL) {
     name = snap_name;
+  }
 
   g_autofree gchar *title = g_strdup_printf(_("%s was updated"), name);
 

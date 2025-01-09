@@ -173,14 +173,16 @@ void sdi_refresh_dialog_set_n_tasks_progress(SdiRefreshDialog *self,
 
 void sdi_refresh_dialog_set_message(SdiRefreshDialog *self,
                                     const gchar *message) {
-  if (message == NULL)
+  if (message == NULL) {
     return;
+  }
   gtk_label_set_text(self->message_label, message);
 }
 
 void sdi_refresh_dialog_set_icon(SdiRefreshDialog *self, GIcon *icon) {
-  if (icon == NULL)
+  if (icon == NULL) {
     return;
+  }
   gtk_image_set_from_gicon(self->icon_image, icon);
   gtk_widget_set_visible(GTK_WIDGET(self->icon_image), TRUE);
 }
@@ -246,11 +248,13 @@ void sdi_refresh_dialog_set_desktop_file(SdiRefreshDialog *self,
   g_autoptr(GDesktopAppInfo) app_info = NULL;
   g_autofree gchar *icon = NULL;
 
-  if (desktop_file == NULL)
+  if (desktop_file == NULL) {
     return;
+  }
 
-  if (strlen(desktop_file) == 0)
+  if (strlen(desktop_file) == 0) {
     return;
+  }
 
   app_info = g_desktop_app_info_new_from_filename(desktop_file);
   if (app_info == NULL) {
@@ -258,6 +262,7 @@ void sdi_refresh_dialog_set_desktop_file(SdiRefreshDialog *self,
   }
   // extract the icon from the desktop file
   icon = g_desktop_app_info_get_string(app_info, "Icon");
-  if (icon != NULL)
+  if (icon != NULL) {
     sdi_refresh_dialog_set_icon_image(self, icon);
+  }
 }

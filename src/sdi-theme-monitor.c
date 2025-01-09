@@ -131,8 +131,9 @@ static void notify_cb(NotifyNotification *notification, gchar *action,
 
 static void show_install_notification(SdiThemeMonitor *self) {
   /* If we've already displayed a notification, do nothing */
-  if (self->install_notification != NULL)
+  if (self->install_notification != NULL) {
     return;
+  }
 
   self->install_notification = notify_notification_new(
       _("Some required theme snaps are missing."),
@@ -172,26 +173,30 @@ static void check_themes_cb(GObject *object, GAsyncResult *result,
     return;
   }
 
-  if (self->gtk_theme_name)
+  if (self->gtk_theme_name) {
     self->gtk_theme_status = GPOINTER_TO_INT(
         g_hash_table_lookup(gtk_theme_status, self->gtk_theme_name));
-  else
+  } else {
     self->gtk_theme_status = SNAPD_THEME_STATUS_UNAVAILABLE;
-  if (self->icon_theme_name)
+  }
+  if (self->icon_theme_name) {
     self->icon_theme_status = GPOINTER_TO_INT(
         g_hash_table_lookup(icon_theme_status, self->icon_theme_name));
-  else
+  } else {
     self->icon_theme_status = SNAPD_THEME_STATUS_UNAVAILABLE;
-  if (self->cursor_theme_name)
+  }
+  if (self->cursor_theme_name) {
     self->cursor_theme_status = GPOINTER_TO_INT(
         g_hash_table_lookup(icon_theme_status, self->cursor_theme_name));
-  else
+  } else {
     self->cursor_theme_status = SNAPD_THEME_STATUS_UNAVAILABLE;
-  if (self->sound_theme_name)
+  }
+  if (self->sound_theme_name) {
     self->sound_theme_status = GPOINTER_TO_INT(
         g_hash_table_lookup(sound_theme_status, self->sound_theme_name));
-  else
+  } else {
     self->sound_theme_status = SNAPD_THEME_STATUS_UNAVAILABLE;
+  }
 
   gboolean themes_available =
       self->gtk_theme_status == SNAPD_THEME_STATUS_AVAILABLE ||
@@ -249,20 +254,24 @@ static gboolean get_themes_cb(SdiThemeMonitor *self) {
   self->sound_theme_status = 0;
 
   g_autoptr(GPtrArray) gtk_theme_names = g_ptr_array_new();
-  if (self->gtk_theme_name)
+  if (self->gtk_theme_name) {
     g_ptr_array_add(gtk_theme_names, self->gtk_theme_name);
+  }
   g_ptr_array_add(gtk_theme_names, NULL);
 
   g_autoptr(GPtrArray) icon_theme_names = g_ptr_array_new();
-  if (self->icon_theme_name)
+  if (self->icon_theme_name) {
     g_ptr_array_add(icon_theme_names, self->icon_theme_name);
-  if (self->cursor_theme_name)
+  }
+  if (self->cursor_theme_name) {
     g_ptr_array_add(icon_theme_names, self->cursor_theme_name);
+  }
   g_ptr_array_add(icon_theme_names, NULL);
 
   g_autoptr(GPtrArray) sound_theme_names = g_ptr_array_new();
-  if (self->sound_theme_name)
+  if (self->sound_theme_name) {
     g_ptr_array_add(sound_theme_names, self->sound_theme_name);
+  }
   g_ptr_array_add(sound_theme_names, NULL);
 
   snapd_client_check_themes_async(
