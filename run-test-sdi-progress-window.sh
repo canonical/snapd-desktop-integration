@@ -19,6 +19,7 @@ rm -rf ${FOLDER}
 meson setup ${FOLDER} -Dadd-coverage=true
 ninja -C ${FOLDER}
 echo Running the test
+mkdir -p coverage
 ./${FOLDER}/tests/test-sdi-progress-window
 gcovr ${FOLDER} --cobertura coverage_base/cobertura-progress-window.xml
 rm -rf ${FOLDER}

@@ -292,6 +292,7 @@ static void do_activate(GApplication *app, gpointer data) {
   }
   g_test_run();
   g_object_unref(window);
+  g_object_unref(progress_window);
 }
 
 static gchar *get_data_path() {

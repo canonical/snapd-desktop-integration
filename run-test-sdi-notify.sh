@@ -19,6 +19,7 @@ rm -rf ${FOLDER}
 meson setup ${FOLDER} -Dadd-coverage=true
 ninja -C ${FOLDER}
 echo Running the test
+mkdir -p coverage
 ./${FOLDER}/tests/test-sdi-notify
 gcovr ${FOLDER} --cobertura coverage_base/cobertura-notify.xml
 rm -rf ${FOLDER}

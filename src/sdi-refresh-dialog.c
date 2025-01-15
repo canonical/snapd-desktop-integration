@@ -129,17 +129,6 @@ const gchar *sdi_refresh_dialog_get_app_name(SdiRefreshDialog *self) {
   return self->app_name;
 }
 
-void sdi_refresh_dialog_set_pulsed_progress(SdiRefreshDialog *self,
-                                            const gchar *bar_text) {
-  self->pulsed = TRUE;
-  if ((bar_text == NULL) || (bar_text[0] == 0)) {
-    gtk_progress_bar_set_show_text(self->progress_bar, FALSE);
-  } else {
-    gtk_progress_bar_set_show_text(self->progress_bar, TRUE);
-    gtk_progress_bar_set_text(self->progress_bar, bar_text);
-  }
-}
-
 void sdi_refresh_dialog_set_percentage_progress(SdiRefreshDialog *self,
                                                 const gchar *bar_text,
                                                 gdouble percent) {
@@ -178,13 +167,6 @@ void sdi_refresh_dialog_set_message(SdiRefreshDialog *self,
   gtk_label_set_text(self->message_label, message);
 }
 
-void sdi_refresh_dialog_set_icon(SdiRefreshDialog *self, GIcon *icon) {
-  if (icon == NULL)
-    return;
-  gtk_image_set_from_gicon(self->icon_image, icon);
-  gtk_widget_set_visible(GTK_WIDGET(self->icon_image), TRUE);
-}
-
 static void set_icon_image(SdiRefreshDialog *self, GdkPixbuf *image) {
   g_autoptr(GdkPixbuf) scaled_image = NULL;
   g_autoptr(GdkTexture) final_image = NULL;
@@ -205,15 +187,6 @@ static void set_icon_image(SdiRefreshDialog *self, GdkPixbuf *image) {
   final_image = gdk_texture_new_for_pixbuf(scaled_image);
   gtk_image_set_from_paintable(self->icon_image, GDK_PAINTABLE(final_image));
   gtk_widget_set_visible(GTK_WIDGET(self->icon_image), TRUE);
-}
-
-void sdi_refresh_dialog_set_icon_from_data(SdiRefreshDialog *self,
-                                           GBytes *data) {
-  g_autoptr(GInputStream) istream = NULL;
-  g_autoptr(GdkPixbuf) image = NULL;
-  istream = g_memory_input_stream_new_from_bytes(data);
-  image = gdk_pixbuf_new_from_stream(istream, NULL, NULL);
-  set_icon_image(self, image);
 }
 
 void sdi_refresh_dialog_set_icon_image(SdiRefreshDialog *self,
@@ -239,25 +212,4 @@ void sdi_refresh_dialog_set_icon_image(SdiRefreshDialog *self,
 
   image = gdk_pixbuf_new_from_file(icon_image, NULL);
   set_icon_image(self, image);
-}
-
-void sdi_refresh_dialog_set_desktop_file(SdiRefreshDialog *self,
-                                         const gchar *desktop_file) {
-  g_autoptr(GDesktopAppInfo) app_info = NULL;
-  g_autofree gchar *icon = NULL;
-
-  if (desktop_file == NULL)
-    return;
-
-  if (strlen(desktop_file) == 0)
-    return;
-
-  app_info = g_desktop_app_info_new_from_filename(desktop_file);
-  if (app_info == NULL) {
-    return;
-  }
-  // extract the icon from the desktop file
-  icon = g_desktop_app_info_get_string(app_info, "Icon");
-  if (icon != NULL)
-    sdi_refresh_dialog_set_icon_image(self, icon);
 }
