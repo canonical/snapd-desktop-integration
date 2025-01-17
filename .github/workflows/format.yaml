@@ -15,4 +15,5 @@ jobs:
 
       - name: Verify formatting
         run: |
+          export SOURCE_PATHS="src tests"
           ./format-source.sh check
