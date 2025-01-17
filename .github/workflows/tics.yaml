@@ -11,7 +11,7 @@ concurrency:
 
 jobs:
   unitary-tests:
-    runs-on: [self-hosted, linux, amd64, tiobe, jammy]
+    runs-on: [self-hosted, linux, amd64, tiobe, noble]
     steps:
       - uses: actions/checkout@v3
       - name: Install dependencies
