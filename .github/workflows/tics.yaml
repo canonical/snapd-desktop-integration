@@ -70,7 +70,7 @@ jobs:
           # Keep for a bit longer to allow investigation on older workflow runs
           retention-days: 7
       - name: Run TICS scan
-        uses: tiobe/tics-github-action@v3
+        uses: tiobe/tics-github-action@88cb795a736d2ca885753bec6ed2c8b03e3f892f #v3
         with:
           mode: qserver
           project: snapd-desktop-integration
