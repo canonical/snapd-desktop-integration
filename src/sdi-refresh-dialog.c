@@ -57,6 +57,10 @@ static void hide_cb(SdiRefreshDialog *self) {
 
 static gboolean refresh_progress_bar(SdiRefreshDialog *self) {
   if (self->pulsed) {
+#ifdef DEBUG_TESTS
+    g_object_set_data(G_OBJECT(self->progress_bar), "pulsed_progress_bar",
+                      GUINT_TO_POINTER(1));
+#endif
     gtk_progress_bar_pulse(self->progress_bar);
   }
   if (self->inactivity_timeout > 0) {
@@ -88,6 +92,11 @@ static void sdi_refresh_dialog_init(SdiRefreshDialog *self) {
       g_timeout_add(PULSE_REFRESH, G_SOURCE_FUNC(refresh_progress_bar), self);
 
   gtk_widget_init_template(GTK_WIDGET(self));
+
+#ifdef DEBUG_TESTS
+  g_object_set_data(G_OBJECT(self->progress_bar), "pulsed_progress_bar",
+                    GUINT_TO_POINTER(0));
+#endif
 }
 
 static void sdi_refresh_dialog_class_init(SdiRefreshDialogClass *klass) {
@@ -147,6 +156,10 @@ void sdi_refresh_dialog_set_percentage_progress(SdiRefreshDialog *self,
       (G_APPROX_VALUE(percent, self->current_percentage, DBL_EPSILON))) {
     return;
   }
+#ifdef DEBUG_TESTS
+  g_object_set_data(G_OBJECT(self->progress_bar), "pulsed_progress_bar",
+                    GUINT_TO_POINTER(0));
+#endif
   self->pulsed = FALSE;
   self->inactivity_timeout = INACTIVITY_TIMEOUT;
   self->current_percentage = percent;
