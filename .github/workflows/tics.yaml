@@ -1,6 +1,5 @@
 name: Run code quality scan
 on:
-  pull_request:
   push:
     branches:
       - main
