@@ -8,6 +8,7 @@ typedef struct {
   int counter;
 } AsyncData;
 
+// TICS -DEADCODE: it's a test
 static AsyncData *async_data_new(GMainLoop *loop, MockSnapd *snapd) {
   AsyncData *data = g_slice_new0(AsyncData);
   data->loop = g_main_loop_ref(loop);
@@ -15,6 +16,7 @@ static AsyncData *async_data_new(GMainLoop *loop, MockSnapd *snapd) {
   return data;
 }
 
+// TICS -DEADCODE: it's a test
 static void async_data_free(AsyncData *data) {
   g_main_loop_unref(data->loop);
   g_object_unref(data->snapd);
@@ -23,6 +25,7 @@ static void async_data_free(AsyncData *data) {
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(AsyncData, async_data_free)
 
+// TICS -DEADCODE: it's a test
 static MockNotice *create_notice(MockSnapd *snapd, const gchar *kind) {
   MockNotice *notice = mock_snapd_add_notice(snapd, "1", "8473", kind);
   g_autoptr(GTimeZone) timezone = g_time_zone_new_utc();
@@ -39,6 +42,7 @@ static MockNotice *create_notice(MockSnapd *snapd, const gchar *kind) {
   return notice;
 }
 
+// TICS -DEADCODE: it's a test
 static void test_notices_events_are_received_cb(SdiSnapdMonitor *self,
                                                 SnapdNotice *notice,
                                                 gboolean first_set,
@@ -74,6 +78,7 @@ static void test_notices_events_are_received_cb(SdiSnapdMonitor *self,
   }
 }
 
+// TICS -DEADCODE: it's a test
 static void test_notices_events_are_received(void) {
   g_autoptr(GMainLoop) loop = g_main_loop_new(NULL, FALSE);
 
@@ -97,6 +102,7 @@ static void test_notices_events_are_received(void) {
   g_object_unref(data->snapd); // it has two references
 }
 
+// TICS -DEADCODE: it's a test
 int main(int argc, char **argv) {
   g_test_init(&argc, &argv, NULL);
   g_test_add_func("/sdi-snapd-monitor/receive-notices",

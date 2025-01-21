@@ -37,7 +37,7 @@ gchar *tmpdirpath = NULL;
 /**
  * Several help functions
  */
-
+// TICS -DEADCODE: it's a test
 static void describe_test(TestData *test) {
   g_assert_nonnull(test);
   g_assert_cmpint(test->test_number, !=, -1);
@@ -52,12 +52,14 @@ static void describe_test(TestData *test) {
   g_print("Waiting for actions\n");
 }
 
+// TICS -DEADCODE: it's a test
 static gchar *get_data_path(gchar *resource_name) {
   g_autofree gchar *path =
       g_test_build_filename(G_TEST_BUILT, "data", resource_name, NULL);
   return g_canonicalize_filename(path, NULL);
 }
 
+// TICS -DEADCODE: it's a test
 static gchar *create_desktop_file(gchar *name, gchar *visible_name,
                                   gchar *icon) {
   g_autofree gchar *filename = g_strdup_printf("%s.desktop", name);
@@ -79,11 +81,13 @@ static gchar *create_desktop_file(gchar *name, gchar *visible_name,
   return desktop_path;
 }
 
+// TICS -DEADCODE: it's a test
 static SnapdApp *create_app(gchar *name, gchar *desktop_file) {
   return g_object_new(SNAPD_TYPE_APP, "name", name, "desktop-file",
                       desktop_file, NULL);
 }
 
+// TICS -DEADCODE: it's a test
 static GPtrArray *add_app(GPtrArray *array, gchar *name, gchar *desktop_file) {
   if (array == NULL) {
     array = g_ptr_array_new_full(1, g_object_unref);
@@ -92,10 +96,12 @@ static GPtrArray *add_app(GPtrArray *array, gchar *name, gchar *desktop_file) {
   return array;
 }
 
+// TICS -DEADCODE: it's a test
 static SnapdSnap *create_snap(gchar *snap_name, GPtrArray *apps) {
   return g_object_new(SNAPD_TYPE_SNAP, "apps", apps, "name", snap_name, NULL);
 }
 
+// TICS -DEADCODE: it's a test
 static gchar *wait_for_notification_close_cb(GObject *self, gchar *param,
                                              gpointer data) {
   static GMainLoop *loop = NULL;
@@ -117,6 +123,7 @@ static gchar *wait_for_notification_close_cb(GObject *self, gchar *param,
   return NULL;
 }
 
+// TICS -DEADCODE: it's a test
 static gchar *wait_for_notification_close() {
   return wait_for_notification_close_cb(NULL, NULL, NULL);
 }
@@ -125,6 +132,7 @@ static gchar *wait_for_notification_close() {
  * Test functions
  */
 
+// TICS -DEADCODE: it's a test
 void test_update_available_1(TestData *test) {
   describe_test(test);
 
@@ -143,6 +151,7 @@ void test_update_available_1(TestData *test) {
   g_assert_cmpstr(result, ==, "show-updates");
 }
 
+// TICS -DEADCODE: it's a test
 void test_update_available_2(TestData *test) {
   describe_test(test);
 
@@ -161,6 +170,7 @@ void test_update_available_2(TestData *test) {
   g_assert_cmpstr(result, ==, "show-updates");
 }
 
+// TICS -DEADCODE: it's a test
 static void test_ignore_event_cb(GObject *self, gchar *value, gpointer data) {
   static gint counter = 0;
   static gchar **string_list;
@@ -175,6 +185,7 @@ static void test_ignore_event_cb(GObject *self, gchar *value, gpointer data) {
   *external_counter = counter;
 }
 
+// TICS -DEADCODE: it's a test
 void test_update_available_3(TestData *test) {
   describe_test(test);
 
@@ -203,6 +214,7 @@ void test_update_available_3(TestData *test) {
   g_assert_cmpint(signal_counter, ==, 1);
 }
 
+// TICS -DEADCODE: it's a test
 void test_update_available_4(TestData *test) {
   describe_test(test);
 
@@ -236,6 +248,7 @@ void test_update_available_4(TestData *test) {
   g_assert_cmpint(signal_counter, ==, 2);
 }
 
+// TICS -DEADCODE: it's a test
 void test_update_available_5(TestData *test) {
   describe_test(test);
 
@@ -275,6 +288,7 @@ void test_update_available_5(TestData *test) {
   g_assert_cmpint(signal_counter, ==, 3);
 }
 
+// TICS -DEADCODE: it's a test
 void test_update_available_6(TestData *test) {
   describe_test(test);
 
@@ -321,6 +335,7 @@ void test_update_available_6(TestData *test) {
   g_assert_cmpint(signal_counter, ==, 4);
 }
 
+// TICS -DEADCODE: it's a test
 void test_update_available_7(TestData *test) {
   describe_test(test);
 
@@ -338,6 +353,7 @@ void test_update_available_7(TestData *test) {
   g_assert_cmpstr(result, ==, expected);
 }
 
+// TICS -DEADCODE: it's a test
 void test_update_available_8(TestData *test) {
   describe_test(test);
 
@@ -354,6 +370,7 @@ void test_update_available_8(TestData *test) {
   g_assert_cmpstr(result, ==, "show-updates");
 }
 
+// TICS -DEADCODE: it's a test
 void test_update_available_9(TestData *test) {
   describe_test(test);
 
@@ -370,6 +387,7 @@ void test_update_available_9(TestData *test) {
   g_assert_cmpstr(result, ==, "show-updates");
 }
 
+// TICS -DEADCODE: it's a test
 void test_update_available_10(TestData *test) {
   describe_test(test);
 
@@ -475,10 +493,12 @@ TestData test_data[] = {
  * GApplication callbacks
  */
 
+// TICS -DEADCODE: it's a test
 static void do_startup(GObject *object, gpointer data) {
   notifier = sdi_notify_new(G_APPLICATION(object));
 }
 
+// TICS -DEADCODE: it's a test
 static void do_activate(GObject *object, gpointer data) {
   // because, by default, there are no windows, so the application would quit
   g_application_hold(G_APPLICATION(object));
@@ -491,6 +511,7 @@ static void do_activate(GObject *object, gpointer data) {
   g_application_release(G_APPLICATION(object));
 }
 
+// TICS -DEADCODE: it's a test
 int main(int argc, char **argv) {
   g_test_init(&argc, &argv, NULL);
   // here we will create any temporary files

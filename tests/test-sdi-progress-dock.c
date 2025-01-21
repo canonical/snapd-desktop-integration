@@ -13,6 +13,7 @@ enum CHANGES_LIST {
   CHANGES_UPDATING = 4
 } current_changes = 0;
 
+// TICS -DEADCODE: it's a test
 static void set_progress_bar(gchar *desktop_file, guint done_tasks,
                              guint total_tasks, gboolean all_done) {
   current_changes = 0;
@@ -24,11 +25,13 @@ static void set_progress_bar(gchar *desktop_file, guint done_tasks,
                                     all_done);
 }
 
+// TICS -DEADCODE: it's a test
 static void timeoutCB(guint *timeout_id) {
   g_assert_cmpint(*timeout_id, !=, 0);
   *timeout_id = 0;
 }
 
+// TICS -DEADCODE: it's a test
 static void wait_for_events(guint timeout, guint changes) {
   GMainContext *context = g_main_context_default();
   guint timeout_id =
@@ -41,6 +44,7 @@ static void wait_for_events(guint timeout, guint changes) {
 
 // these are the actual tests
 
+// TICS -DEADCODE: it's a test
 static void test_progress_bar() {
   g_assert_false(updating_value);
   g_assert_false(progress_visible_value);
@@ -68,6 +72,7 @@ static void test_progress_bar() {
   g_assert_cmpfloat_with_epsilon(progress_value, 10 / 10.0, DBL_EPSILON);
 }
 
+// TICS -DEADCODE: it's a test
 static void test_updating() {
   g_assert_true(updating_value);
   g_assert_true(progress_visible_value);
@@ -84,6 +89,7 @@ static void test_updating() {
  * GApplication callbacks
  */
 
+// TICS -DEADCODE: it's a test
 static void dockCB(GDBusConnection *connection, const gchar *sender_name,
                    const gchar *object_path, const gchar *interface_name,
                    const gchar *signal_name, GVariant *parameters,
@@ -126,6 +132,7 @@ static void dockCB(GDBusConnection *connection, const gchar *sender_name,
   }
 }
 
+// TICS -DEADCODE: it's a test
 static void do_startup(GApplication *application, gpointer data) {
   progress_dock = sdi_progress_dock_new(application);
   g_autoptr(GDBusConnection) dbus_conn =
@@ -135,6 +142,7 @@ static void do_startup(GApplication *application, gpointer data) {
       NULL, G_DBUS_SIGNAL_FLAGS_NONE, (GDBusSignalCallback)dockCB, NULL, NULL);
 }
 
+// TICS -DEADCODE: it's a test
 static void do_activate(GApplication *app, gpointer data) {
   g_test_add_func("/dock/progress-bar", test_progress_bar);
   g_test_add_func("/dock/updating", test_updating);

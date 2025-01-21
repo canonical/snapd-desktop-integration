@@ -42,6 +42,7 @@ enum {
   STATE_NOTIFY_COMPLETE
 } state = STATE_GET_EXISTING_THEME_STATUS;
 
+// TICS -DEADCODE: it's a test
 static gchar *get_json(SoupMessageBody *message_body) {
   g_autoptr(JsonParser) parser = json_parser_new();
   if (!json_parser_load_from_data(parser, message_body->data,
@@ -55,6 +56,7 @@ static gchar *get_json(SoupMessageBody *message_body) {
   return json_generator_to_data(generator, NULL);
 }
 
+// TICS -DEADCODE: it's a test
 static void set_setting(const gchar *schema_name, const gchar *key_name,
                         const gchar *value) {
   g_autofree gchar *filename =
@@ -66,6 +68,7 @@ static void set_setting(const gchar *schema_name, const gchar *key_name,
   g_settings_set_string(settings, key_name, value);
 }
 
+// TICS -DEADCODE: it's a test
 static void send_snapd_response(SoupServerMessage *message, guint status_code,
                                 const gchar *json) {
   soup_server_message_set_status(message, status_code, "");
@@ -77,6 +80,7 @@ static void send_snapd_response(SoupServerMessage *message, guint status_code,
                            SOUP_MEMORY_COPY, json, strlen(json));
 }
 
+// TICS -DEADCODE: it's a test
 static void handle_snapd_themes_request(SoupServerMessage *message) {
   const gchar *query = g_uri_get_query(soup_server_message_get_uri(message));
   switch (state) {
@@ -132,12 +136,14 @@ static void handle_snapd_themes_request(SoupServerMessage *message) {
   }
 }
 
+// TICS -DEADCODE: it's a test
 static void handle_snapd_get_changes_request(SoupServerMessage *message) {
   send_snapd_response(message, 200,
                       "{\"type\":\"sync\",\"status-code\":200,\"status\":"
                       "\"OK\",\"result\":{\"id\":\"1234\",\"ready\":true}}");
 }
 
+// TICS -DEADCODE: it's a test
 static void handle_snapd_request(SoupServer *server, SoupServerMessage *message,
                                  const char *path, GHashTable *query,
                                  gpointer user_data) {
@@ -154,6 +160,7 @@ static void handle_snapd_request(SoupServer *server, SoupServerMessage *message,
   }
 }
 
+// TICS -DEADCODE: it's a test
 static gboolean setup_mock_snapd(GError **error) {
   snapd_socket_path = g_build_filename(temp_dir, "snapd.socket", NULL);
 
@@ -185,6 +192,7 @@ static gboolean setup_mock_snapd(GError **error) {
   return TRUE;
 }
 
+// TICS -DEADCODE: it's a test
 static gboolean setup_session_bus(GError **error) {
   int address_pipe_fds[2];
   if (!g_unix_open_pipe(address_pipe_fds, FD_CLOEXEC, error)) {
@@ -217,6 +225,7 @@ static gboolean setup_session_bus(GError **error) {
   return TRUE;
 }
 
+// TICS -DEADCODE: it's a test
 static gboolean launch_snapd_desktop_integration() {
   g_autoptr(GSubprocessLauncher) launcher =
       g_subprocess_launcher_new(G_SUBPROCESS_FLAGS_NONE);
@@ -242,12 +251,14 @@ static gboolean launch_snapd_desktop_integration() {
   return TRUE;
 }
 
+// TICS -DEADCODE: it's a test
 static void notifications_name_acquired_cb(GDBusConnection *connection,
                                            const gchar *name,
                                            gpointer user_data) {
   g_assert_true(launch_snapd_desktop_integration());
 }
 
+// TICS -DEADCODE: it's a test
 static void handle_notifications_method_call(
     GDBusConnection *connection, const gchar *sender, const gchar *object_path,
     const gchar *interface_name, const gchar *method_name, GVariant *parameters,
@@ -312,6 +323,7 @@ static void handle_notifications_method_call(
   }
 }
 
+// TICS -DEADCODE: it's a test
 static gboolean setup_mock_notifications(GError **error) {
   g_autoptr(GDBusConnection) connection =
       g_dbus_connection_new_for_address_sync(
@@ -384,6 +396,7 @@ static gboolean setup_mock_notifications(GError **error) {
   return TRUE;
 }
 
+// TICS -DEADCODE: it's a test
 int main(int argc, char **argv) {
   loop = g_main_loop_new(NULL, FALSE);
 

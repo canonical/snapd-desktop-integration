@@ -26,12 +26,14 @@ gchar *app_list[] = {"kicad_kicad.desktop", "simple-scan_simple-scan.desktop",
  * Several help functions
  */
 
+// TICS -DEADCODE: it's a test
 static void buttons_callback(GtkButton *button, gchar *answer) {
   g_assert_cmpstr(answer, ==, "yes");
   g_assert_false(clicked_on_wait);
   clicked_on_wait = TRUE;
 }
 
+// TICS -DEADCODE: it's a test
 static GtkApplicationWindow *create_window(GApplication *app) {
   GtkApplicationWindow *app_window =
       GTK_APPLICATION_WINDOW(gtk_application_window_new(GTK_APPLICATION(app)));
@@ -53,6 +55,7 @@ static GtkApplicationWindow *create_window(GApplication *app) {
   return app_window;
 }
 
+// TICS -DEADCODE: it's a test
 static void describe_test(TestData *test) {
   g_assert_nonnull(test);
   g_assert(test->test_number);
@@ -62,6 +65,7 @@ static void describe_test(TestData *test) {
   gtk_label_set_label(window_text, text);
 }
 
+// TICS -DEADCODE: it's a test
 static gboolean set_progress_bar(gchar *snap_name) {
   static guint done_tasks = 0;
   guint total_tasks = 10;
@@ -77,6 +81,7 @@ static gboolean set_progress_bar(gchar *snap_name) {
   return G_SOURCE_CONTINUE;
 }
 
+// TICS -DEADCODE: it's a test
 static void wait_for_click() {
   GMainContext *context = g_main_context_default();
   clicked_on_wait = FALSE;
@@ -85,17 +90,20 @@ static void wait_for_click() {
   } while (!clicked_on_wait);
 }
 
+// TICS -DEADCODE: it's a test
 static void enable_buttons(gpointer data) {
   gtk_widget_set_sensitive(GTK_WIDGET(yes_button), TRUE);
   gtk_widget_set_sensitive(GTK_WIDGET(no_button), TRUE);
 }
 
+// TICS -DEADCODE: it's a test
 static void disable_buttons_for_seconds(gint seconds) {
   gtk_widget_set_sensitive(GTK_WIDGET(yes_button), FALSE);
   gtk_widget_set_sensitive(GTK_WIDGET(no_button), FALSE);
   g_timeout_add_once(seconds * 1000, enable_buttons, NULL);
 }
 
+// TICS -DEADCODE: it's a test
 static void show_progress_window(gchar *snap_name, gchar *desktop_file) {
   g_autoptr(GDesktopAppInfo) app_info = g_desktop_app_info_new(desktop_file);
   g_assert_nonnull(app_info);
@@ -106,6 +114,7 @@ static void show_progress_window(gchar *snap_name, gchar *desktop_file) {
       (gchar *)g_app_info_get_display_name(G_APP_INFO(app_info)), icon);
 }
 
+// TICS -DEADCODE: it's a test
 static int count_progress_childs() {
   GtkWindow *window =
       GTK_WINDOW(sdi_progress_window_get_window(progress_window));
@@ -123,6 +132,7 @@ static int count_progress_childs() {
   return counter;
 }
 
+// TICS -DEADCODE: it's a test
 static int count_hash_childs() {
   GHashTable *table = sdi_progress_window_get_dialogs(progress_window);
   g_assert_nonnull(table);
@@ -131,6 +141,7 @@ static int count_hash_childs() {
 
 // these are the actual tests
 
+// TICS -DEADCODE: it's a test
 static void test_progress_bar(TestData *test) {
   describe_test(test);
   show_progress_window("A-SNAP", *app_list);
@@ -142,6 +153,7 @@ static void test_progress_bar(TestData *test) {
   g_source_remove(timeout_id);
 }
 
+// TICS -DEADCODE: it's a test
 static void test_pulse_bar(TestData *test) {
   describe_test(test);
   disable_buttons_for_seconds(6);
@@ -150,6 +162,7 @@ static void test_pulse_bar(TestData *test) {
   wait_for_click();
 }
 
+// TICS -DEADCODE: it's a test
 static void test_close_bar(TestData *test) {
   describe_test(test);
   sdi_progress_window_end_refresh(progress_window, "A-SNAP");
@@ -162,6 +175,7 @@ static void test_close_bar(TestData *test) {
   g_source_remove(timeout_id);
 }
 
+// TICS -DEADCODE: it's a test
 static void test_manual_hide(TestData *test) {
   describe_test(test);
   show_progress_window("B-SNAP", *(app_list + 1));
@@ -174,6 +188,7 @@ static void test_manual_hide(TestData *test) {
   g_source_remove(timeout_id);
 }
 
+// TICS -DEADCODE: it's a test
 static void test_dual_progress_bar1(TestData *test) {
   describe_test(test);
   show_progress_window("C-SNAP", *(app_list));
@@ -183,6 +198,7 @@ static void test_dual_progress_bar1(TestData *test) {
   wait_for_click();
 }
 
+// TICS -DEADCODE: it's a test
 static void test_dual_progress_bar2(TestData *test) {
   describe_test(test);
   show_progress_window("D-SNAP", *(app_list + 1));
@@ -192,6 +208,7 @@ static void test_dual_progress_bar2(TestData *test) {
   wait_for_click();
 }
 
+// TICS -DEADCODE: it's a test
 static void test_dual_progress_bar3(TestData *test) {
   describe_test(test);
   sdi_progress_window_end_refresh(progress_window, "C-SNAP");
@@ -201,6 +218,7 @@ static void test_dual_progress_bar3(TestData *test) {
   g_source_remove(timeout_id1);
 }
 
+// TICS -DEADCODE: it's a test
 static void test_dual_progress_bar4(TestData *test) {
   describe_test(test);
   sdi_progress_window_end_refresh(progress_window, "D-SNAP");
@@ -277,12 +295,14 @@ TestData test_data[] = {
  * GApplication callbacks
  */
 
+// TICS -DEADCODE: it's a test
 static void do_startup(GObject *object, gpointer data) {
   progress_window = sdi_progress_window_new(G_APPLICATION(object));
 
   g_assert_nonnull(app_list);
 }
 
+// TICS -DEADCODE: it's a test
 static void do_activate(GApplication *app, gpointer data) {
   window = create_window(app);
 
@@ -294,11 +314,13 @@ static void do_activate(GApplication *app, gpointer data) {
   g_object_unref(window);
 }
 
+// TICS -DEADCODE: it's a test
 static gchar *get_data_path() {
   g_autofree gchar *path = g_test_build_filename(G_TEST_BUILT, "data", NULL);
   return g_canonicalize_filename(path, NULL);
 }
 
+// TICS -DEADCODE: it's a test
 void set_environment() {
   const gchar *data_dirs = g_getenv("XDG_DATA_DIRS");
   g_autofree gchar *share_path = get_data_path();
@@ -306,6 +328,7 @@ void set_environment() {
   g_setenv("XDG_DATA_DIRS", newvar, TRUE);
 }
 
+// TICS -DEADCODE: it's a test
 int main(int argc, char **argv) {
   g_test_init(&argc, &argv, NULL);
   set_environment();
