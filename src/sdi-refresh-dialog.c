@@ -20,7 +20,6 @@
 #include <gio/gdesktopappinfo.h>
 #include <glib/gi18n.h>
 #include <gtk/gtk.h>
-#include <stdbool.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -46,7 +45,7 @@ struct _SdiRefreshDialog {
   gchar *message;
   gdouble current_percentage;
   guint timeout_id;
-  bool pulsed;
+  gboolean pulsed;
   gint inactivity_timeout;
 };
 
@@ -64,7 +63,7 @@ static gboolean refresh_progress_bar(SdiRefreshDialog *self) {
     self->inactivity_timeout -= PULSE_REFRESH;
     if (self->inactivity_timeout <= 0) {
       self->inactivity_timeout = 0;
-      self->pulsed = true;
+      self->pulsed = TRUE;
     }
   }
   return G_SOURCE_CONTINUE;
@@ -118,7 +117,7 @@ SdiRefreshDialog *sdi_refresh_dialog_new(const gchar *app_name,
   g_autofree gchar *label_text = NULL;
 
   self->app_name = g_strdup(app_name);
-  self->pulsed = true;
+  self->pulsed = TRUE;
   self->current_percentage = -1;
   label_text =
       g_strdup_printf(_("Updating %s to the latest version."), visible_name);
@@ -132,7 +131,7 @@ const gchar *sdi_refresh_dialog_get_app_name(SdiRefreshDialog *self) {
 
 void sdi_refresh_dialog_set_pulsed_progress(SdiRefreshDialog *self,
                                             const gchar *bar_text) {
-  self->pulsed = true;
+  self->pulsed = TRUE;
   if ((bar_text == NULL) || (bar_text[0] == 0)) {
     gtk_progress_bar_set_show_text(self->progress_bar, FALSE);
   } else {
@@ -148,7 +147,7 @@ void sdi_refresh_dialog_set_percentage_progress(SdiRefreshDialog *self,
       (G_APPROX_VALUE(percent, self->current_percentage, DBL_EPSILON))) {
     return;
   }
-  self->pulsed = false;
+  self->pulsed = FALSE;
   self->inactivity_timeout = INACTIVITY_TIMEOUT;
   self->current_percentage = percent;
   g_free(self->message);

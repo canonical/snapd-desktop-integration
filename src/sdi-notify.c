@@ -23,7 +23,6 @@
 #include <gio/gdesktopappinfo.h>
 #include <glib/gi18n.h>
 #include <libnotify/notify.h>
-#include <stdbool.h>
 
 #include "io.snapcraft.PrivilegedDesktopLauncher.h"
 #include "sdi-helpers.h"
@@ -38,7 +37,7 @@ struct _SdiNotify {
 
 G_DEFINE_TYPE(SdiNotify, sdi_notify, G_TYPE_OBJECT)
 
-static bool launch_desktop(GApplication *app, const gchar *desktop_file) {
+static gboolean launch_desktop(GApplication *app, const gchar *desktop_file) {
   g_autofree gchar *full_desktop_path = NULL;
   g_autofree gchar *desktop_file2 = NULL;
   if (*desktop_file == '/') {
@@ -50,7 +49,7 @@ static bool launch_desktop(GApplication *app, const gchar *desktop_file) {
     desktop_file2 = g_strdup(desktop_file);
   }
   if (!g_file_test(full_desktop_path, G_FILE_TEST_EXISTS)) {
-    return false;
+    return FALSE;
   }
   g_autoptr(PrivilegedDesktopLauncher) launcher = NULL;
 
@@ -60,7 +59,7 @@ static bool launch_desktop(GApplication *app, const gchar *desktop_file) {
       NULL);
   privileged_desktop_launcher__call_open_desktop_entry_sync(
       launcher, desktop_file2, NULL, NULL);
-  return true;
+  return TRUE;
 }
 
 static void show_updates(SdiNotify *self) {
