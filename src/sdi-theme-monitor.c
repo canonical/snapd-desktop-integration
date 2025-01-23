@@ -15,11 +15,10 @@
  *
  */
 
+#include "sdi-theme-monitor.h"
 #include <glib/gi18n.h>
 #include <gtk/gtk.h>
 #include <libnotify/notify.h>
-
-#include "sdi-theme-monitor.h"
 
 struct _SdiThemeMonitor {
   GObject parent_instance;
@@ -68,7 +67,7 @@ static void install_themes_cb(GObject *object, GAsyncResult *result,
         _("Complete."), "dialog-information");
   } else {
     g_message("Installation failed: %s\n", error->message);
-    const gchar *error_message;
+    const gchar *error_message = NULL;
     switch (error->code) {
     case SNAPD_ERROR_AUTH_CANCELLED:
       /// TRANSLATORS: installing a missing theme snap was cancelled by the user

@@ -20,7 +20,7 @@
 static Login1Manager *login_manager = NULL;
 static guint idle_id = 0;
 
-static gboolean sdi_session_is_desktop(const gchar *object_path) {
+static bool sdi_session_is_desktop(const gchar *object_path) {
   g_autoptr(OrgFreedesktopLogin1Session) session = NULL;
   g_autoptr(GVariant) user = NULL;
   // these values belongs to the session proxy, so they must not be freed
@@ -37,28 +37,28 @@ static gboolean sdi_session_is_desktop(const gchar *object_path) {
      * session or in a text one, so we will assume that we are in a session
      * desktop to force a reload.
      */
-    return TRUE;
+    return true;
   }
   user = g_variant_get_child_value(user_data, 0);
   if (user == NULL) {
     g_message("Failed to read the session user.");
-    return FALSE;
+    return false;
   }
   if (getuid() != g_variant_get_uint32(user)) {
     // the new session isn't for our user
-    return FALSE;
+    return false;
   }
   session_type = org_freedesktop_login1_session_get_type_(session);
   if (session_type == NULL) {
     g_message("Failed to read the session type");
-    return FALSE;
+    return false;
   }
   if (!g_strcmp0("x11", session_type) || !g_strcmp0("wayland", session_type) ||
       !g_strcmp0("mir", session_type)) {
     // this is a graphical session
-    return TRUE;
+    return true;
   }
-  return FALSE;
+  return false;
 }
 
 static gboolean sdi_check_graphical_sessions(GMainLoop *loop) {

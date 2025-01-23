@@ -124,7 +124,7 @@ static void do_shutdown(GObject *object, gpointer data) {
 
 static int global_retval = 0;
 
-void sighandler(int v) {
+static void sighandler(int v) {
   global_retval = 128 + v; // exit value is usually 128 + signal_id
 }
 

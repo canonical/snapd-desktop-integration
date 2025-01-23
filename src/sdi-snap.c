@@ -22,28 +22,28 @@ enum { PROP_NAME = 1, PROP_LAST };
 struct _SdiSnap {
   GObject parent_instance;
 
-  //* the snap name used as identifier
+  // the snap name used as identifier
   gchar *name;
 
-  //* This is set to TRUE if the user clicked the "Ignore" button in a
-  //* notification, to avoid new notifications to be shown
+  // This is set to TRUE if the user clicked the "Ignore" button in a
+  // notification, to avoid new notifications to be shown
   gboolean ignored;
 
-  //* If a snap is marked as "inhibited", it means that it is waiting for the
-  //* user to close the instance to continue the refresh. Non-inhibited snaps
-  //* must NOT show a progress bar.
+  // If a snap is marked as "inhibited", it means that it is waiting for the
+  // user to close the instance to continue the refresh. Non-inhibited snaps
+  // must NOT show a progress bar.
   gboolean inhibited;
 
-  //* If a dialog is destroyed for whatever reason (for example, because the top
-  //* window containing it is closed) this is set to TRUE to avoid creating
-  //* again
-  //* a progress bar for this snap in the next loop.
+  // If a dialog is destroyed for whatever reason (for example, because the top
+  // window containing it is closed) this is set to TRUE to avoid creating
+  // again
+  // a progress bar for this snap in the next loop.
   gboolean hidden;
 
-  //* Stores wether a dialog has already been requested or not
+  // Stores wether a dialog has already been requested or not
   gboolean created_dialog;
 
-  //* Every time a notification is shown, this value is updated to the remaining
+  // Every time a notification is shown, this value is updated to the remaining
   GTimeSpan last_remaining_time;
 };
 
