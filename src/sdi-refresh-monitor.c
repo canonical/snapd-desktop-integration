@@ -260,7 +260,7 @@ static void process_inhibited_snaps(SdiRefreshMonitor *self,
                               NULL);
       } else {
         // If we have snap data, we can use "pretty names" and icons
-        const gchar *snap_name2 = snapd_snap_get_name(client_snap);
+        const gchar *snap_name = snapd_snap_get_name(client_snap);
         const gchar *visible_name = NULL;
         g_autoptr(GAppInfo) app_info =
             sdi_get_desktop_file_from_snap(client_snap);
@@ -271,9 +271,9 @@ static void process_inhibited_snaps(SdiRefreshMonitor *self,
                                                "Icon");
         }
         if (visible_name == NULL) {
-          visible_name = snap_name2;
+          visible_name = snap_name;
         }
-        g_signal_emit_by_name(self, "begin-refresh", snap_name2, visible_name,
+        g_signal_emit_by_name(self, "begin-refresh", snap_name, visible_name,
                               icon);
       }
     }
