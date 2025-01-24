@@ -42,7 +42,7 @@ static gboolean sdi_session_is_desktop(const gchar *object_path) {
   user = g_variant_get_child_value(user_data, 0);
   if (user == NULL) {
     g_message("Failed to read the session user.");
-    return false;
+    return FALSE;
   }
   if (getuid() != g_variant_get_uint32(user)) {
     // the new session isn't for our user
