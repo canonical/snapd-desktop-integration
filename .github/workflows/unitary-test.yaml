@@ -33,5 +33,9 @@ jobs:
       - name: Test notices monitor
         run: |
           ./_build/tests/test-sdi-notices-monitor
+      - name: Test Dock progress bar
+        run: |
           ./_build/tests/test-sdi-progress-dock
-
+      - name: Test notifications
+        run: |
+          ./_build/tests/test-sdi-notify
