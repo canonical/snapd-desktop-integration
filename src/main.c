@@ -55,7 +55,7 @@ static GOptionEntry entries[] = {{"snapd-socket-path", 0, G_OPTION_FLAG_NONE,
 static void do_startup(GObject *object, gpointer data) {
   sdi_snapd_client_factory_set_custom_path(snapd_socket_path);
 
-  refresh_monitor = sdi_refresh_monitor_new(G_APPLICATION(object));
+  refresh_monitor = sdi_refresh_monitor_new();
 
   notify_manager = sdi_notify_new(G_APPLICATION(object));
   g_signal_connect_object(refresh_monitor, "notify-pending-refresh",
@@ -124,7 +124,7 @@ static void do_shutdown(GObject *object, gpointer data) {
 
 static int global_retval = 0;
 
-void sighandler(int v) {
+static void sighandler(int v) {
   global_retval = 128 + v; // exit value is usually 128 + signal_id
 }
 

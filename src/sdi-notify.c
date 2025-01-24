@@ -19,14 +19,13 @@
 #define SNAP_STORE "snap-store_snap-store.desktop"
 #define SNAP_STORE_UPDATES "snap-store_show-updates.desktop"
 
+#include "sdi-notify.h"
 #include <gio/gdesktopappinfo.h>
 #include <glib/gi18n.h>
 #include <libnotify/notify.h>
 
 #include "io.snapcraft.PrivilegedDesktopLauncher.h"
-#include "sdi-forced-refresh-time-constants.h"
 #include "sdi-helpers.h"
-#include "sdi-notify.h"
 
 enum { PROP_APPLICATION = 1, PROP_LAST };
 
@@ -101,8 +100,9 @@ static void sdi_notify_action_ignore(GActionGroup *action_group,
 #ifndef USE_GNOTIFY
 
 static GVariant *get_snap_list(GListModel *snaps) {
-  if (snaps == NULL)
+  if (snaps == NULL) {
     return NULL;
+  }
   g_autoptr(GVariantBuilder) builder =
       g_variant_builder_new(G_VARIANT_TYPE("as"));
   for (int i = 0; i < g_list_model_get_n_items(snaps); i++) {
@@ -120,8 +120,9 @@ static gchar *get_icon_name_from_gicon(GIcon *icon) {
   if (G_IS_THEMED_ICON(icon)) {
     GThemedIcon *themed_icon = G_THEMED_ICON(icon);
     const gchar *const *names = g_themed_icon_get_names(themed_icon);
-    if (names == NULL)
+    if (names == NULL) {
       return NULL;
+    }
     return g_strdup(names[0]);
   }
 
@@ -493,11 +494,13 @@ void sdi_notify_refresh_complete(SdiNotify *self, SnapdSnap *snap,
       icon = g_app_info_get_icon(app_info);
       desktop = g_desktop_app_info_get_filename(G_DESKTOP_APP_INFO(app_info));
     }
-    if (name == NULL)
+    if (name == NULL) {
       name = snapd_snap_get_name(snap);
+    }
   }
-  if (name == NULL)
+  if (name == NULL) {
     name = snap_name;
+  }
 
   g_autofree gchar *title = g_strdup_printf(_("%s was updated"), name);
 
@@ -530,7 +533,7 @@ static void set_actions(SdiNotify *self) {
 static void sdi_notify_set_property(GObject *object, guint prop_id,
                                     const GValue *value, GParamSpec *pspec) {
   SdiNotify *self = SDI_NOTIFY(object);
-  gpointer p;
+  gpointer p = NULL;
 
   switch (prop_id) {
   case PROP_APPLICATION:

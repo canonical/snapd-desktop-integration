@@ -15,6 +15,7 @@
  *
  */
 
+#include "sdi-refresh-dialog.h"
 #include <errno.h>
 #include <gio/gdesktopappinfo.h>
 #include <glib/gi18n.h>
@@ -24,7 +25,6 @@
 #include <unistd.h>
 
 #include "iresources.h"
-#include "sdi-refresh-dialog.h"
 
 #define ICON_SIZE 64
 
@@ -63,7 +63,7 @@ static gboolean refresh_progress_bar(SdiRefreshDialog *self) {
     self->inactivity_timeout -= PULSE_REFRESH;
     if (self->inactivity_timeout <= 0) {
       self->inactivity_timeout = 0;
-      self->pulsed = true;
+      self->pulsed = TRUE;
     }
   }
   return G_SOURCE_CONTINUE;
@@ -144,7 +144,7 @@ void sdi_refresh_dialog_set_percentage_progress(SdiRefreshDialog *self,
                                                 const gchar *bar_text,
                                                 gdouble percent) {
   if ((self->message != NULL) && (g_str_equal(self->message, bar_text)) &&
-      (percent == self->current_percentage)) {
+      (G_APPROX_VALUE(percent, self->current_percentage, DBL_EPSILON))) {
     return;
   }
   self->pulsed = FALSE;
@@ -173,14 +173,16 @@ void sdi_refresh_dialog_set_n_tasks_progress(SdiRefreshDialog *self,
 
 void sdi_refresh_dialog_set_message(SdiRefreshDialog *self,
                                     const gchar *message) {
-  if (message == NULL)
+  if (message == NULL) {
     return;
+  }
   gtk_label_set_text(self->message_label, message);
 }
 
 void sdi_refresh_dialog_set_icon(SdiRefreshDialog *self, GIcon *icon) {
-  if (icon == NULL)
+  if (icon == NULL) {
     return;
+  }
   gtk_image_set_from_gicon(self->icon_image, icon);
   gtk_widget_set_visible(GTK_WIDGET(self->icon_image), TRUE);
 }
@@ -246,11 +248,13 @@ void sdi_refresh_dialog_set_desktop_file(SdiRefreshDialog *self,
   g_autoptr(GDesktopAppInfo) app_info = NULL;
   g_autofree gchar *icon = NULL;
 
-  if (desktop_file == NULL)
+  if (desktop_file == NULL) {
     return;
+  }
 
-  if (strlen(desktop_file) == 0)
+  if (strlen(desktop_file) == 0) {
     return;
+  }
 
   app_info = g_desktop_app_info_new_from_filename(desktop_file);
   if (app_info == NULL) {
@@ -258,6 +262,7 @@ void sdi_refresh_dialog_set_desktop_file(SdiRefreshDialog *self,
   }
   // extract the icon from the desktop file
   icon = g_desktop_app_info_get_string(app_info, "Icon");
-  if (icon != NULL)
+  if (icon != NULL) {
     sdi_refresh_dialog_set_icon_image(self, icon);
+  }
 }

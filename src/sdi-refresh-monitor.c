@@ -15,16 +15,16 @@
  *
  */
 
+#include "sdi-refresh-monitor.h"
+
 #include <glib/gi18n.h>
 #include <gtk/gtk.h>
 #include <snapd-glib/snapd-glib.h>
 #include <unistd.h>
 
 #include "com.canonical.Unity.LauncherEntry.h"
-#include "sdi-forced-refresh-time-constants.h"
 #include "sdi-helpers.h"
 #include "sdi-notify.h"
-#include "sdi-refresh-monitor.h"
 #include "sdi-snapd-client-factory.h"
 
 // time in ms for periodic check of each change in Refresh Monitor.
@@ -103,7 +103,8 @@ static GStrv get_desktop_filenames_for_snap(const gchar *snap_name) {
     return NULL;
   }
   g_autofree gchar *prefix = g_strdup_printf("%s_", snap_name);
-  const gchar *filename;
+  const gchar *filename = NULL;
+
   g_autoptr(GStrvBuilder) desktop_files_builder = g_strv_builder_new();
   while ((filename = g_dir_read_name(desktop_folder)) != NULL) {
     if (!g_str_has_prefix(filename, prefix)) {
@@ -145,8 +146,9 @@ static SdiSnap *add_snap(SdiRefreshMonitor *self, const gchar *snap_name) {
 }
 
 static void remove_snap(SdiRefreshMonitor *self, SdiSnap *snap) {
-  if (snap == NULL)
+  if (snap == NULL) {
     return;
+  }
   g_hash_table_remove(self->snaps, sdi_snap_get_name(snap));
 }
 
@@ -162,11 +164,12 @@ static void show_snap_completed(GObject *source, GAsyncResult *res,
       (g_error_matches(error, G_IO_ERROR, G_IO_ERROR_CANCELLED))) {
     return;
   }
-  if ((error == NULL) && (snap != NULL))
+  if ((error == NULL) && (snap != NULL)) {
     g_signal_emit_by_name(self, "notify-refresh-complete", snap, NULL);
-  else
+  } else {
     g_signal_emit_by_name(self, "notify-refresh-complete", NULL,
                           data->snap_name);
+  }
 }
 
 static void refresh_change(gpointer p) {
@@ -206,14 +209,16 @@ static void process_inhibited_snaps(SdiRefreshMonitor *self,
   for (gchar **p = snap_names; *p != NULL; p++) {
     gchar *snap_name = *p;
     g_autoptr(SdiSnap) snap = find_snap(self, snap_name);
-    if (snap == NULL)
+    if (snap == NULL) {
       continue;
+    }
     /* Only show progress bar if that snap shown an 'inhibited' notification
      * (The notification asking the user to close the application to allow it
      * to be refreshed).
      */
-    if (!sdi_snap_get_inhibited(snap))
+    if (!sdi_snap_get_inhibited(snap)) {
       continue;
+    }
 
     if (done || cancelled) {
       /* If the Change is completed, emit the `end-refresh` signal to close
@@ -265,8 +270,9 @@ static void process_inhibited_snaps(SdiRefreshMonitor *self,
           icon = g_desktop_app_info_get_string(G_DESKTOP_APP_INFO(app_info),
                                                "Icon");
         }
-        if (visible_name == NULL)
+        if (visible_name == NULL) {
           visible_name = snap_name;
+        }
         g_signal_emit_by_name(self, "begin-refresh", snap_name, visible_name,
                               icon);
       }
@@ -312,7 +318,7 @@ static void process_change_progress(SdiRefreshMonitor *self,
   GPtrArray *tasks = snapd_change_get_tasks(change);
   GSList *snaps_to_remove = NULL;
 
-  for (gint i = 0; i < tasks->len; i++) {
+  for (guint i = 0; i < tasks->len; i++) {
     SnapdTask *task = tasks->pdata[i];
     SnapdTaskData *task_data = snapd_task_get_data(task);
     if (task_data == NULL) {
@@ -345,7 +351,7 @@ static void process_change_progress(SdiRefreshMonitor *self,
       progress_task_data->done = task_done;
       if (task_done) {
         progress_task_data->done_tasks++;
-      } else if (progress_task_data->task_description == NULL &&
+      } else if ((progress_task_data->task_description == NULL) &&
                  g_str_equal("Doing", status)) {
         progress_task_data->task_description =
             g_strdup(snapd_task_get_summary(task));
@@ -397,8 +403,9 @@ static void manage_change_update(SnapdClient *source, GAsyncResult *res,
     g_debug("Error in manage_change_update: %s\n", error->message);
     return;
   }
-  if (change == NULL)
+  if (change == NULL) {
     return;
+  }
 
   const gchar *change_status = snapd_change_get_status(change);
 
@@ -473,8 +480,9 @@ static void manage_refresh_inhibit(SnapdClient *source, GAsyncResult *res,
     g_debug("Error in manage_refresh_inhibit: %s\n", error->message);
     return;
   }
-  if (snaps->len == 0)
+  if (snaps->len == 0) {
     return;
+  }
   // Check if there's at least one snap not marked as "ignore"
   gboolean show_grouped_notification = FALSE;
   g_autoptr(GListStore) snap_list = g_list_store_new(SNAPD_TYPE_SNAP);
@@ -483,11 +491,13 @@ static void manage_refresh_inhibit(SnapdClient *source, GAsyncResult *res,
     const gchar *name = snapd_snap_get_name(snap);
     g_debug("Received refresh inhibit notification for inhibited snap %s",
             name);
-    if (name == NULL)
+    if (name == NULL) {
       continue;
+    }
     g_autoptr(SdiSnap) snap_data = add_snap(self, name);
-    if (snap_data == NULL)
+    if (snap_data == NULL) {
       continue;
+    }
     /* Mark this snap as "inhibited"; this is, a notification asking
      * the user to close it to allow it to be updated has been shown
      * for this snap, so a dialog with a progress bar should be shown
@@ -528,11 +538,13 @@ void sdi_refresh_monitor_notice(SdiRefreshMonitor *self, SnapdNotice *notice,
      * During first run, we must ignore these events to avoid showing old
      * notices that do not apply anymore.
      */
-    if (first_run)
+    if (first_run) {
       return;
+    }
     if (!g_str_equal(kind, "auto-refresh") &&
-        !g_str_equal(kind, "refresh-snap"))
+        !g_str_equal(kind, "refresh-snap")) {
       return;
+    }
     snapd_client_get_change_async(
         self->client, snapd_notice_get_key(notice), NULL,
         (GAsyncReadyCallback)manage_change_update, g_object_ref(self));
@@ -611,7 +623,7 @@ void sdi_refresh_monitor_class_init(SdiRefreshMonitorClass *klass) {
                NULL, NULL, NULL, G_TYPE_NONE, 1, G_TYPE_STRING);
 }
 
-SdiRefreshMonitor *sdi_refresh_monitor_new(GApplication *application) {
+SdiRefreshMonitor *sdi_refresh_monitor_new() {
   SdiRefreshMonitor *self = g_object_new(SDI_TYPE_REFRESH_MONITOR, NULL);
   return self;
 }

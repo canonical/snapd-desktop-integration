@@ -1,4 +1,3 @@
-#include "../src/sdi-forced-refresh-time-constants.h"
 #include "../src/sdi-notify.h"
 #include "gtk/gtk.h"
 
@@ -47,8 +46,9 @@ static void describe_test(TestData *test) {
   g_print("  Title: %s\n", test->title);
   g_print("  Description: %s\n\n", test->description);
   g_print("  Actions: %s\n", test->actions);
-  if (test->expected_results != NULL)
+  if (test->expected_results != NULL) {
     g_print("  Expected results: %s\n", test->expected_results);
+  }
   g_print("Waiting for actions\n");
 }
 

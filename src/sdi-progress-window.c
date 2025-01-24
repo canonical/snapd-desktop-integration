@@ -55,8 +55,9 @@ GtkWindow *sdi_progress_window_get_window(SdiProgressWindow *self) {
 
 static void remove_dialog_from_main_window(SdiProgressWindow *self,
                                            SdiRefreshDialog *dialog) {
-  if (dialog == NULL)
+  if (dialog == NULL) {
     return;
+  }
 
   if (!g_hash_table_remove(self->dialogs,
                            sdi_refresh_dialog_get_app_name(dialog))) {
@@ -157,8 +158,9 @@ void sdi_progress_window_update_progress(SdiProgressWindow *self,
                                          gchar *task_description,
                                          guint done_tasks, guint total_tasks,
                                          gboolean task_done) {
-  if (snap_name == NULL)
+  if (snap_name == NULL) {
     return;
+  }
 
   // Update dialog progress bar
   SdiRefreshDialog *dialog =

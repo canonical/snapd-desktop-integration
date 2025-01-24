@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include "sdi-forced-refresh-time-constants.h"
 #include "sdi-snap.h"
 #include <gtk/gtk.h>
 #include <snapd-glib/snapd-glib.h>
