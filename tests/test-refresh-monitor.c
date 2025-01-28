@@ -1,4 +1,5 @@
 #include "../src/sdi-forced-refresh-time-constants.h"
+#include "../src/sdi-helpers.h"
 #include "../src/sdi-refresh-monitor.h"
 #include "../src/sdi-snapd-client-factory.h"
 #include "gtk/gtk.h"
@@ -347,6 +348,20 @@ static MockApp *add_app_to_snap(MockSnap *snap, const gchar *app,
     mock_app_set_desktop_file(app1, desktop_file_path);
   }
   return app1;
+}
+
+static void add_app_to_array(GPtrArray *apps_array, const gchar *app_name,
+                             const gchar *desktop_file) {
+  SnapdApp *app = NULL;
+  if (desktop_file == NULL) {
+    app = g_object_new(SNAPD_TYPE_APP, "name", app_name, NULL);
+  } else {
+    g_autofree gchar *desktop_file_path =
+        g_strdup_printf("%s/%s", SNAPS_DESKTOP_FILES_FOLDER, desktop_file);
+    app = g_object_new(SNAPD_TYPE_APP, "name", app_name, "desktop-file",
+                       desktop_file_path, NULL);
+  }
+  g_ptr_array_add(apps_array, app);
 }
 
 // These are the tests themselves
@@ -874,6 +889,52 @@ static void test_cancelled_refresh(const void *param) {
   g_assert_true(wait_for_timeout(600));
 }
 
+static void test_sdi_get_desktop_file_from_snap_no_apps(void) {
+  g_autoptr(GPtrArray) apps_array =
+      g_ptr_array_new_with_free_func(g_object_unref);
+  g_autoptr(SnapdSnap) snap1 =
+      g_object_new(SNAPD_TYPE_SNAP, "apps", apps_array, NULL);
+  g_autoptr(GAppInfo) app_info = sdi_get_desktop_file_from_snap(snap1);
+  g_assert_null(app_info);
+}
+
+static void test_sdi_get_desktop_file_from_snap_one_valid_app(void) {
+  g_autoptr(GPtrArray) apps_array =
+      g_ptr_array_new_with_free_func(g_object_unref);
+  add_app_to_array(apps_array, "kicad", "kicad_kicad.desktop");
+
+  g_autoptr(SnapdSnap) snap1 =
+      g_object_new(SNAPD_TYPE_SNAP, "apps", apps_array, NULL);
+  g_autoptr(GAppInfo) app_info = sdi_get_desktop_file_from_snap(snap1);
+  g_assert_nonnull(app_info);
+  g_assert_cmpstr(g_app_info_get_display_name(app_info), ==, "KiCad");
+}
+
+static void test_sdi_get_desktop_file_from_snap_one_invalid_app(void) {
+  g_autoptr(GPtrArray) apps_array =
+      g_ptr_array_new_with_free_func(g_object_unref);
+  add_app_to_array(apps_array, "kicad", "nonexistent.desktop");
+
+  g_autoptr(SnapdSnap) snap1 =
+      g_object_new(SNAPD_TYPE_SNAP, "apps", apps_array, NULL);
+  g_autoptr(GAppInfo) app_info = sdi_get_desktop_file_from_snap(snap1);
+  g_assert_null(app_info);
+}
+
+static void test_sdi_get_desktop_file_from_snap_two_valid_apps(void) {
+  g_autoptr(GPtrArray) apps_array =
+      g_ptr_array_new_with_free_func(g_object_unref);
+  add_app_to_array(apps_array, "simple-scan",
+                   "simple-scan_simple_scan.desktop");
+  add_app_to_array(apps_array, "kicad", "kicad_kicad.desktop");
+
+  g_autoptr(SnapdSnap) snap1 =
+      g_object_new(SNAPD_TYPE_SNAP, "name", "kicad", "apps", apps_array, NULL);
+  g_autoptr(GAppInfo) app_info = sdi_get_desktop_file_from_snap(snap1);
+  g_assert_nonnull(app_info);
+  g_assert_cmpstr(g_app_info_get_display_name(app_info), ==, "KiCad");
+}
+
 // End of tests
 
 static void do_activate(GObject *object, gpointer data) {
@@ -881,7 +942,7 @@ static void do_activate(GObject *object, gpointer data) {
   g_application_hold(G_APPLICATION(object));
 
   // add tests
-  g_test_add_func("/update/test-sdi-snap", test_sdi_snap);
+  g_test_add_func("/others/test-sdi-snap", test_sdi_snap);
   g_test_add_func("/refresh/no-pending", test_refresh_inhibit_no_pending);
   g_test_add_func("/refresh/one-pending", test_refresh_inhibit_one_pending);
   g_test_add_func("/refresh/three-pending", test_refresh_inhibit_three_pending);
@@ -922,6 +983,14 @@ static void do_activate(GObject *object, gpointer data) {
                        test_cancelled_refresh);
   g_test_add_data_func("/cancelled/error", (const void *)"Error",
                        test_cancelled_refresh);
+  g_test_add_func("/others/get-desktop-file-from-snap-no-apps",
+                  test_sdi_get_desktop_file_from_snap_no_apps);
+  g_test_add_func("/others/get-desktop-file-from-snap-one-valid-app",
+                  test_sdi_get_desktop_file_from_snap_one_valid_app);
+  g_test_add_func("/others/get-desktop-file-from-snap-one-invalid-app",
+                  test_sdi_get_desktop_file_from_snap_one_invalid_app);
+  g_test_add_func("/others/get-desktop-file-from-snap-two-valid-apps",
+                  test_sdi_get_desktop_file_from_snap_two_valid_apps);
 
   g_test_run();
   g_application_release(G_APPLICATION(object));
