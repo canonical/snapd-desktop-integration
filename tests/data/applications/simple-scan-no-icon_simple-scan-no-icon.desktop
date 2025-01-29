@@ -5,7 +5,6 @@ Comment=Make a digital copy of your photos and documents
 Keywords=scan;scanner;flatbed;adf;
 X-SnapAppName=simple-scan
 Exec=env BAMF_DESKTOP_FILE_HINT=/var/lib/snapd/desktop/applications/simple-scan_simple-scan.desktop /snap/bin/simple-scan
-Icon=SimpleScan.svg
 Terminal=false
 Type=Application
 StartupNotify=true
