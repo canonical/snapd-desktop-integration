@@ -935,6 +935,37 @@ static void test_sdi_get_desktop_file_from_snap_two_valid_apps(void) {
   g_assert_cmpstr(g_app_info_get_display_name(app_info), ==, "KiCad");
 }
 
+static void test_sdi_get_desktop_file_from_snap_two_valid_apps_one_right(void) {
+  g_autoptr(GPtrArray) apps_array =
+      g_ptr_array_new_with_free_func(g_object_unref);
+  add_app_to_array(apps_array, "kicad-no-icon",
+                   "kicad-no-icon_kicad-no-icon.desktop");
+  add_app_to_array(apps_array, "simple-scan",
+                   "simple-scan_simple-scan.desktop");
+
+  g_autoptr(SnapdSnap) snap1 =
+      g_object_new(SNAPD_TYPE_SNAP, "name", "kicad", "apps", apps_array, NULL);
+  g_autoptr(GAppInfo) app_info = sdi_get_desktop_file_from_snap(snap1);
+  g_assert_nonnull(app_info);
+  g_assert_cmpstr(g_app_info_get_display_name(app_info), ==,
+                  "Document Scanner");
+}
+
+static void
+test_sdi_get_desktop_file_from_snap_two_valid_apps_none_right(void) {
+  g_autoptr(GPtrArray) apps_array =
+      g_ptr_array_new_with_free_func(g_object_unref);
+  add_app_to_array(apps_array, "kicad-no-icon",
+                   "kicad-no-icon_kicad-no-icon.desktop");
+  add_app_to_array(apps_array, "simple-scan",
+                   "simple-scan-no-icon_simple-scan-no-icon.desktop");
+
+  g_autoptr(SnapdSnap) snap1 =
+      g_object_new(SNAPD_TYPE_SNAP, "name", "kicad", "apps", apps_array, NULL);
+  g_autoptr(GAppInfo) app_info = sdi_get_desktop_file_from_snap(snap1);
+  g_assert_null(app_info);
+}
+
 // End of tests
 
 static void do_activate(GObject *object, gpointer data) {
@@ -991,6 +1022,11 @@ static void do_activate(GObject *object, gpointer data) {
                   test_sdi_get_desktop_file_from_snap_one_invalid_app);
   g_test_add_func("/others/get-desktop-file-from-snap-two-valid-apps",
                   test_sdi_get_desktop_file_from_snap_two_valid_apps);
+  g_test_add_func("/others/get-desktop-file-from-snap-two-valid-apps-one-right",
+                  test_sdi_get_desktop_file_from_snap_two_valid_apps_one_right);
+  g_test_add_func(
+      "/others/get-desktop-file-from-snap-two-valid-apps-none-right",
+      test_sdi_get_desktop_file_from_snap_two_valid_apps_none_right);
 
   g_test_run();
   g_application_release(G_APPLICATION(object));
