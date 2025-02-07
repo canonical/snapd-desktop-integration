@@ -93,6 +93,8 @@ static void add_dialog_to_main_window(SdiProgressWindow *self,
         GTK_BOX(gtk_box_new(GTK_ORIENTATION_VERTICAL, 0));
     gtk_window_set_child(self->main_window,
                          GTK_WIDGET(self->refresh_bar_container));
+    /** TRANSLATORS: This text is shown as the title of the window that contains
+        progress bars for each of the snaps being updated. */
     gtk_window_set_title(GTK_WINDOW(self->main_window), _("Refreshing snaps"));
     gtk_window_present(GTK_WINDOW(self->main_window));
     gtk_window_set_default_size(GTK_WINDOW(self->main_window), 0, 0);
