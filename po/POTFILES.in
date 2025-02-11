@@ -1,5 +1,13 @@
-src/sdi-refresh-dialog.c
-src/sdi-theme-monitor.c
-data/resources/sdi-refresh-dialog.ui
+src/main.c
+src/sdi-helpers.c
 src/sdi-notify.c
+src/sdi-progress-dock.c
+src/sdi-progress-window.c
+src/sdi-refresh-dialog.c
 src/sdi-refresh-monitor.c
+src/sdi-snap.c
+src/sdi-snapd-client-factory.c
+src/sdi-snapd-monitor.c
+src/sdi-theme-monitor.c
+src/sdi-user-session-helper.c
+data/resources/sdi-refresh-dialog.ui
