@@ -38,6 +38,7 @@ GAppInfo *sdi_get_desktop_file_from_snap(SnapdSnap *snap) {
     if (g_str_equal(name, snapd_app_get_name(app))) {
       const gchar *desktop_file = snapd_app_get_desktop_file(app);
       if (desktop_file == NULL) {
+        // there can't be several entries with the same name, so stop searching
         return NULL;
       }
       return G_APP_INFO(g_desktop_app_info_new_from_filename(desktop_file));
