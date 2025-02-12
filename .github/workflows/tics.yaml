@@ -37,6 +37,7 @@ jobs:
         run: |
           ./_build/tests/test-sdi-notices-monitor
           ./_build/tests/test-sdi-progress-dock
+          ./_build/tests/test-sdi-notify
       - name: Coverage
         run: |
           COMMIT_TIMESTAMP () {
@@ -54,13 +55,12 @@ jobs:
           }
 
           # Check if the prebuilt COBERTURA.XML files are up-to-date
-          CHECK_COVERAGE_DATES cobertura-notify.xml run-test-sdi-notify.sh tests/test-sdi-notify.c src/sdi-notify.c src/sdi-helpers.c
           CHECK_COVERAGE_DATES cobertura-progress-window.xml run-test-sdi-progress-window.sh tests/test-sdi-progress-window.c src/sdi-progress-window.c src/sdi-refresh-dialog.c
 
           mkdir -p coverage
           gcovr _build --cobertura coverage_base/cobertura-tests.xml
           # merge the prebuilt COBERTURA.XML files with the newly generated
-          gcovr --cobertura-add-tracefile coverage_base/cobertura-notify.xml --cobertura-add-tracefile coverage_base/cobertura-progress-window.xml --cobertura-add-tracefile coverage_base/cobertura-tests.xml --cobertura coverage/cobertura.xml
+          gcovr --cobertura-add-tracefile coverage_base/cobertura-progress-window.xml --cobertura-add-tracefile coverage_base/cobertura-tests.xml --cobertura coverage/cobertura.xml
 
       - name: Upload coverage reports
         uses: actions/upload-artifact@v4
