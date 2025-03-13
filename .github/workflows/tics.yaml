@@ -43,8 +43,7 @@ jobs:
       - name: Coverage
         run: |
           mkdir -p coverage
-          gcovr _build --cobertura coverage_base/cobertura-tests.xml
-          # merge the prebuilt COBERTURA.XML files with the newly generated
+          gcovr _build --cobertura coverage/cobertura-tests.xml
 
       - name: Upload coverage reports
         uses: actions/upload-artifact@v4
