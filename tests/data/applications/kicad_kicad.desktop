@@ -8,6 +8,7 @@ Categories=Science;Electronics;
 X-SnapAppName=kicad
 Exec=env BAMF_DESKTOP_FILE_HINT=/var/lib/snapd/desktop/applications/kicad_kicad.desktop /snap/bin/kicad %f
 StartupWMClass=kicad
+Keywords=Projectmanager;
 MimeType=application/x-kicad-project;
 Name=KiCad
 GenericName=EDA Suite
