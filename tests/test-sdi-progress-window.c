@@ -82,13 +82,13 @@ static GSList *find_widgets_by_type(GtkWidget *widget, GType type) {
     return NULL;
   }
 
-  if (((GTypeInstance *)widget)->g_class->g_type == SDI_TYPE_REFRESH_DIALOG) {
+  if (G_TYPE_CHECK_INSTANCE_TYPE(widget, SDI_TYPE_REFRESH_DIALOG)) {
     widget = gtk_widget_get_first_child(widget);
     if (widget == NULL) {
       return NULL;
     }
   }
-  if (((GTypeInstance *)widget)->g_class->g_type == type) {
+  if (G_TYPE_CHECK_INSTANCE_TYPE(widget, type)) {
     widget_list = g_slist_append(widget_list, widget);
   }
   GtkWidget *next_widget = gtk_widget_get_next_sibling(widget);
