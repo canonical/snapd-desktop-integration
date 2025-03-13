@@ -566,10 +566,15 @@ static void sdi_refresh_monitor_dispose(GObject *object) {
   G_OBJECT_CLASS(sdi_refresh_monitor_parent_class)->dispose(object);
 }
 
+static void remove_source(gpointer data) {
+  g_source_remove(GPOINTER_TO_INT(data));
+}
+
 void sdi_refresh_monitor_init(SdiRefreshMonitor *self) {
   self->snaps =
       g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_object_unref);
-  self->changes = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
+  self->changes =
+      g_hash_table_new_full(g_str_hash, g_str_equal, g_free, remove_source);
   /* the key in this table is the snap name; the value is a SnapProgressTaskData
    * structure.
    */
