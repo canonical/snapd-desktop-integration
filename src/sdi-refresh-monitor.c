@@ -24,7 +24,6 @@
 
 #include "sdi-forced-refresh-time-constants.h"
 #include "sdi-helpers.h"
-#include "sdi-refresh-monitor.h"
 #include "sdi-snapd-client-factory.h"
 
 // time in ms for periodic check of each change in Refresh Monitor.
