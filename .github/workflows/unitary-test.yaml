@@ -39,3 +39,6 @@ jobs:
       - name: Test notifications
         run: |
           ./_build/tests/test-sdi-notify
+      - name: Test refresh monitor
+        run: |
+          ./_build/tests/test-refresh-monitor

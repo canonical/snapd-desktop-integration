@@ -62,6 +62,21 @@ test_sdi_progress_window_executable = executable(
   install: false,
 )
 
+test_refresh_monitor = executable(
+  'test-refresh-monitor',
+  'test-refresh-monitor.c',
+  'mock-snapd.c',
+  '../src/sdi-refresh-monitor.c',
+  '../src/sdi-snap.c',
+  '../src/sdi-helpers.c',
+  '../src/sdi-snapd-client-factory.c',
+  resources,
+  dependencies: [gtk_dep, snapd_glib_dep, gio_dep, libsoup_dep, json_glib_dep],
+  c_args: ['-DDEBUG_TESTS','-DSNAPS_DESKTOP_FILES_FOLDER="' + meson.source_root() + '/tests/data/applications"'] + COVERAGE_C_ARGS,
+  link_args: COVERAGE_LINK_ARGS,
+  install: false,
+)
+
 subdir('data')
 
 test('Tests', test_executable)

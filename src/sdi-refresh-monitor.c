@@ -22,9 +22,9 @@
 #include <snapd-glib/snapd-glib.h>
 #include <unistd.h>
 
-#include "com.canonical.Unity.LauncherEntry.h"
+#include "sdi-forced-refresh-time-constants.h"
 #include "sdi-helpers.h"
-#include "sdi-notify.h"
+#include "sdi-refresh-monitor.h"
 #include "sdi-snapd-client-factory.h"
 
 // time in ms for periodic check of each change in Refresh Monitor.
@@ -98,7 +98,7 @@ static GTimeSpan get_remaining_time_in_seconds(SnapdSnap *snap) {
 
 static GStrv get_desktop_filenames_for_snap(const gchar *snap_name) {
   g_autoptr(GDir) desktop_folder =
-      g_dir_open("/var/lib/snapd/desktop/applications", 0, NULL);
+      g_dir_open(SNAPS_DESKTOP_FILES_FOLDER, 0, NULL);
   if (desktop_folder == NULL) {
     return NULL;
   }
@@ -239,10 +239,6 @@ static void process_inhibited_snaps(SdiRefreshMonitor *self,
       continue;
     }
 
-    if (sdi_snap_get_hidden(snap)) {
-      continue;
-    }
-
     if (!sdi_snap_get_created_dialog(snap)) {
       // If there's no dialog, get the data for this snap and create it.
       sdi_snap_set_ignored(snap, TRUE);
@@ -260,7 +256,6 @@ static void process_inhibited_snaps(SdiRefreshMonitor *self,
                               NULL);
       } else {
         // If we have snap data, we can use "pretty names" and icons
-        const gchar *snap_name = snapd_snap_get_name(client_snap);
         const gchar *visible_name = NULL;
         g_autoptr(GAppInfo) app_info =
             sdi_get_desktop_file_from_snap(client_snap);
@@ -489,8 +484,6 @@ static void manage_refresh_inhibit(SnapdClient *source, GAsyncResult *res,
   for (guint i = 0; i < snaps->len; i++) {
     SnapdSnap *snap = snaps->pdata[i];
     const gchar *name = snapd_snap_get_name(snap);
-    g_debug("Received refresh inhibit notification for inhibited snap %s",
-            name);
     if (name == NULL) {
       continue;
     }
@@ -593,7 +586,6 @@ void sdi_refresh_monitor_init(SdiRefreshMonitor *self) {
  */
 void sdi_refresh_monitor_ignore_snap(SdiRefreshMonitor *self,
                                      const gchar *snap_name) {
-  g_debug("Ignoring refreshes for %s", snap_name);
   g_autoptr(SdiSnap) snap = add_snap(self, snap_name);
   sdi_snap_set_ignored(snap, TRUE);
 }

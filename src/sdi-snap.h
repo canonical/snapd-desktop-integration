@@ -28,10 +28,6 @@ G_DECLARE_FINAL_TYPE(SdiSnap, sdi_snap, SDI, SNAP, GObject)
 
 SdiSnap *sdi_snap_new(const gchar *name);
 
-gboolean sdi_snap_get_hidden(SdiSnap *snap);
-
-void sdi_snap_set_hidden(SdiSnap *snap, gboolean hidden);
-
 gboolean sdi_snap_get_created_dialog(SdiSnap *self);
 
 void sdi_snap_set_created_dialog(SdiSnap *self, gboolean hidden);
@@ -45,9 +41,5 @@ gboolean sdi_snap_get_ignored(SdiSnap *self);
 void sdi_snap_set_ignored(SdiSnap *self, gboolean ignore);
 
 const gchar *sdi_snap_get_name(SdiSnap *self);
-
-GTimeSpan sdi_snap_get_last_remaining_time(SdiSnap *self);
-
-void sdi_snap_set_last_remaining_time(SdiSnap *self, GTimeSpan time);
 
 G_END_DECLS
