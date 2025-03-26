@@ -42,9 +42,6 @@ SnapdClient *sdi_snapd_client_factory_new_snapd_client(void) {
   if (sdi_snapd_socket_path != NULL) {
     // if a custom path has been set via command-line parameters, use it
     snapd_client_set_socket_path(client, sdi_snapd_socket_path);
-  } else if (g_getenv("SNAP") != NULL) {
-    // snapped applications use a different socket
-    snapd_client_set_socket_path(client, "/run/snapd-snap.socket");
   }
   return client;
 }
