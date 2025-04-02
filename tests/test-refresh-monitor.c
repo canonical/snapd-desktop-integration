@@ -966,6 +966,26 @@ test_sdi_get_desktop_file_from_snap_two_valid_apps_none_right(void) {
   g_assert_null(app_info);
 }
 
+static void
+test_refresh_inhibit_with_negative_value_dont_shows_notifications(void) {
+  // https://github.com/canonical/snapd-desktop-integration/issues/135
+  reset_mock_snapd();
+  MockSnap *snap1 = mock_snapd_add_snap(snapd, "snap1");
+  set_snap_as_inhibited(snap1,
+                        TIME_TO_SHOW_REMAINING_TIME_BEFORE_FORCED_REFRESH + 10);
+  MockSnap *snap2 = mock_snapd_add_snap(snapd, "snap2");
+  set_snap_as_inhibited(snap2, -400);
+  new_notice("refresh-inhibit");
+  g_assert_true(wait_for_notice());
+
+  g_autoptr(ReceivedSignalData) data2 =
+      wait_for_signal(RECEIVED_SIGNAL_NOTIFY_PENDING_REFRESH, 100);
+  g_assert_nonnull(data2);
+  g_assert_true(snap_list_contains_name(data2, "snap1"));
+  g_assert_false(snap_list_contains_name(data2, "snap2"));
+  g_assert_true(assert_no_more_signals());
+}
+
 // End of tests
 
 static void do_activate(GObject *object, gpointer data) {
@@ -973,6 +993,9 @@ static void do_activate(GObject *object, gpointer data) {
   g_application_hold(G_APPLICATION(object));
 
   // add tests
+  g_test_add_func(
+      "/others/test-no-negative-values",
+      test_refresh_inhibit_with_negative_value_dont_shows_notifications);
   g_test_add_func("/others/test-sdi-snap", test_sdi_snap);
   g_test_add_func("/refresh/no-pending", test_refresh_inhibit_no_pending);
   g_test_add_func("/refresh/one-pending", test_refresh_inhibit_one_pending);
