@@ -490,6 +490,17 @@ static void manage_refresh_inhibit(SnapdClient *source, GAsyncResult *res,
     if (snap_data == NULL) {
       continue;
     }
+
+    /* Sometimes, snapd sends a notification with a negative value.
+     * This is due to an old refresh already done. In that case, that
+     * notification must be ignored.
+     *
+     * https://github.com/canonical/snapd-desktop-integration/issues/135
+     */
+    GTimeSpan next_refresh = get_remaining_time_in_seconds(snap);
+    if (next_refresh < 0) {
+      continue;
+    }
     /* Mark this snap as "inhibited"; this is, a notification asking
      * the user to close it to allow it to be updated has been shown
      * for this snap, so a dialog with a progress bar should be shown
