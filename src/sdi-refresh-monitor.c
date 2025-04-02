@@ -491,7 +491,7 @@ static void manage_refresh_inhibit(SnapdClient *source, GAsyncResult *res,
       continue;
     }
 
-    /* Sometimes, snapd sents a notification with a negative value.
+    /* Sometimes, snapd sends a notification with a negative value.
      * This is due to an old refresh already done. In that case, that
      * notification must be ignored.
      *
