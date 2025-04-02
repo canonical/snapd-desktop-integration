@@ -978,11 +978,11 @@ test_refresh_inhibit_with_negative_value_dont_shows_notifications(void) {
   new_notice("refresh-inhibit");
   g_assert_true(wait_for_notice());
 
-  g_autoptr(ReceivedSignalData) data2 =
+  g_autoptr(ReceivedSignalData) data =
       wait_for_signal(RECEIVED_SIGNAL_NOTIFY_PENDING_REFRESH, 100);
-  g_assert_nonnull(data2);
-  g_assert_true(snap_list_contains_name(data2, "snap1"));
-  g_assert_false(snap_list_contains_name(data2, "snap2"));
+  g_assert_nonnull(data);
+  g_assert_true(snap_list_contains_name(data, "snap1"));
+  g_assert_false(snap_list_contains_name(data, "snap2"));
   g_assert_true(assert_no_more_signals());
 }
 
