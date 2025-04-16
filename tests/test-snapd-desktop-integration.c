@@ -298,6 +298,21 @@ static void handle_notifications_method_call(
           "org.freedesktop.Notifications", "ActionInvoked",
           g_variant_new("(us)", notification_id, "yes"), NULL));
 
+      /* Ubuntu Budgie has a bug, where clicking on a button in a
+       * notification sends the button action AND the default action.
+       * We emulate this to ensure that this is managed and no error
+       * happens. */
+      g_assert_true(g_dbus_connection_emit_signal(
+          connection, NULL, "/org/freedesktop/Notifications",
+          "org.freedesktop.Notifications", "ActionInvoked",
+          g_variant_new("(us)", notification_id, "default"), NULL));
+
+      /* After sending the action, the notification is closed too. */
+      g_assert_true(g_dbus_connection_emit_signal(
+          connection, NULL, "/org/freedesktop/Notifications",
+          "org.freedesktop.Notifications", "NotificationClosed",
+          g_variant_new("(uu)", notification_id, 1), NULL));
+
       state = STATE_INSTALL_THEMES;
     } else if (state == STATE_NOTIFY_COMPLETE) {
       g_assert_cmpstr(summary, ==, "Installing missing theme snaps:");
@@ -417,7 +432,20 @@ int main(int argc, char **argv) {
 
   g_main_loop_run(loop);
 
-  g_print("Tests passed\n");
+  g_print("Test 1 passed\n");
+
+  // Now we test that, after a change, the daemon is in a known state
+  // and continues to respond to new changes.
+  state = STATE_GET_EXISTING_THEME_STATUS;
+  set_setting("org.gnome.desktop.interface", "gtk-theme", "GtkTheme1");
+  set_setting("org.gnome.desktop.interface", "icon-theme", "IconTheme1");
+  set_setting("org.gnome.desktop.interface", "cursor-theme", "CursorTheme1");
+  set_setting("org.gnome.desktop.sound", "theme-name", "SoundTheme1");
+
+  g_main_loop_run(loop);
+
+  g_print("Test 2 passed\n");
+
   if (dbus_subprocess != NULL) {
     g_print("Killing subprocesses\n");
     g_subprocess_force_exit(dbus_subprocess);
