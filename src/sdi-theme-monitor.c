@@ -41,6 +41,7 @@ struct _SdiThemeMonitor {
 
   /* The desktop notifications */
   NotifyNotification *install_notification;
+  gboolean install_notification_answered;
   NotifyNotification *progress_notification;
 
   // Connection to snapd.
@@ -91,12 +92,29 @@ static void notification_closed_cb(NotifyNotification *notification,
                                    SdiThemeMonitor *self) {
   /* Notification has been closed: */
   g_clear_object(&self->install_notification);
+  self->install_notification_answered = FALSE;
 }
 
 static void notify_cb(NotifyNotification *notification, gchar *action,
                       gpointer user_data) {
   SdiThemeMonitor *self = user_data;
 
+  /* Some notification daemons, when the user presses an action, emit
+   * the action first, and after it, the "default" action. Although
+   * this is an incorrect behavior, we add a workaround to avoid more
+   * bug reports.
+   *
+   * Ideally, we should block the action signal here and unlock it in
+   * the "closed" callback; unfortunately, this isn't a standard
+   * GObject signal, but a specific callback in the notification,
+   * so we have to do it "manually".
+   */
+
+  if (self->install_notification_answered == TRUE) {
+    return;
+  }
+
+  self->install_notification_answered = TRUE;
   if ((strcmp(action, "yes") == 0) || (strcmp(action, "default") == 0)) {
     g_message("Installing missing theme snaps...\n");
     self->progress_notification = notify_notification_new(
