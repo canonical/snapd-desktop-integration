@@ -19,6 +19,10 @@ plugs:
     interface: system-files
     read:
       - /snap
+  systemd-graphical-session-target-status:
+    interface: dbus
+    bus: session
+    name: org.freedesktop.systemd1
 
 apps:
   snapd-desktop-integration:
@@ -26,8 +30,7 @@ apps:
     command: usr/bin/snapd-desktop-integration
     daemon: simple
     desktop: usr/share/applications/io.snapcraft.SnapDesktopIntegration.desktop
-    passthrough: #///! TODO: Remove once daemon-scope lands in snapcraft
-      daemon-scope: user
+    daemon-scope: user
     restart-condition: on-success
     restart-delay: 2s
     plugs:
@@ -37,6 +40,7 @@ apps:
       - snap-refresh-observe
       - unity7
       - desktop-launch
+      - systemd-graphical-session-target-status
 
 slots:
   snapd-desktop-integration:

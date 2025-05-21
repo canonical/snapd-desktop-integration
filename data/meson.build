@@ -3,15 +3,18 @@ subdir('resources')
 gnome = import('gnome')
 
 # The returned source would be passed to another target
-login_src = gnome.gdbus_codegen('org.freedesktop.login1',
-  sources: 'org.freedesktop.login1.dbus.xml',
-  interface_prefix : 'org.freedesktop'
+graphical_session_target_src = gnome.gdbus_codegen('org.freedesktop.systemd1.Unit',
+  sources: 'org.freedesktop.systemd1.unit.dbus.xml',
+  interface_prefix : 'org.freedesktop.systemd1.Unit',
+  namespace: 'GraphicalSessionTarget'
 )
 
-login_session_src = gnome.gdbus_codegen('org.freedesktop.login1.Session',
-  sources: 'org.freedesktop.login1.session.dbus.xml',
-  interface_prefix : 'org.freedesktop.login1.session'
+systemd_manager_src = gnome.gdbus_codegen('org.freedesktop.systemd1.Manager',
+  sources: 'org.freedesktop.systemd1.dbus.xml',
+  interface_prefix : 'org.freedesktop.systemd1.Manager',
+  namespace: 'Systemd1Manager'
 )
+
 
 unity_launcher_src = gnome.gdbus_codegen('com.canonical.Unity.LauncherEntry',
   sources: 'com.canonical.Unity.LauncherEntry.dbus.xml',

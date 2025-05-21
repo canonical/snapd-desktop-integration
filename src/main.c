@@ -164,10 +164,11 @@ int main(int argc, char **argv) {
   bindtextdomain(GETTEXT_PACKAGE, LOCALEDIR);
   textdomain(GETTEXT_PACKAGE);
 
+  sdi_wait_for_graphical_session();
+
   if (!gtk_init_check()) {
     g_message("Failed to do gtk init. Waiting for a new session with desktop "
               "capabilities.");
-    sdi_wait_for_graphical_session();
     g_message("Loop exited. Forcing reload.");
     return 0;
   }

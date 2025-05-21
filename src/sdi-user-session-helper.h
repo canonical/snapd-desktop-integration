@@ -17,12 +17,12 @@
 
 #pragma once
 
-#include "org.freedesktop.login1.Session.h"
-#include "org.freedesktop.login1.h"
+#include "org.freedesktop.systemd1.Manager.h"
+#include "org.freedesktop.systemd1.Unit.h"
 #include <gtk/gtk.h>
 
 G_BEGIN_DECLS
 
-void sdi_wait_for_graphical_session(void);
+bool sdi_wait_for_graphical_session(void);
 
 G_END_DECLS
