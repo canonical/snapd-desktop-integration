@@ -35,7 +35,6 @@
 #include "sdi-snapd-client-factory.h"
 #include "sdi-snapd-monitor.h"
 #include "sdi-theme-monitor.h"
-#include "sdi-user-session-helper.h"
 
 static SnapdClient *client = NULL;
 static SdiThemeMonitor *theme_monitor = NULL;
@@ -122,55 +121,15 @@ static void do_shutdown(GObject *object, gpointer data) {
   g_clear_object(&snapd_monitor);
 }
 
-static int global_retval = 0;
-
-static void sighandler(int v) {
-  global_retval = 128 + v; // exit value is usually 128 + signal_id
-}
-
 static gboolean close_app(GApplication *application) {
   g_application_quit(application);
   return G_SOURCE_REMOVE;
 }
 
 int main(int argc, char **argv) {
-  int retval;
-  int pid = fork();
-  if (pid != 0) {
-    if (pid > 0) {
-      /* SIGTERM and SIGINT will be ignored, but
-       * will break WAITPID with a EINTR value in
-       * errno.
-       * This allows the program to always exit with
-       * a NO-ERROR value, and kill the child
-       */
-      struct sigaction signal_data = {0};
-      signal_data.sa_handler = sighandler;
-      sigemptyset(&signal_data.sa_mask);
-      signal_data.sa_flags = 0;
-      sigaction(SIGTERM, &signal_data, NULL);
-      sigaction(SIGINT, &signal_data, NULL);
-
-      retval = waitpid(pid, NULL, 0);
-      if ((retval < 0) && (errno == EINTR)) {
-        kill(pid, SIGTERM);
-        waitpid(pid, NULL, 0);
-      }
-    }
-    return global_retval;
-  }
-
   setlocale(LC_ALL, "");
   bindtextdomain(GETTEXT_PACKAGE, LOCALEDIR);
   textdomain(GETTEXT_PACKAGE);
-
-  if (!gtk_init_check()) {
-    g_message("Failed to do gtk init. Waiting for a new session with desktop "
-              "capabilities.");
-    sdi_wait_for_graphical_session();
-    g_message("Loop exited. Forcing reload.");
-    return 0;
-  }
 
   g_autoptr(GtkApplication) app = gtk_application_new(
       "io.snapcraft.SnapDesktopIntegration",
@@ -186,8 +145,5 @@ int main(int argc, char **argv) {
 
   g_application_run(G_APPLICATION(app), argc, argv);
 
-  /* since it should never ends, if we reach here, we return 0 as error value to
-   * ensure that systemd will relaunch it.
-   */
   return 0;
 }

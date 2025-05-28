@@ -1,0 +1,15 @@
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN" "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<node>
+  <interface name="org.freedesktop.DBus">
+    <method name="NameHasOwner">
+      <arg direction="in" type="s"/>
+      <arg direction="out" type="b"/>
+    </method>
+    <method name="ListNames">
+      <arg direction="out" type="as"/>
+    </method>
+    <method name="ListActivatableNames">
+      <arg direction="out" type="as"/>
+    </method>
+  </interface>
+</node>
