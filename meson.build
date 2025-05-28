@@ -4,6 +4,8 @@ if get_option('gnotify')
     add_global_arguments('-DUSE_GNOTIFY', language: 'c')
 endif
 
+glib_dep = dependency('glib-2.0')
+gobject_dep = dependency('gobject-2.0')
 gio_dep = dependency('gio-2.0')
 gio_unix_dep = dependency('gio-unix-2.0')
 gtk_dep = dependency('gtk4', version: '>= 4.0')

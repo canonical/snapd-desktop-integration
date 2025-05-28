@@ -24,10 +24,13 @@ apps:
   snapd-desktop-integration:
     extensions: [gnome]
     command: usr/bin/snapd-desktop-integration
+    command-chain:
+      - usr/bin/user-session-helper
     daemon: simple
     desktop: usr/share/applications/io.snapcraft.SnapDesktopIntegration.desktop
     passthrough: #///! TODO: Remove once daemon-scope lands in snapcraft
       daemon-scope: user
+    # restart-condition must be on-success to avoid continuous messages in GDM
     restart-condition: on-success
     restart-delay: 2s
     plugs:
@@ -36,6 +39,8 @@ apps:
       - snap
       - snap-refresh-observe
       - unity7
+      - x11
+      - wayland
       - desktop-launch
 
 slots:

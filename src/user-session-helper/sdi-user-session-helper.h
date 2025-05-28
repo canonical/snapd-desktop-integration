@@ -17,12 +17,15 @@
 
 #pragma once
 
+#include "org.freedesktop.DBus.h"
 #include "org.freedesktop.login1.Session.h"
 #include "org.freedesktop.login1.h"
-#include <gtk/gtk.h>
+#include <glib-object.h>
+#include <glib.h>
+#include <stdbool.h>
 
 G_BEGIN_DECLS
 
-void sdi_wait_for_graphical_session(void);
+bool sdi_wait_for_graphical_session(void);
 
 G_END_DECLS
