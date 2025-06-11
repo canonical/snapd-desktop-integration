@@ -155,8 +155,6 @@ static void ignore_notify_data_free(IgnoreNotifyData *data) {
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(IgnoreNotifyData, ignore_notify_data_free)
 
-G_DEFINE_AUTOPTR_CLEANUP_FUNC(NotifyNotification, g_object_unref)
-
 typedef struct {
   SdiNotify *self;
   gchar *desktop;
