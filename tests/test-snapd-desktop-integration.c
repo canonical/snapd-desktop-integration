@@ -304,6 +304,7 @@ static void handle_notifications_method_call(
       g_assert_cmpstr(actions[3], ==, "No");
       g_assert_cmpstr(actions[4], ==, "default");
       g_assert_cmpstr(actions[5], ==, "default");
+      g_assert_cmpint(actions_to_send, !=, 0);
 
       if (actions_to_send & ACTION_SEND_YES) {
         g_print("Sending action YES\n");
@@ -433,6 +434,13 @@ void timeout_no_install(GMainLoop *loop) {
   g_main_loop_quit(loop);
 }
 
+static void set_test_settings() {
+  set_setting("org.gnome.desktop.interface", "gtk-theme", "GtkTheme1");
+  set_setting("org.gnome.desktop.interface", "icon-theme", "IconTheme1");
+  set_setting("org.gnome.desktop.interface", "cursor-theme", "CursorTheme1");
+  set_setting("org.gnome.desktop.sound", "theme-name", "SoundTheme1");
+}
+
 int main(int argc, char **argv) {
   loop = g_main_loop_new(NULL, FALSE);
 
@@ -444,10 +452,7 @@ int main(int argc, char **argv) {
   }
 
   exit_code = SNAPD_EXIT_FAILURE;
-  set_setting("org.gnome.desktop.interface", "gtk-theme", "GtkTheme1");
-  set_setting("org.gnome.desktop.interface", "icon-theme", "IconTheme1");
-  set_setting("org.gnome.desktop.interface", "cursor-theme", "CursorTheme1");
-  set_setting("org.gnome.desktop.sound", "theme-name", "SoundTheme1");
+  set_test_settings();
   actions_to_send = ACTION_SEND_YES | ACTION_SEND_CLOSE;
 
   if (!setup_mock_snapd(&error)) {
@@ -475,10 +480,7 @@ int main(int argc, char **argv) {
   // doesn't break the system.
   exit_code = SNAPD_EXIT_FAILURE;
   state = STATE_GET_EXISTING_THEME_STATUS;
-  set_setting("org.gnome.desktop.interface", "gtk-theme", "GtkTheme1");
-  set_setting("org.gnome.desktop.interface", "icon-theme", "IconTheme1");
-  set_setting("org.gnome.desktop.interface", "cursor-theme", "CursorTheme1");
-  set_setting("org.gnome.desktop.sound", "theme-name", "SoundTheme1");
+  set_test_settings();
   actions_to_send = ACTION_SEND_YES | ACTION_SEND_DEFAULT | ACTION_SEND_CLOSE;
 
   g_main_loop_run(loop);
@@ -489,10 +491,7 @@ int main(int argc, char **argv) {
   // Test that answering NO won't update the themes
   exit_code = SNAPD_EXIT_FAILURE;
   state = STATE_GET_EXISTING_THEME_STATUS;
-  set_setting("org.gnome.desktop.interface", "gtk-theme", "GtkTheme1");
-  set_setting("org.gnome.desktop.interface", "icon-theme", "IconTheme1");
-  set_setting("org.gnome.desktop.interface", "cursor-theme", "CursorTheme1");
-  set_setting("org.gnome.desktop.sound", "theme-name", "SoundTheme1");
+  set_test_settings();
   actions_to_send = ACTION_SEND_NO | ACTION_SEND_CLOSE;
   g_timeout_add_once(4000, (GSourceOnceFunc)timeout_no_install, loop);
 
@@ -504,10 +503,7 @@ int main(int argc, char **argv) {
   // Test that clicking on the notification does install the theme
   exit_code = SNAPD_EXIT_FAILURE;
   state = STATE_GET_EXISTING_THEME_STATUS;
-  set_setting("org.gnome.desktop.interface", "gtk-theme", "GtkTheme1");
-  set_setting("org.gnome.desktop.interface", "icon-theme", "IconTheme1");
-  set_setting("org.gnome.desktop.interface", "cursor-theme", "CursorTheme1");
-  set_setting("org.gnome.desktop.sound", "theme-name", "SoundTheme1");
+  set_test_settings();
   actions_to_send = ACTION_SEND_DEFAULT | ACTION_SEND_CLOSE;
 
   g_main_loop_run(loop);
@@ -519,10 +515,7 @@ int main(int argc, char **argv) {
   // and continues to respond to new changes.
   exit_code = SNAPD_EXIT_FAILURE;
   state = STATE_GET_EXISTING_THEME_STATUS;
-  set_setting("org.gnome.desktop.interface", "gtk-theme", "GtkTheme1");
-  set_setting("org.gnome.desktop.interface", "icon-theme", "IconTheme1");
-  set_setting("org.gnome.desktop.interface", "cursor-theme", "CursorTheme1");
-  set_setting("org.gnome.desktop.sound", "theme-name", "SoundTheme1");
+  set_test_settings();
   actions_to_send = ACTION_SEND_YES | ACTION_SEND_CLOSE;
 
   g_main_loop_run(loop);
