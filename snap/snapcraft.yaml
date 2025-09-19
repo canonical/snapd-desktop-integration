@@ -47,6 +47,7 @@ slots:
 parts:
   snapd-glib:
     source: https://github.com/snapcore/snapd-glib
+    source-depth: 1
     source-type: git
     plugin: meson
     meson-parameters:
@@ -64,12 +65,36 @@ parts:
     prime:
       - usr/lib/*/libsnapd-glib-2.so.*
 
+  libnotify:
+    source: https://gitlab.gnome.org/GNOME/libnotify.git
+    source-tag: 0.8.4
+    source-depth: 1
+    plugin: meson
+    meson-parameters:
+      - --prefix=/usr
+      - -Dgtk_doc=false
+      - -Dman=false
+      - -Dintrospection=disabled
+      - -Dtests=false
+    build-packages:
+      - libglibd-2.0-dev
+      - libgdk-pixbuf-2.0-dev
+    prime:
+      - usr/lib/*/libnotify.so.*
+
   snapd-desktop-integration:
-    after: [ snapd-glib ]
+    after:
+      - libnotify
+      - snapd-glib
     source: .
     plugin: meson
     meson-parameters:
       - --prefix=/usr
+    build-environment:
+      - PKG_CONFIG_PATH: "$CRAFT_STAGE/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/pkgconfig:\
+                          $CRAFT_STAGE/usr/lib/pkgconfig:\
+                          $CRAFT_STAGE/usr/share/pkgconfig\
+                          ${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
     build-packages:
       - jq
     override-build: |
