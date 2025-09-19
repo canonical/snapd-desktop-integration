@@ -572,7 +572,7 @@ static void sdi_notify_dispose(GObject *object) {
 
 void sdi_notify_init(SdiNotify *self) {
 #ifndef USE_GNOTIFY
-  notify_init("snapd-desktop-integration-test_snapd-desktop-integration-test");
+  notify_init("Snapd Desktop Integration");
 #endif
 }
 
