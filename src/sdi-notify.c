@@ -571,6 +571,12 @@ static void sdi_notify_dispose(GObject *object) {
   G_OBJECT_CLASS(sdi_notify_parent_class)->dispose(object);
 }
 
+static void sdi_notify_finalize(GObject *object) {
+  notify_uninit();
+
+  G_OBJECT_CLASS(sdi_notify_parent_class)->finalize(object);
+}
+
 void sdi_notify_init(SdiNotify *self) {
 #ifndef USE_GNOTIFY
   notify_init(NULL);
@@ -583,6 +589,7 @@ void sdi_notify_class_init(SdiNotifyClass *klass) {
   gobject_class->set_property = sdi_notify_set_property;
   gobject_class->get_property = sdi_notify_get_property;
   gobject_class->dispose = sdi_notify_dispose;
+  gobject_class->finalize = sdi_notify_finalize;
 
   g_object_class_install_property(
       gobject_class, PROP_APPLICATION,
