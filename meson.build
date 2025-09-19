@@ -11,7 +11,7 @@ snapd_glib_dep = dependency('snapd-glib-2', required: false, version: '>= 1.65')
 if not snapd_glib_dep.found()
     snapd_glib_dep = dependency('snapd-glib', version: '>= 1.60')
 endif
-libnotify_dep = dependency('libnotify', version: '>= 0.7.7')
+libnotify_dep = dependency('libnotify', version: '>= 0.8')
 libsoup_dep = dependency ('libsoup-3.0')
 json_glib_dep = dependency ('json-glib-1.0')
 
