@@ -38,28 +38,24 @@ struct _SdiNotify {
 
 G_DEFINE_TYPE(SdiNotify, sdi_notify, G_TYPE_OBJECT)
 
-static bool launch_desktop(GApplication *app, const gchar *desktop_file) {
-  g_autofree gchar *full_desktop_path = NULL;
-  g_autofree gchar *desktop_file2 = NULL;
-  if (*desktop_file == '/') {
-    full_desktop_path = g_strdup(desktop_file);
-    desktop_file2 = g_path_get_basename(desktop_file);
-  } else {
-    full_desktop_path = g_build_path("/", "/var/lib/snapd/desktop/applications",
-                                     desktop_file, NULL);
-    desktop_file2 = g_strdup(desktop_file);
-  }
-  if (!g_file_test(full_desktop_path, G_FILE_TEST_EXISTS)) {
+static bool launch_desktop(GApplication *app, const gchar *desktop_id) {
+  g_autoptr(PrivilegedDesktopLauncher) launcher = NULL;
+  g_autoptr(GError) error = NULL;
+
+  if (!(launcher = privileged_desktop_launcher__proxy_new_sync(
+            g_application_get_dbus_connection(app), G_DBUS_PROXY_FLAGS_NONE,
+            "io.snapcraft.Launcher", "/io/snapcraft/PrivilegedDesktopLauncher",
+            NULL, &error))) {
+    g_message("Failed to launch %s: %s", desktop_id, error->message);
     return false;
   }
-  g_autoptr(PrivilegedDesktopLauncher) launcher = NULL;
 
-  launcher = privileged_desktop_launcher__proxy_new_sync(
-      g_application_get_dbus_connection(app), G_DBUS_PROXY_FLAGS_NONE,
-      "io.snapcraft.Launcher", "/io/snapcraft/PrivilegedDesktopLauncher", NULL,
-      NULL);
-  privileged_desktop_launcher__call_open_desktop_entry_sync(
-      launcher, desktop_file2, NULL, NULL);
+  if (!privileged_desktop_launcher__call_open_desktop_entry_sync(
+          launcher, desktop_id, NULL, &error)) {
+    g_message("Failed to launch %s: %s", desktop_id, error->message);
+    return false;
+  }
+
   return true;
 }
 
