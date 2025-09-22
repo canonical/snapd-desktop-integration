@@ -67,7 +67,7 @@ parts:
 
   libnotify:
     source: https://gitlab.gnome.org/GNOME/libnotify.git
-    source-tag: 0.8.4
+    source-tag: 0.8.6
     source-depth: 1
     plugin: meson
     meson-parameters:
