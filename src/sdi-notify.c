@@ -216,10 +216,15 @@ static void show_pending_update_notification(SdiNotify *self,
                                              GListModel *snaps,
                                              gboolean allow_to_ignore) {
   g_autoptr(GDesktopAppInfo) snap_store_app_info = NULL;
+  GIcon *snap_store_icon = NULL;
+
   snap_store_app_info = g_desktop_app_info_new(SNAP_STORE);
 
-  if (snap_store_app_info && !icon) {
-    icon = g_app_info_get_icon(G_APP_INFO(snap_store_app_info));
+  if (snap_store_app_info) {
+    snap_store_icon = g_app_info_get_icon(G_APP_INFO(snap_store_app_info));
+  }
+  if (!icon) {
+    icon = snap_store_icon;
   }
 
   g_autofree gchar *icon_name = NULL;
@@ -237,6 +242,19 @@ static void show_pending_update_notification(SdiNotify *self,
 
   /* If no snap store is installed there's no point to show update actions */
   if (snap_store_app_info) {
+    /* We should actually set the snap_store_app_info ID (minus the .desktop
+     * suffix as the desktop file), but we're a snap and we are not allowed to
+     * impersonate something else.
+     */
+    notify_notification_set_app_name(
+        notification,
+        g_app_info_get_display_name(G_APP_INFO(snap_store_app_info)));
+
+    if (snap_store_icon) {
+      g_autofree char *app_icon = get_icon_name_from_gicon(snap_store_icon);
+      notify_notification_set_app_icon(notification, app_icon);
+    }
+
     notify_notification_add_action(notification, "app.show-updates",
                                    _("Show updates"),
                                    (NotifyActionCallback)app_show_updates,
@@ -249,6 +267,13 @@ static void show_pending_update_notification(SdiNotify *self,
     notify_notification_add_action(notification, "default", _("Show updates"),
                                    (NotifyActionCallback)app_show_updates,
                                    g_object_ref(self), g_object_unref);
+  } else {
+    /* Libnotify was smart enough to set this for us, but snapd broke it.
+     * This can be dropped when the root issue is fixed:
+     * https://bugs.launchpad.net/ubuntu/+source/snapd/+bug/2125222
+     */
+    notify_notification_set_hint(notification, "desktop-entry",
+                                 g_variant_new_string(g_getenv("SNAP_NAME")));
   }
 
   if (allow_to_ignore) {
