@@ -183,7 +183,6 @@ static void app_close_notification(NotifyNotification *notification,
 #ifdef DEBUG_TESTS
   g_signal_emit_by_name(self, "notification-closed", "close-notification");
 #endif
-  g_object_unref(notification);
 }
 
 static void app_launch_updated(NotifyNotification *notification, char *action,
@@ -194,20 +193,17 @@ static void app_launch_updated(NotifyNotification *notification, char *action,
   g_signal_emit_by_name(data->self, "notification-closed", param);
 #endif
   launch_desktop(data->self->application, (const gchar *)data->desktop);
-  g_object_unref(notification);
 }
 
 static void app_show_updates(NotifyNotification *notification, char *action,
                              SdiNotify *self) {
   show_updates(self);
-  g_object_unref(notification);
 }
 
 static void app_ignore_snaps_notification(NotifyNotification *notification,
                                           char *action,
                                           IgnoreNotifyData *data) {
   sdi_notify_action_ignore(NULL, data->snaps, data->self);
-  g_object_unref(notification);
 }
 
 static void show_pending_update_notification(SdiNotify *self,
@@ -231,7 +227,6 @@ static void show_pending_update_notification(SdiNotify *self,
   if (icon)
     icon_name = get_icon_name_from_gicon(icon);
 
-  // Don't use g_autoptr because it must survive for the actions
   NotifyNotification *notification =
       notify_notification_new(title, body, icon_name);
   if (icon_name != NULL) {
@@ -287,7 +282,10 @@ static void show_pending_update_notification(SdiNotify *self,
         ignore_notify_data_new(self, snap_list),
         (GFreeFunc)ignore_notify_data_free);
   }
-  notify_notification_show(notification, NULL);
+
+  g_signal_connect_object(notification, "closed", G_CALLBACK(g_object_unref),
+                          self, 0);
+  notify_notification_show(g_steal_pointer(&notification), NULL);
 }
 
 static void update_complete_notification(SdiNotify *self, const gchar *title,
@@ -295,7 +293,6 @@ static void update_complete_notification(SdiNotify *self, const gchar *title,
                                          const gchar *id,
                                          const gchar *desktop) {
   g_autofree gchar *icon_name = get_icon_name_from_gicon(icon);
-  // Don't use g_autoptr because it must survive for the actions
   NotifyNotification *notification =
       notify_notification_new(title, body, icon_name);
 
@@ -317,7 +314,10 @@ static void update_complete_notification(SdiNotify *self, const gchar *title,
                                    (NotifyActionCallback)app_launch_updated,
                                    data, launch_updated_app_free);
   }
-  notify_notification_show(notification, NULL);
+
+  g_signal_connect_object(notification, "closed", G_CALLBACK(g_object_unref),
+                          self, 0);
+  notify_notification_show(g_steal_pointer(&notification), NULL);
 }
 
 #else
