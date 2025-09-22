@@ -215,7 +215,17 @@ static void show_pending_update_notification(SdiNotify *self,
                                              const gchar *body, GIcon *icon,
                                              GListModel *snaps,
                                              gboolean allow_to_ignore) {
-  g_autofree gchar *icon_name = get_icon_name_from_gicon(icon);
+  g_autoptr(GDesktopAppInfo) snap_store_app_info = NULL;
+  snap_store_app_info = g_desktop_app_info_new(SNAP_STORE);
+
+  if (snap_store_app_info && !icon) {
+    icon = g_app_info_get_icon(G_APP_INFO(snap_store_app_info));
+  }
+
+  g_autofree gchar *icon_name = NULL;
+  if (icon)
+    icon_name = get_icon_name_from_gicon(icon);
+
   // Don't use g_autoptr because it must survive for the actions
   NotifyNotification *notification =
       notify_notification_new(title, body, icon_name);
@@ -224,18 +234,23 @@ static void show_pending_update_notification(SdiNotify *self,
     notify_notification_set_hint(notification, "image-path",
                                  g_variant_new_string(icon_name));
   }
-  notify_notification_add_action(notification, "app.show-updates",
-                                 _("Show updates"),
-                                 (NotifyActionCallback)app_show_updates,
-                                 g_object_ref(self), g_object_unref);
-  /* This is the default action, the one executed when the user clicks on the
-   * notification itself. It has no button, so the _("Show updates") text is
-   * really unnecesary. It's added just in case in a future notifications do
-   * use it for... whatever... a popup, for example.
-   */
-  notify_notification_add_action(notification, "default", _("Show updates"),
-                                 (NotifyActionCallback)app_show_updates,
-                                 g_object_ref(self), g_object_unref);
+
+  /* If no snap store is installed there's no point to show update actions */
+  if (snap_store_app_info) {
+    notify_notification_add_action(notification, "app.show-updates",
+                                   _("Show updates"),
+                                   (NotifyActionCallback)app_show_updates,
+                                   g_object_ref(self), g_object_unref);
+    /* This is the default action, the one executed when the user clicks on the
+     * notification itself. It has no button, so the _("Show updates") text is
+     * really unnecessary. It's added just in case in a future notifications do
+     * use it for... whatever... a popup, for example.
+     */
+    notify_notification_add_action(notification, "default", _("Show updates"),
+                                   (NotifyActionCallback)app_show_updates,
+                                   g_object_ref(self), g_object_unref);
+  }
+
   if (allow_to_ignore) {
     g_autoptr(GVariant) snap_list = get_snap_list(snaps);
     /// TRANSLATORS: Text for a button in a notification. Pressing it
@@ -467,12 +482,7 @@ void sdi_notify_pending_refresh(SdiNotify *self, GListModel *snaps) {
       break;
     }
   }
-  if (icon == NULL) {
-    app_info2 = g_desktop_app_info_new(SNAP_STORE);
-    if (app_info2 != NULL) {
-      icon = g_app_info_get_icon(G_APP_INFO(app_info2));
-    }
-  }
+
   show_pending_update_notification(self, title, body, icon, snaps, TRUE);
 }
 
