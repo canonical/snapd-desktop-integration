@@ -518,6 +518,8 @@ void test_update_available_10() {
   g_autoptr(SnapdSnap) snap1 = create_snap("test_snap10", apps1);
   sdi_notify_pending_refresh_forced(notifier, snap1, SECONDS_IN_A_MINUTE * 13,
                                     TRUE);
+  g_autofree gchar *store_updates_desktop_file = create_desktop_file(
+      "snap-store_show-updates", "Snap Store Updates", NULL);
 
   gint signal_counter = 0;
   gchar *string_list[] = {"test_snap10"};
@@ -547,6 +549,7 @@ void test_update_available_10() {
 
   g_autofree gchar *result = wait_for_notification_close(NULL, NULL);
   unlink(desktop_file1); // delete desktop file
+  unlink(store_updates_desktop_file);
   g_signal_handler_disconnect(notifier, sid);
   g_assert_cmpstr(result, ==, "ignore-snaps");
   g_assert_cmpint(signal_counter, ==, 1);
