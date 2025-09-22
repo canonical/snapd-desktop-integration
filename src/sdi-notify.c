@@ -230,7 +230,8 @@ static void show_pending_update_notification(SdiNotify *self,
   NotifyNotification *notification =
       notify_notification_new(title, body, icon_name);
   if (icon_name != NULL) {
-    // don't use g_autoptr with the GVariant because it is consumed in set_hint
+    // don't use g_autoptr with the GVariant because it is a floating reference
+    // that is consumed by set_hint.
     notify_notification_set_hint(notification, "image-path",
                                  g_variant_new_string(icon_name));
   }
