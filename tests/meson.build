@@ -11,8 +11,8 @@ test_executable = executable(
   link_args: COVERAGE_LINK_ARGS,
   install: false,
 )
-
-test('Tests', test_executable)
+test('snapd-desktop-integration', test_executable,
+  timeout: 90)
 
 sdi_notify_executable = executable(
   'test-sdi-notify',
@@ -26,6 +26,7 @@ sdi_notify_executable = executable(
   link_args: COVERAGE_LINK_ARGS,
   install: false,
 )
+test('sdi-notify', sdi_notify_executable)
 
 test_sdi_notices_monitor = executable(
   'test-sdi-notices-monitor',
@@ -38,6 +39,7 @@ test_sdi_notices_monitor = executable(
   link_args: COVERAGE_LINK_ARGS,
   install: false,
 )
+test('sdi-notices-monitor', test_sdi_notices_monitor)
 
 test_sdi_progress_dock_executable = executable(
   'test-sdi-progress-dock',
@@ -49,6 +51,7 @@ test_sdi_progress_dock_executable = executable(
   link_args: COVERAGE_LINK_ARGS,
   install: false,
 )
+test('sdi-progress-dock', test_sdi_progress_dock_executable)
 
 test_sdi_progress_window_executable = executable(
   'test-sdi-progress-window',
@@ -61,6 +64,8 @@ test_sdi_progress_window_executable = executable(
   link_args: COVERAGE_LINK_ARGS,
   install: false,
 )
+test('sdi-progress-window', test_sdi_progress_window_executable,
+  timeout: 90)
 
 test_refresh_monitor = executable(
   'test-refresh-monitor',
@@ -76,7 +81,7 @@ test_refresh_monitor = executable(
   link_args: COVERAGE_LINK_ARGS,
   install: false,
 )
+test('refresh-monitor', test_refresh_monitor,
+  timeout: 90)
 
 subdir('data')
-
-test('Tests', test_executable)
