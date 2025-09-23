@@ -142,6 +142,7 @@ mock_fdo_notifications_wait_for_notification(MockFdoNotifications *self,
   gsize parameters_size;
   g_autofree gpointer serialized_parameters = NULL;
   g_autoptr(GVariant) parameters = NULL;
+  g_autoptr(GVariantType) parameters_type = NULL;
   int read_size;
   struct pollfd poll_fd;
   poll_fd.fd = self->notification_pipes[0];
@@ -164,9 +165,13 @@ mock_fdo_notifications_wait_for_notification(MockFdoNotifications *self,
     return NULL;
   }
 
-  parameters = g_variant_new_from_data(g_variant_type_new("(susssasa{sv}i)"),
-                                       serialized_parameters, parameters_size,
-                                       TRUE, g_free, serialized_parameters);
+  g_clear_pointer(&self->last_notification_data.hints, g_variant_unref);
+  g_clear_pointer(&self->last_notification_data.actions, g_strfreev);
+
+  parameters_type = g_variant_type_new("(susssasa{sv}i)");
+  parameters = g_variant_new_from_data(parameters_type, serialized_parameters,
+                                       parameters_size, TRUE, g_free,
+                                       serialized_parameters);
   serialized_parameters = NULL; // is freed by the GVariant constructor
   g_auto(GStrv) actions;
   g_autofree char *parameters_str = g_variant_print(parameters, true);
@@ -179,7 +184,7 @@ mock_fdo_notifications_wait_for_notification(MockFdoNotifications *self,
                 &self->last_notification_data.body, &actions,
                 &self->last_notification_data.hints,
                 &self->last_notification_data.expire_timeout);
-  self->last_notification_data.actions = g_strdupv(actions);
+  self->last_notification_data.actions = g_steal_pointer(&actions);
 
   read_size =
       read(self->notification_pipes[0], &self->last_notification_data.uid,
@@ -311,6 +316,9 @@ static gboolean setup_mock_notifications_dbus_server(MockFdoNotifications *self,
 
 static void mock_fdo_notifications_dispose(GObject *object) {
   MockFdoNotifications *self = MOCK_FDO_NOTIFICATIONS(object);
+
+  g_clear_pointer(&self->last_notification_data.hints, g_variant_unref);
+  g_clear_pointer(&self->last_notification_data.actions, g_strfreev);
 
   close(self->notification_pipes[0]);
   close(self->notification_pipes[1]);
