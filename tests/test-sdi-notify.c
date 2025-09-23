@@ -26,7 +26,6 @@
 
 SdiNotify *notifier = NULL;
 
-gchar *tmpdirpath = NULL;
 gchar *snap_store_icon = NULL;
 MockFdoNotifications *mock_notifications = NULL;
 
@@ -44,7 +43,7 @@ static gchar *create_desktop_file(const char *name, const char *visible_name,
                                   const char *icon) {
   g_autofree gchar *filename = g_strdup_printf("%s.desktop", name);
   gchar *desktop_path =
-      g_build_filename(tmpdirpath, "applications", filename, NULL);
+      g_build_filename(g_get_tmp_dir(), "applications", filename, NULL);
   FILE *f = fopen(desktop_path, "w");
   g_assert_nonnull(f);
   fprintf(f,
@@ -615,20 +614,15 @@ int main(int argc, char **argv) {
   mock_notifications = mock_fdo_notifications_new();
   mock_fdo_notifications_run(mock_notifications, argc, argv);
 
-  g_test_init(&argc, &argv, NULL);
-  // here we will create any temporary files
-  tmpdirpath = g_dir_make_tmp("test-sdi-notify-XXXXXXX", NULL);
+  g_test_init(&argc, &argv, G_TEST_OPTION_ISOLATE_DIRS, NULL);
 
   // This is needed to ensure that the gtk libraries can find the .desktop files
   g_autofree gchar *applications_path =
-      g_build_filename(tmpdirpath, "applications", NULL);
-  gchar *xdg_data_dirs = getenv("XDG_DATA_DIRS");
-  g_autofree gchar *new_xdg_data_dirs =
-      g_strdup_printf("%s%s%s", tmpdirpath, xdg_data_dirs ? ":" : "",
-                      xdg_data_dirs ? xdg_data_dirs : "");
-  mkdir(applications_path, 0777);
-  setenv("XDG_DATA_DIRS", new_xdg_data_dirs, TRUE);
-  g_test_message("Using XDG_DATA_DIRS: %s", new_xdg_data_dirs);
+      g_build_filename(g_get_tmp_dir(), "applications", NULL);
+  g_mkdir_with_parents(applications_path, 0700);
+  g_assert_no_errno(errno);
+  g_setenv("XDG_DATA_HOME", g_get_tmp_dir(), TRUE);
+  g_test_message("Using XDG_DATA_HOME: %s", g_get_tmp_dir());
 
   // and since we cannot guarantee that the snap-store is installed, we fake it
   snap_store_icon = get_data_path("app-center.png");
@@ -643,7 +637,6 @@ int main(int argc, char **argv) {
 
   mock_fdo_notifications_quit(mock_notifications);
   g_clear_object(&mock_notifications);
-  g_free(tmpdirpath);
   g_free(snap_store_icon);
   return 0;
 }
