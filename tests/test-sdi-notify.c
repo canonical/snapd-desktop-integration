@@ -602,7 +602,7 @@ int main(int argc, char **argv) {
 
   g_test_init(&argc, &argv, NULL);
   // here we will create any temporary files
-  tmpdirpath = g_dir_make_tmp(NULL, NULL);
+  tmpdirpath = g_dir_make_tmp("test-sdi-notify-XXXXXXX", NULL);
 
   // This is needed to ensure that the gtk libraries can find the .desktop files
   g_autofree gchar *applications_path =
@@ -613,6 +613,7 @@ int main(int argc, char **argv) {
                       xdg_data_dirs ? xdg_data_dirs : "");
   mkdir(applications_path, 0777);
   setenv("XDG_DATA_DIRS", new_xdg_data_dirs, TRUE);
+  g_test_message("Using XDG_DATA_DIRS: %s", new_xdg_data_dirs);
 
   // and since we cannot guarantee that the snap-store is installed, we fake it
   snap_store_icon = get_data_path("app-center.png");
