@@ -32,7 +32,7 @@ typedef struct {
   gchar *icon;
   gchar *icon_path;
   GStrv actions;
-  GVariantIter *hints;
+  GVariant *hints;
   guint32 expire_timeout;
   guint32 uid;
 } MockNotificationsData;
