@@ -17,9 +17,11 @@
 
 #include "mock-fdo-notifications.h"
 
+#include <errno.h>
 #include <gio/gio.h>
 #include <glib-unix.h>
 #include <poll.h>
+#include <string.h>
 #include <unistd.h>
 
 /*
@@ -348,13 +350,20 @@ void mock_fdo_notifications_run(MockFdoNotifications *self, int argc,
                                 char **argv) {
   // it is a must to run the server in another process
   int pid = fork();
+  if (pid < 0) {
+    // Fork failed
+    g_error("Failed to fork in mock notifications: %s", strerror(errno));
+    return;
+  }
   if (pid != 0) {
+    // Parent process
     gchar buffer;
     // wait until the child process has completed initialization
     read(self->notification_pipes[0], &buffer, 1);
     return;
   }
 
+  // Child process
   self->app = g_application_new("io.snapcraft.MockNotifications",
                                 G_APPLICATION_DEFAULT_FLAGS);
   g_signal_connect(self->app, "activate", (GCallback)do_activate, self);

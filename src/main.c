@@ -24,6 +24,7 @@
 #include <locale.h>
 #include <signal.h>
 #include <snapd-glib/snapd-glib.h>
+#include <string.h>
 #include <sys/wait.h>
 #include <syslog.h>
 #include <unistd.h>
@@ -136,7 +137,13 @@ static gboolean close_app(GApplication *application) {
 int main(int argc, char **argv) {
   int retval;
   int pid = fork();
+  if (pid < 0) {
+    // Fork failed
+    g_error("Failed to fork: %s", strerror(errno));
+    return 1;
+  }
   if (pid != 0) {
+    // Parent process
     if (pid > 0) {
       /* SIGTERM and SIGINT will be ignored, but
        * will break WAITPID with a EINTR value in
@@ -160,6 +167,7 @@ int main(int argc, char **argv) {
     return global_retval;
   }
 
+  // Child process
   setlocale(LC_ALL, "");
   bindtextdomain(GETTEXT_PACKAGE, LOCALEDIR);
   textdomain(GETTEXT_PACKAGE);
