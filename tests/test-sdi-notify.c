@@ -38,15 +38,15 @@ static gchar *get_data_path(gchar *resource_name) {
   return g_canonicalize_filename(path, NULL);
 }
 
-static gchar *create_desktop_file(gchar *name, gchar *visible_name,
-                                  gchar *icon) {
+static gchar *create_desktop_file(const char *name, const char *visible_name,
+                                  const char *icon) {
   g_autofree gchar *filename = g_strdup_printf("%s.desktop", name);
   gchar *desktop_path =
       g_build_filename(tmpdirpath, "applications", filename, NULL);
   FILE *f = fopen(desktop_path, "w");
   g_assert_nonnull(f);
   fprintf(f,
-          "[Desktop Entry]\nVersion=1.0\nType=Application\nExec=/bin/ls "
+          "[Desktop Entry]\nVersion=1.0\nType=Application\nExec=/usr/bin/true "
           "This is application %s\n",
           visible_name);
   if (visible_name != NULL) {
