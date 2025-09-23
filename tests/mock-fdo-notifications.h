@@ -46,6 +46,7 @@ gboolean mock_fdo_notifications_setup_session_bus(GError **error);
 
 void mock_fdo_notifications_run(MockFdoNotifications *mock, int argc,
                                 char **argv);
+void mock_fdo_notifications_quit(MockFdoNotifications *self);
 
 MockNotificationsData *
 mock_fdo_notifications_wait_for_notification(MockFdoNotifications *mock,

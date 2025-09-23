@@ -67,6 +67,7 @@ struct _MockFdoNotifications {
   MockNotificationsData last_notification_data;
   gboolean updated;
   guint32 current_uid;
+  int child_pid;
   int notification_pipes[2];
   int actions_pipes[2];
   guint actions_source;
@@ -330,6 +331,8 @@ static void mock_fdo_notifications_dispose(GObject *object) {
     g_clear_object(&self->dbus_subprocess);
   }
 
+  g_clear_object(&self->app);
+
   G_OBJECT_CLASS(mock_fdo_notifications_parent_class)->dispose(object);
 }
 
@@ -361,6 +364,9 @@ void mock_fdo_notifications_run(MockFdoNotifications *self, int argc,
   int pid = fork();
   if (pid != 0) {
     gchar buffer;
+
+    self->child_pid = pid;
+
     // wait until the child process has completed initialization
     read(self->notification_pipes[0], &buffer, 1);
     return;
@@ -372,7 +378,11 @@ void mock_fdo_notifications_run(MockFdoNotifications *self, int argc,
   self->actions_source = g_unix_fd_add(self->actions_pipes[0], G_IO_IN,
                                        (GUnixFDSourceFunc)send_action, self);
   g_application_run(self->app, argc, argv);
-  exit(0);
+  g_signal_connect(self->app, "shutdown", G_CALLBACK(g_object_unref), NULL);
+}
+
+void mock_fdo_notifications_quit(MockFdoNotifications *self) {
+  kill(self->child_pid, SIGTERM);
 }
 
 static void mock_fdo_notifications_init(MockFdoNotifications *self) {

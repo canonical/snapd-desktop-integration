@@ -572,7 +572,7 @@ void test_update_available_10() {
  * Notify emulator callbacks
  */
 
-void run_tests() { g_print("Listo\n"); }
+void run_tests() { g_test_message("Ready!"); }
 
 /**
  * GApplication callbacks
@@ -599,7 +599,9 @@ static void do_activate(GObject *object, gpointer data) {
   g_test_add_func("/update_forced/test10", test_update_available_10);
 
   g_test_run();
+
   g_application_release(G_APPLICATION(object));
+  g_application_quit(G_APPLICATION(object));
 }
 
 int main(int argc, char **argv) {
@@ -638,6 +640,9 @@ int main(int argc, char **argv) {
   g_signal_connect(app, "startup", (GCallback)do_startup, NULL);
   g_signal_connect(app, "activate", (GCallback)do_activate, NULL);
   g_application_run(app, argc, argv);
+
+  mock_fdo_notifications_quit(mock_notifications);
+  g_clear_object(&mock_notifications);
   g_free(tmpdirpath);
   g_free(snap_store_icon);
   return 0;
