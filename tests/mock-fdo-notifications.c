@@ -20,6 +20,7 @@
 #include <gio/gio.h>
 #include <glib-unix.h>
 #include <poll.h>
+#include <stdbool.h>
 #include <unistd.h>
 
 /*
@@ -168,6 +169,8 @@ mock_fdo_notifications_wait_for_notification(MockFdoNotifications *self,
                                        TRUE, g_free, serialized_parameters);
   serialized_parameters = NULL; // is freed by the GVariant constructor
   g_auto(GStrv) actions;
+  g_autofree char *parameters_str = g_variant_print(parameters, true);
+  g_test_message("Notify Called with parameters: %s", parameters_str);
   g_variant_get(parameters, "(&su&s&s&s^asa{sv}i)",
                 &self->last_notification_data.app_name,
                 &self->last_notification_data.replaces_id,
