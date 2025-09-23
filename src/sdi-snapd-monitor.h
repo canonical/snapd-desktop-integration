@@ -18,6 +18,7 @@
 #pragma once
 
 #include <snapd-glib/snapd-glib.h>
+#include <stdbool.h>
 
 G_BEGIN_DECLS
 
@@ -28,6 +29,6 @@ G_DECLARE_FINAL_TYPE(SdiSnapdMonitor, sdi_snapd_monitor, SDI, SNAPD_MONITOR,
 
 SdiSnapdMonitor *sdi_snapd_monitor_new();
 
-gboolean sdi_snapd_monitor_start(SdiSnapdMonitor *self);
+bool sdi_snapd_monitor_start(SdiSnapdMonitor *self);
 
 G_END_DECLS
