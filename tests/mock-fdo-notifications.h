@@ -25,12 +25,12 @@ G_BEGIN_DECLS
 #define MOCK_FDO_TYPE_NOTIFICATIONS mock_fdo_notifications_get_type()
 
 typedef struct {
-  gchar *app_name;
+  const gchar *app_name;
   guint32 replaces_id;
-  gchar *title;
-  gchar *body;
-  gchar *icon;
-  gchar *icon_path;
+  const gchar *title;
+  const gchar *body;
+  const gchar *icon;
+  const gchar *icon_path;
   GStrv actions;
   GVariant *hints;
   guint32 expire_timeout;
