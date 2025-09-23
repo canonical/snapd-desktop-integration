@@ -17,6 +17,11 @@
 
 #include "sdi-helpers.h"
 
+/**
+ * Analyzes a SnapdSnap and uses several heuristics to return the most
+ * suitable .desktop file to use for extracting a "beautiful name",
+ * icon...
+ */
 GAppInfo *sdi_get_desktop_file_from_snap(SnapdSnap *snap) {
   GPtrArray *apps = snapd_snap_get_apps(snap);
   if ((apps == NULL) || (apps->len == 0)) {

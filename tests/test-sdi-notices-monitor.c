@@ -91,7 +91,7 @@ static void test_notices_events_are_received(void) {
 
   create_notice(snapd, "change-update");
 
-  sdi_snapd_monitor_start(snapd_monitor);
+  g_assert_true(sdi_snapd_monitor_start(snapd_monitor));
   g_main_loop_run(loop);
   g_assert_cmpint(data->counter, ==, 2);
   g_object_unref(data->snapd); // it has two references

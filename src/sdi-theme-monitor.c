@@ -19,6 +19,7 @@
 #include <glib/gi18n.h>
 #include <gtk/gtk.h>
 #include <libnotify/notify.h>
+#include <stdbool.h>
 
 struct _SdiThemeMonitor {
   GObject parent_instance;
@@ -41,7 +42,7 @@ struct _SdiThemeMonitor {
 
   /* The desktop notifications */
   NotifyNotification *install_notification;
-  gboolean install_notification_answered;
+  bool install_notification_answered;
   NotifyNotification *progress_notification;
 
   // Connection to snapd.
@@ -92,7 +93,7 @@ static void notification_closed_cb(NotifyNotification *notification,
                                    SdiThemeMonitor *self) {
   /* Notification has been closed: */
   g_clear_object(&self->install_notification);
-  self->install_notification_answered = FALSE;
+  self->install_notification_answered = false;
 }
 
 static void notify_cb(NotifyNotification *notification, gchar *action,
@@ -110,11 +111,11 @@ static void notify_cb(NotifyNotification *notification, gchar *action,
    * so we have to do it "manually".
    */
 
-  if (self->install_notification_answered == TRUE) {
+  if (self->install_notification_answered) {
     return;
   }
 
-  self->install_notification_answered = TRUE;
+  self->install_notification_answered = true;
   if ((strcmp(action, "yes") == 0) || (strcmp(action, "default") == 0)) {
     g_message("Installing missing theme snaps...\n");
     self->progress_notification = notify_notification_new(
@@ -215,7 +216,7 @@ static void check_themes_cb(GObject *object, GAsyncResult *result,
     self->sound_theme_status = SNAPD_THEME_STATUS_UNAVAILABLE;
   }
 
-  gboolean themes_available =
+  bool themes_available =
       self->gtk_theme_status == SNAPD_THEME_STATUS_AVAILABLE ||
       self->icon_theme_status == SNAPD_THEME_STATUS_AVAILABLE ||
       self->cursor_theme_status == SNAPD_THEME_STATUS_AVAILABLE ||

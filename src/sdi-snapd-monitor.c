@@ -107,9 +107,9 @@ SdiSnapdMonitor *sdi_snapd_monitor_new() {
   return g_object_new(SDI_TYPE_SNAPD_MONITOR, NULL);
 }
 
-gboolean sdi_snapd_monitor_start(SdiSnapdMonitor *self) {
-  g_return_val_if_fail(SDI_IS_SNAPD_MONITOR(self), FALSE);
+bool sdi_snapd_monitor_start(SdiSnapdMonitor *self) {
+  g_return_val_if_fail(SDI_IS_SNAPD_MONITOR(self), false);
 
   snapd_notices_monitor_start(self->snapd_monitor, NULL);
-  return TRUE;
+  return true;
 }

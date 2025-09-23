@@ -144,7 +144,7 @@ int main(int argc, char **argv) {
        * This allows the program to always exit with
        * a NO-ERROR value, and kill the child
        */
-      struct sigaction signal_data;
+      struct sigaction signal_data = {0};
       signal_data.sa_handler = sighandler;
       sigemptyset(&signal_data.sa_mask);
       signal_data.sa_flags = 0;
