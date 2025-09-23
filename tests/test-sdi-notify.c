@@ -86,6 +86,22 @@ static gboolean has_action(GStrv actions, gchar *action, gchar *text) {
   return FALSE;
 }
 
+static void assert_notification_hint(MockNotificationsData *data,
+                                     const char *hint,
+                                     GVariant *expected_value) {
+  g_autoptr(GVariant) expected_ref = g_variant_ref_sink(expected_value);
+  g_autoptr(GVariant) value = g_variant_lookup_value(
+      data->hints, hint, g_variant_get_type(expected_value));
+  g_assert_nonnull(value);
+
+  g_autofree char *expected_value_str = g_variant_print(expected_value, TRUE);
+  g_autofree char *value_str = g_variant_print(value, TRUE);
+  g_test_message("Expected hint for %s: %s", hint, expected_value_str);
+  g_test_message("Actual hint for %s: %s", hint, value_str);
+
+  g_assert_true(g_variant_equal(value, expected_ref));
+}
+
 static gchar *wait_for_notification_close_cb(GObject *self, gchar *param,
                                              gpointer data) {
   static GMainLoop *loop = NULL;

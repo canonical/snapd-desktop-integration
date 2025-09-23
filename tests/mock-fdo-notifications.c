@@ -171,7 +171,7 @@ mock_fdo_notifications_wait_for_notification(MockFdoNotifications *self,
   g_auto(GStrv) actions;
   g_autofree char *parameters_str = g_variant_print(parameters, true);
   g_test_message("Notify Called with parameters: %s", parameters_str);
-  g_variant_get(parameters, "(&su&s&s&s^asa{sv}i)",
+  g_variant_get(parameters, "(&su&s&s&s^as@a{sv}i)",
                 &self->last_notification_data.app_name,
                 &self->last_notification_data.replaces_id,
                 &self->last_notification_data.icon_path,
