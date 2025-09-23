@@ -3,6 +3,24 @@ conf.set_quoted('DAEMON_BUILDDIR', daemon_builddir)
 configure_file(output: 'config.h',
                configuration: conf)
 
+wlheadless_run = find_program('wlheadless-run', required: false)
+weston = find_program('weston', required: false)
+
+test_environment = environment()
+test_environment.set('GSETTINGS_BACKEND', 'memory')
+
+add_test_setup('default',
+  is_default: true,
+  env: test_environment,
+)
+
+add_test_setup('headless',
+  env: test_environment,
+  exe_wrapper: wlheadless_run.found() and weston.found() ? [
+    wlheadless_run, '-c', fs.name(weston.full_path()), '--'
+  ] : [],
+)
+
 test_executable = executable(
   'test-snapd-desktop-integration',
   'test-snapd-desktop-integration.c',
