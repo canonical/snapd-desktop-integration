@@ -22,6 +22,18 @@ jobs:
           ninja -C _build
           sudo ninja -C _build install
           cd ..
+      - name: Build libnotify
+        run: |
+          git clone https://gitlab.gnome.org/GNOME/libnotify.git
+          cd libnotify
+          meson setup _build --prefix=/usr \
+            -Dgtk_doc=false \
+            -Dman=false \
+            -Dintrospection=disabled \
+            -Dtests=false
+          ninja -C _build
+          sudo ninja -C _build install
+          cd ..
       - name: Build
         run: |
           meson setup _build
