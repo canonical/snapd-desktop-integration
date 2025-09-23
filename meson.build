@@ -1,5 +1,7 @@
 project('snapd-desktop-integration', 'c', version: '0.9', meson_version: '>= 0.64.0')
 
+fs = import('fs')
+
 if get_option('gnotify')
     add_global_arguments('-DUSE_GNOTIFY', language: 'c')
 endif
