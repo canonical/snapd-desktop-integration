@@ -83,7 +83,7 @@ static gboolean sdi_session_is_desktop(const gchar *object_path) {
 }
 
 static gboolean sdi_check_graphical_sessions(Login1Manager *login_manager) {
-  GVariant *sessions = NULL;
+  g_autoptr(GVariant) sessions = NULL;
   gboolean got_session_list;
 
   got_session_list = login1_manager_call_list_sessions_sync(
@@ -104,7 +104,7 @@ static gboolean sdi_check_graphical_sessions(Login1Manager *login_manager) {
     if (session == NULL) {
       continue;
     }
-    g_autofree gchar *session_object;
+    g_autofree gchar *session_object = NULL;
     g_variant_get(session, "(susso)", NULL, NULL, NULL, NULL, &session_object);
     g_debug("Checking session %s...", session_object);
     if (sdi_session_is_desktop(session_object)) {
@@ -170,7 +170,7 @@ bool sdi_wait_for_graphical_session(void) {
   g_clear_signal_handler(&session_new_id, login_manager);
 
   /* Now we know that we are in a graphical session, so now wait for
-   * one of the valid DBus well-known names to be acquired by a process, to
+   * the DBus well-known name NAME_TO_WATCH to be acquired by a process, to
    * guarantee that the system is ready
    */
 
