@@ -103,7 +103,7 @@ static void sdi_snapd_monitor_class_init(SdiSnapdMonitorClass *klass) {
                G_TYPE_BOOLEAN);
 }
 
-SdiSnapdMonitor *sdi_snapd_monitor_new() {
+SdiSnapdMonitor *sdi_snapd_monitor_new(void) {
   return g_object_new(SDI_TYPE_SNAPD_MONITOR, NULL);
 }
 

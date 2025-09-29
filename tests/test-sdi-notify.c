@@ -107,7 +107,7 @@ static gchar *wait_for_notification_close_cb(GObject *self, gchar *param,
   return NULL;
 }
 
-static gchar *wait_for_notification_close() {
+static gchar *wait_for_notification_close(void) {
   return wait_for_notification_close_cb(NULL, NULL, NULL);
 }
 
@@ -142,7 +142,7 @@ void test_update_available_1() {
   mock_fdo_notifications_send_action(mock_notifications, data->uid,
                                      "app.show-updates");
 
-  g_autofree gchar *result = wait_for_notification_close(NULL, NULL);
+  g_autofree gchar *result = wait_for_notification_close();
   unlink(desktop_file); // delete desktop file
   g_assert_cmpstr(result, ==, "show-updates");
 }
@@ -173,7 +173,7 @@ void test_update_available_2() {
 
   mock_fdo_notifications_send_action(mock_notifications, data->uid, "default");
 
-  g_autofree gchar *result = wait_for_notification_close(NULL, NULL);
+  g_autofree gchar *result = wait_for_notification_close();
   unlink(desktop_file); // delete desktop file
   g_assert_cmpstr(result, ==, "show-updates");
 }
@@ -226,7 +226,7 @@ void test_update_available_3() {
                               (GCallback)test_ignore_event_cb, &signal_counter);
 
   // run the test
-  g_autofree gchar *result = wait_for_notification_close(NULL, NULL);
+  g_autofree gchar *result = wait_for_notification_close();
   unlink(desktop_file); // delete desktop file
   g_signal_handler_disconnect(notifier, sid);
 
@@ -275,7 +275,7 @@ void test_update_available_4() {
   mock_fdo_notifications_send_action(mock_notifications, data->uid,
                                      "app.ignore-notification");
 
-  g_autofree gchar *result = wait_for_notification_close(NULL, NULL);
+  g_autofree gchar *result = wait_for_notification_close();
   unlink(desktop_file1); // delete desktop file
   unlink(desktop_file2); // delete desktop file
   g_signal_handler_disconnect(notifier, sid);
@@ -329,7 +329,7 @@ void test_update_available_5() {
   mock_fdo_notifications_send_action(mock_notifications, data->uid,
                                      "app.ignore-notification");
 
-  g_autofree gchar *result = wait_for_notification_close(NULL, NULL);
+  g_autofree gchar *result = wait_for_notification_close();
   unlink(desktop_file1); // delete desktop file
   unlink(desktop_file2); // delete desktop file
   unlink(desktop_file3); // delete desktop file
@@ -388,7 +388,7 @@ void test_update_available_6() {
   mock_fdo_notifications_send_action(mock_notifications, data->uid,
                                      "app.ignore-notification");
 
-  g_autofree gchar *result = wait_for_notification_close(NULL, NULL);
+  g_autofree gchar *result = wait_for_notification_close();
   unlink(desktop_file1); // delete desktop file
   unlink(desktop_file2); // delete desktop file
   unlink(desktop_file3); // delete desktop file
@@ -418,7 +418,7 @@ void test_update_available_7() {
 
   mock_fdo_notifications_send_action(mock_notifications, data->uid, "default");
 
-  g_autofree gchar *result = wait_for_notification_close(NULL, NULL);
+  g_autofree gchar *result = wait_for_notification_close();
   unlink(desktop_file1); // delete desktop file
   g_autofree gchar *expected =
       g_strdup_printf("app-launch-updated %s", desktop_file1);
@@ -449,7 +449,7 @@ void test_update_available_8() {
 
   mock_fdo_notifications_send_action(mock_notifications, data->uid, "default");
 
-  g_autofree gchar *result = wait_for_notification_close(NULL, NULL);
+  g_autofree gchar *result = wait_for_notification_close();
   unlink(desktop_file1); // delete desktop file
   g_assert_cmpstr(result, ==, "show-updates");
 }
@@ -477,7 +477,7 @@ void test_update_available_9() {
   g_assert_true(has_action(data->actions, "app.show-updates", "Show updates"));
 
   mock_fdo_notifications_send_action(mock_notifications, data->uid, "default");
-  g_autofree gchar *result = wait_for_notification_close(NULL, NULL);
+  g_autofree gchar *result = wait_for_notification_close();
   unlink(desktop_file1); // delete desktop file
   g_assert_cmpstr(result, ==, "show-updates");
 }
@@ -516,7 +516,7 @@ void test_update_available_10() {
   mock_fdo_notifications_send_action(mock_notifications, data->uid,
                                      "app.ignore-notification");
 
-  g_autofree gchar *result = wait_for_notification_close(NULL, NULL);
+  g_autofree gchar *result = wait_for_notification_close();
   unlink(desktop_file1); // delete desktop file
   g_signal_handler_disconnect(notifier, sid);
   g_assert_cmpstr(result, ==, "ignore-snaps");

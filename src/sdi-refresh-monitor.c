@@ -630,7 +630,7 @@ void sdi_refresh_monitor_class_init(SdiRefreshMonitorClass *klass) {
                NULL, NULL, NULL, G_TYPE_NONE, 1, G_TYPE_STRING);
 }
 
-SdiRefreshMonitor *sdi_refresh_monitor_new() {
+SdiRefreshMonitor *sdi_refresh_monitor_new(void) {
   SdiRefreshMonitor *self = g_object_new(SDI_TYPE_REFRESH_MONITOR, NULL);
   return self;
 }

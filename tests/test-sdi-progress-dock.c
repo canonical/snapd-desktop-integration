@@ -41,7 +41,7 @@ static void wait_for_events(guint timeout, guint changes) {
 
 // these are the actual tests
 
-static void test_progress_bar() {
+static void test_progress_bar(void) {
   g_assert_false(updating_value);
   g_assert_false(progress_visible_value);
   g_assert_cmpfloat_with_epsilon(progress_value, -1.0, DBL_EPSILON);
@@ -68,7 +68,7 @@ static void test_progress_bar() {
   g_assert_cmpfloat_with_epsilon(progress_value, 10 / 10.0, DBL_EPSILON);
 }
 
-static void test_updating() {
+static void test_updating(void) {
   g_assert_true(updating_value);
   g_assert_true(progress_visible_value);
 

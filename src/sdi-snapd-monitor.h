@@ -27,7 +27,7 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE(SdiSnapdMonitor, sdi_snapd_monitor, SDI, SNAPD_MONITOR,
                      GObject)
 
-SdiSnapdMonitor *sdi_snapd_monitor_new();
+SdiSnapdMonitor *sdi_snapd_monitor_new(void);
 
 bool sdi_snapd_monitor_start(SdiSnapdMonitor *self);
 
