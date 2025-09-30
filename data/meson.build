@@ -8,6 +8,12 @@ login_src = gnome.gdbus_codegen('org.freedesktop.login1',
   interface_prefix : 'org.freedesktop'
 )
 
+dbus_server_src = gnome.gdbus_codegen('org.freedesktop.DBus',
+  sources: 'org.freedesktop.DBus.dbus.xml',
+  interface_prefix : 'org.freedesktop.DBus',
+  namespace: 'dbus_server'
+)
+
 login_session_src = gnome.gdbus_codegen('org.freedesktop.login1.Session',
   sources: 'org.freedesktop.login1.session.dbus.xml',
   interface_prefix : 'org.freedesktop.login1.session'

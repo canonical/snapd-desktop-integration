@@ -72,7 +72,7 @@ test_refresh_monitor = executable(
   '../src/sdi-snapd-client-factory.c',
   resources,
   dependencies: [gtk_dep, snapd_glib_dep, gio_dep, libsoup_dep, json_glib_dep],
-  c_args: ['-DDEBUG_TESTS','-DSNAPS_DESKTOP_FILES_FOLDER="' + meson.source_root() + '/tests/data/applications"'] + COVERAGE_C_ARGS,
+  c_args: ['-DDEBUG_TESTS','-DSNAPS_DESKTOP_FILES_FOLDER="' + meson.project_source_root() + '/tests/data/applications"'] + COVERAGE_C_ARGS,
   link_args: COVERAGE_LINK_ARGS,
   install: false,
 )

@@ -13,11 +13,10 @@ snapd_desktop_integration = executable(
   'sdi-progress-dock.c',
   'sdi-progress-window.c',
   'sdi-theme-monitor.c',
-  'sdi-user-session-helper.c',
   'sdi-helpers.c',
   'sdi-snapd-monitor.c',
   'sdi-snapd-client-factory.c',
-  resources, login_src, login_session_src, unity_launcher_src, desktop_launcher_src,
+  resources, dbus_server_src, login_src, login_session_src, unity_launcher_src, desktop_launcher_src,
   dependencies: [gtk_dep, snapd_glib_dep, libnotify_dep],
   install: DO_INSTALL,
   c_args: COVERAGE_C_ARGS,
@@ -25,3 +24,5 @@ snapd_desktop_integration = executable(
 )
 
 daemon_builddir = meson.current_build_dir()
+
+subdir('user-session-helper')
