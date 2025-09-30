@@ -40,7 +40,7 @@ typedef struct {
 G_DECLARE_FINAL_TYPE(MockFdoNotifications, mock_fdo_notifications, MOCK_FDO,
                      NOTIFICATIONS, GObject)
 
-MockFdoNotifications *mock_fdo_notifications_new();
+MockFdoNotifications *mock_fdo_notifications_new(void);
 
 gboolean mock_fdo_notifications_setup_session_bus(GError **error);
 

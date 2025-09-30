@@ -229,7 +229,7 @@ static gboolean setup_session_bus(GError **error) {
   return TRUE;
 }
 
-static gboolean launch_snapd_desktop_integration() {
+static gboolean launch_snapd_desktop_integration(void) {
   g_autoptr(GSubprocessLauncher) launcher =
       g_subprocess_launcher_new(G_SUBPROCESS_FLAGS_NONE);
   g_subprocess_launcher_setenv(launcher, "LC_ALL", "C", TRUE);
@@ -434,7 +434,7 @@ void timeout_no_install(GMainLoop *loop) {
   g_main_loop_quit(loop);
 }
 
-static void set_test_settings() {
+static void set_test_settings(void) {
   set_setting("org.gnome.desktop.interface", "gtk-theme", "GtkTheme1");
   set_setting("org.gnome.desktop.interface", "icon-theme", "IconTheme1");
   set_setting("org.gnome.desktop.interface", "cursor-theme", "CursorTheme1");

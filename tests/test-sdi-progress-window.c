@@ -52,7 +52,7 @@ static void show_progress_window(gchar *snap_name, gchar *desktop_file) {
  * This is done inside Gtk itself, thus ensuring that the desired
  * widgets have been created.
  */
-static int count_progress_childs() {
+static int count_progress_childs(void) {
   GtkWindow *window =
       GTK_WINDOW(sdi_progress_window_get_window(progress_window));
   // to differentiate between window existing and zero elements, and no window
@@ -140,7 +140,7 @@ static GtkWidget *find_progress_by_description(const gchar *program_name) {
   return NULL;
 }
 
-static int count_hash_childs() {
+static int count_hash_childs(void) {
   GHashTable *table = sdi_progress_window_get_dialogs(progress_window);
   g_assert_nonnull(table);
   return g_hash_table_size(table);
@@ -205,7 +205,7 @@ typedef enum {
  * 3: any of the progress status elements is not visible
  * 4: all the elements are visible
  */
-static VisibilityLevel check_full_visibility() {
+static VisibilityLevel check_full_visibility(void) {
   GtkWindow *window =
       GTK_WINDOW(sdi_progress_window_get_window(progress_window));
   // to differentiate between window existing and zero elements, and no window
@@ -323,7 +323,7 @@ static bool press_hide_button(GtkWidget *element) {
 
 // these are the actual tests
 
-static void test_progress_bar() {
+static void test_progress_bar(void) {
   g_assert_cmpint(count_hash_childs(), ==, 0);
   g_assert_cmpint(count_progress_childs(), ==, -1);
 
@@ -361,7 +361,7 @@ static void test_progress_bar() {
   g_assert_cmpint(check_widgets_visibility(element), ==, ALL_BUT_ICON_VISIBLE);
 }
 
-static void test_pulse_bar() {
+static void test_pulse_bar(void) {
   g_assert_cmpint(count_hash_childs(), ==, 1);
   g_assert_cmpint(count_progress_childs(), ==, 1);
 
@@ -382,7 +382,7 @@ static void test_pulse_bar() {
   g_assert_cmpint(check_widgets_visibility(element), ==, ALL_BUT_ICON_VISIBLE);
 }
 
-static void test_close_bar() {
+static void test_close_bar(void) {
   GtkWidget *element = find_progress_by_description("KiCad-no-icon");
   g_assert_nonnull(element);
 
@@ -395,7 +395,7 @@ static void test_close_bar() {
   g_assert_cmpint(count_progress_childs(), ==, -1);
 }
 
-static void test_manual_hide() {
+static void test_manual_hide(void) {
   show_progress_window("B-SNAP", *(app_list + 1));
 
   GtkWidget *element = find_progress_by_description("Document Scanner");
@@ -413,7 +413,7 @@ static void test_manual_hide() {
   g_assert_cmpint(count_progress_childs(), ==, -1);
 }
 
-static void test_dual_progress_bar1() {
+static void test_dual_progress_bar1(void) {
   show_progress_window("C-SNAP", *(app_list));
   g_assert_cmpint(count_hash_childs(), ==, 1);
   g_assert_cmpint(count_progress_childs(), ==, 1);
@@ -439,7 +439,7 @@ static void test_dual_progress_bar1() {
   g_assert_cmpint(check_widgets_visibility(element), ==, ALL_BUT_ICON_VISIBLE);
 }
 
-static void test_dual_progress_bar2() {
+static void test_dual_progress_bar2(void) {
   show_progress_window("D-SNAP", *(app_list + 1));
   g_assert_cmpint(count_hash_childs(), ==, 2);
   g_assert_cmpint(count_progress_childs(), ==, 2);
@@ -489,7 +489,7 @@ static void test_dual_progress_bar2() {
   g_assert_cmpint(check_widgets_visibility(element2), ==, ALL_VISIBLE);
 }
 
-static void test_dual_progress_bar3() {
+static void test_dual_progress_bar3(void) {
   sdi_progress_window_end_refresh(progress_window, "C-SNAP");
   g_assert_cmpint(count_hash_childs(), ==, 1);
   g_assert_cmpint(count_progress_childs(), ==, 1);
@@ -502,7 +502,7 @@ static void test_dual_progress_bar3() {
   g_assert_cmpint(check_widgets_visibility(element), ==, ALL_VISIBLE);
 }
 
-static void test_dual_progress_bar4() {
+static void test_dual_progress_bar4(void) {
   sdi_progress_window_end_refresh(progress_window, "D-SNAP");
   g_assert_cmpint(count_hash_childs(), ==, 0);
   g_assert_cmpint(count_progress_childs(), ==, -1);
@@ -538,12 +538,12 @@ static void do_activate(GApplication *app, gpointer data) {
   g_application_release(app);
 }
 
-static gchar *get_data_path() {
+static gchar *get_data_path(void) {
   g_autofree gchar *path = g_test_build_filename(G_TEST_BUILT, "data", NULL);
   return g_canonicalize_filename(path, NULL);
 }
 
-void set_environment() {
+void set_environment(void) {
   g_autofree gchar *share_path = get_data_path();
   g_autofree gchar *newvar = g_strdup_printf("%s:/usr/share/", share_path);
   g_setenv("XDG_DATA_DIRS", newvar, TRUE);

@@ -79,7 +79,7 @@ static void free_received_signal_data(ReceivedSignalData *data) {
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(ReceivedSignalData, free_received_signal_data);
 
-static void clear_received_signals() {
+static void clear_received_signals(void) {
   if (received_signals == NULL) {
     return;
   }
@@ -203,7 +203,7 @@ static ReceivedSignalData *wait_for_signal(ReceivedSignal desired_signal,
   return data;
 }
 
-static void reset_mock_snapd() {
+static void reset_mock_snapd(void) {
   g_clear_object(&snapd_monitor);
   g_clear_object(&snapd);
   g_clear_object(&refresh_monitor);
@@ -226,7 +226,7 @@ static void reset_mock_snapd() {
 
   g_assert_true(snapd_notices_monitor_start(snapd_monitor, &error));
 
-  refresh_monitor = sdi_refresh_monitor_new(NULL);
+  refresh_monitor = sdi_refresh_monitor_new();
 
   g_signal_connect(refresh_monitor, "notify-pending-refresh",
                    (GCallback)notify_pending_refresh_cb, NULL);

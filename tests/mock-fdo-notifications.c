@@ -374,7 +374,7 @@ mock_fdo_notifications_class_init(MockFdoNotificationsClass *klass) {
   G_OBJECT_CLASS(klass)->dispose = mock_fdo_notifications_dispose;
 }
 
-MockFdoNotifications *mock_fdo_notifications_new() {
+MockFdoNotifications *mock_fdo_notifications_new(void) {
   return g_object_new(MOCK_FDO_TYPE_NOTIFICATIONS, NULL);
 }
 
