@@ -20,6 +20,7 @@
 #include <gio/gio.h>
 #include <glib-unix.h>
 #include <poll.h>
+#include <stdbool.h>
 #include <unistd.h>
 
 /*
@@ -66,6 +67,7 @@ struct _MockFdoNotifications {
   MockNotificationsData last_notification_data;
   gboolean updated;
   guint32 current_uid;
+  int child_pid;
   int notification_pipes[2];
   int actions_pipes[2];
   guint actions_source;
@@ -141,6 +143,7 @@ mock_fdo_notifications_wait_for_notification(MockFdoNotifications *self,
   gsize parameters_size;
   g_autofree gpointer serialized_parameters = NULL;
   g_autoptr(GVariant) parameters = NULL;
+  g_autoptr(GVariantType) parameters_type = NULL;
   int read_size;
   struct pollfd poll_fd;
   poll_fd.fd = self->notification_pipes[0];
@@ -163,12 +166,18 @@ mock_fdo_notifications_wait_for_notification(MockFdoNotifications *self,
     return NULL;
   }
 
-  parameters = g_variant_new_from_data(g_variant_type_new("(susssasa{sv}i)"),
-                                       serialized_parameters, parameters_size,
-                                       TRUE, g_free, serialized_parameters);
+  g_clear_pointer(&self->last_notification_data.hints, g_variant_unref);
+  g_clear_pointer(&self->last_notification_data.actions, g_strfreev);
+
+  parameters_type = g_variant_type_new("(susssasa{sv}i)");
+  parameters = g_variant_new_from_data(parameters_type, serialized_parameters,
+                                       parameters_size, TRUE, g_free,
+                                       serialized_parameters);
   serialized_parameters = NULL; // is freed by the GVariant constructor
   g_auto(GStrv) actions;
-  g_variant_get(parameters, "(&su&s&s&s^asa{sv}i)",
+  g_autofree char *parameters_str = g_variant_print(parameters, true);
+  g_test_message("Notify Called with parameters: %s", parameters_str);
+  g_variant_get(parameters, "(&su&s&s&s^as@a{sv}i)",
                 &self->last_notification_data.app_name,
                 &self->last_notification_data.replaces_id,
                 &self->last_notification_data.icon_path,
@@ -176,7 +185,7 @@ mock_fdo_notifications_wait_for_notification(MockFdoNotifications *self,
                 &self->last_notification_data.body, &actions,
                 &self->last_notification_data.hints,
                 &self->last_notification_data.expire_timeout);
-  self->last_notification_data.actions = g_strdupv(actions);
+  self->last_notification_data.actions = g_steal_pointer(&actions);
 
   read_size =
       read(self->notification_pipes[0], &self->last_notification_data.uid,
@@ -309,6 +318,9 @@ static gboolean setup_mock_notifications_dbus_server(MockFdoNotifications *self,
 static void mock_fdo_notifications_dispose(GObject *object) {
   MockFdoNotifications *self = MOCK_FDO_NOTIFICATIONS(object);
 
+  g_clear_pointer(&self->last_notification_data.hints, g_variant_unref);
+  g_clear_pointer(&self->last_notification_data.actions, g_strfreev);
+
   close(self->notification_pipes[0]);
   close(self->notification_pipes[1]);
   close(self->actions_pipes[0]);
@@ -318,6 +330,8 @@ static void mock_fdo_notifications_dispose(GObject *object) {
     g_subprocess_force_exit(self->dbus_subprocess);
     g_clear_object(&self->dbus_subprocess);
   }
+
+  g_clear_object(&self->app);
 
   G_OBJECT_CLASS(mock_fdo_notifications_parent_class)->dispose(object);
 }
@@ -350,6 +364,9 @@ void mock_fdo_notifications_run(MockFdoNotifications *self, int argc,
   int pid = fork();
   if (pid != 0) {
     gchar buffer;
+
+    self->child_pid = pid;
+
     // wait until the child process has completed initialization
     read(self->notification_pipes[0], &buffer, 1);
     return;
@@ -361,7 +378,11 @@ void mock_fdo_notifications_run(MockFdoNotifications *self, int argc,
   self->actions_source = g_unix_fd_add(self->actions_pipes[0], G_IO_IN,
                                        (GUnixFDSourceFunc)send_action, self);
   g_application_run(self->app, argc, argv);
-  exit(0);
+  g_signal_connect(self->app, "shutdown", G_CALLBACK(g_object_unref), NULL);
+}
+
+void mock_fdo_notifications_quit(MockFdoNotifications *self) {
+  kill(self->child_pid, SIGTERM);
 }
 
 static void mock_fdo_notifications_init(MockFdoNotifications *self) {

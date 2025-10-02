@@ -10,6 +10,8 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v3
+      - name: Setup build environment
+        uses: canonical/desktop-engineering/gh-actions/common/dpkg-install-speedup@main
       - name: Install dependencies
         run: |
           sudo apt update
@@ -22,26 +24,23 @@ jobs:
           ninja -C _build
           sudo ninja -C _build install
           cd ..
+      - name: Build libnotify
+        run: |
+          git clone https://gitlab.gnome.org/GNOME/libnotify.git
+          cd libnotify
+          meson setup _build --prefix=/usr \
+            -Dgtk_doc=false \
+            -Dman=false \
+            -Dintrospection=disabled \
+            -Dtests=false
+          ninja -C _build
+          sudo ninja -C _build install
+          cd ..
       - name: Build
         run: |
           meson setup _build
           ninja -C _build
-      - name: Test theme change
+      - name: Test
         run: |
           # can't use XVFB because gtk_settings uses Xsettings by default, but we need to use keyfile backend
-          wlheadless-run -c weston -- ./_build/tests/test-snapd-desktop-integration
-      - name: Test notices monitor
-        run: |
-          ./_build/tests/test-sdi-notices-monitor
-      - name: Test Dock progress bar
-        run: |
-          ./_build/tests/test-sdi-progress-dock
-      - name: Test notifications
-        run: |
-          ./_build/tests/test-sdi-notify
-      - name: Test refresh monitor
-        run: |
-          ./_build/tests/test-refresh-monitor
-      - name: Test progress window
-        run: |
-          wlheadless-run -c weston -- ./_build/tests/test-sdi-progress-window
+          wlheadless-run -c weston -- meson test -C _build --print-errorlogs -t 3

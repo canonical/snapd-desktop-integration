@@ -22,9 +22,11 @@
  * memory accesses.
  */
 
+#define SNAP_STORE_APP_NAME "Snap Store"
+
 SdiNotify *notifier = NULL;
 
-gchar *tmpdirpath = NULL;
+gchar *snap_store_icon = NULL;
 MockFdoNotifications *mock_notifications = NULL;
 
 /**
@@ -37,15 +39,15 @@ static gchar *get_data_path(gchar *resource_name) {
   return g_canonicalize_filename(path, NULL);
 }
 
-static gchar *create_desktop_file(gchar *name, gchar *visible_name,
-                                  gchar *icon) {
+static gchar *create_desktop_file(const char *name, const char *visible_name,
+                                  const char *icon) {
   g_autofree gchar *filename = g_strdup_printf("%s.desktop", name);
   gchar *desktop_path =
-      g_build_filename(tmpdirpath, "applications", filename, NULL);
+      g_build_filename(g_get_tmp_dir(), "applications", filename, NULL);
   FILE *f = fopen(desktop_path, "w");
   g_assert_nonnull(f);
   fprintf(f,
-          "[Desktop Entry]\nVersion=1.0\nType=Application\nExec=/bin/ls "
+          "[Desktop Entry]\nVersion=1.0\nType=Application\nExec=/usr/bin/true "
           "This is application %s\n",
           visible_name);
   if (visible_name != NULL) {
@@ -84,6 +86,22 @@ static gboolean has_action(GStrv actions, gchar *action, gchar *text) {
     }
   }
   return FALSE;
+}
+
+static void assert_notification_hint(MockNotificationsData *data,
+                                     const char *hint,
+                                     GVariant *expected_value) {
+  g_autoptr(GVariant) expected_ref = g_variant_ref_sink(expected_value);
+  g_autoptr(GVariant) value = g_variant_lookup_value(
+      data->hints, hint, g_variant_get_type(expected_value));
+  g_assert_nonnull(value);
+
+  g_autofree char *expected_value_str = g_variant_print(expected_value, TRUE);
+  g_autofree char *value_str = g_variant_print(value, TRUE);
+  g_test_message("Expected hint for %s: %s", hint, expected_value_str);
+  g_test_message("Actual hint for %s: %s", hint, value_str);
+
+  g_assert_true(g_variant_equal(value, expected_ref));
 }
 
 static gchar *wait_for_notification_close_cb(GObject *self, gchar *param,
@@ -132,7 +150,9 @@ void test_update_available_1() {
 
   g_assert_cmpstr(data->title, ==, "Update available for Test app 1");
   g_assert_cmpstr(data->body, ==, "Quit the app to update it now.");
-  g_assert_true(g_str_has_suffix(data->icon_path, "/icon1.svg"));
+  g_assert_cmpstr(data->icon_path, ==, snap_store_icon);
+  g_assert_cmpstr(data->app_name, ==, SNAP_STORE_APP_NAME);
+  assert_notification_hint(data, "image-path", g_variant_new_string(icon_path));
   g_assert_cmpint(g_strv_length(data->actions), ==, 6);
   g_assert_true(has_action(data->actions, "app.show-updates", "Show updates"));
   g_assert_true(has_action(data->actions, "default", NULL));
@@ -164,7 +184,9 @@ void test_update_available_2() {
 
   g_assert_cmpstr(data->title, ==, "Update available for Test app 2");
   g_assert_cmpstr(data->body, ==, "Quit the app to update it now.");
-  g_assert_true(g_str_has_suffix(data->icon_path, "/icon1.svg"));
+  g_assert_cmpstr(data->icon_path, ==, snap_store_icon);
+  g_assert_cmpstr(data->app_name, ==, SNAP_STORE_APP_NAME);
+  assert_notification_hint(data, "image-path", g_variant_new_string(icon_path));
   g_assert_cmpint(g_strv_length(data->actions), ==, 6);
   g_assert_true(has_action(data->actions, "app.show-updates", "Show updates"));
   g_assert_true(has_action(data->actions, "default", NULL));
@@ -209,7 +231,9 @@ void test_update_available_3() {
 
   g_assert_cmpstr(data->title, ==, "Update available for Test app 3");
   g_assert_cmpstr(data->body, ==, "Quit the app to update it now.");
-  g_assert_true(g_str_has_suffix(data->icon_path, "/icon1.svg"));
+  g_assert_cmpstr(data->icon_path, ==, snap_store_icon);
+  g_assert_cmpstr(data->app_name, ==, SNAP_STORE_APP_NAME);
+  assert_notification_hint(data, "image-path", g_variant_new_string(icon_path));
   g_assert_cmpint(g_strv_length(data->actions), ==, 6);
   g_assert_true(has_action(data->actions, "app.show-updates", "Show updates"));
   g_assert_true(has_action(data->actions, "default", NULL));
@@ -265,7 +289,10 @@ void test_update_available_4() {
   g_assert_cmpstr(
       data->body, ==,
       "Test app 4_1 and Test app 4_2 will update when you quit them.");
-  g_assert_true(g_str_has_suffix(data->icon_path, "/app-center.png"));
+  g_assert_cmpstr(data->icon_path, ==, snap_store_icon);
+  g_assert_cmpstr(data->app_name, ==, SNAP_STORE_APP_NAME);
+  assert_notification_hint(data, "image-path",
+                           g_variant_new_string(snap_store_icon));
   g_assert_cmpint(g_strv_length(data->actions), ==, 6);
   g_assert_true(has_action(data->actions, "app.show-updates", "Show updates"));
   g_assert_true(has_action(data->actions, "default", NULL));
@@ -319,7 +346,10 @@ void test_update_available_5() {
   g_assert_cmpstr(data->body, ==,
                   "Test app 5_1, Test app 5_2 and Test app 5_3 will update "
                   "when you quit them.");
-  g_assert_true(g_str_has_suffix(data->icon_path, "/app-center.png"));
+  g_assert_cmpstr(data->icon_path, ==, snap_store_icon);
+  g_assert_cmpstr(data->app_name, ==, SNAP_STORE_APP_NAME);
+  assert_notification_hint(data, "image-path",
+                           g_variant_new_string(snap_store_icon));
   g_assert_cmpint(g_strv_length(data->actions), ==, 6);
   g_assert_true(has_action(data->actions, "app.show-updates", "Show updates"));
   g_assert_true(has_action(data->actions, "default", NULL));
@@ -378,7 +408,10 @@ void test_update_available_6() {
 
   g_assert_cmpstr(data->title, ==, "Updates available for 4 apps");
   g_assert_cmpstr(data->body, ==, "Quit the apps to update them now.");
-  g_assert_true(g_str_has_suffix(data->icon_path, "/app-center.png"));
+  g_assert_cmpstr(data->icon_path, ==, snap_store_icon);
+  g_assert_cmpstr(data->app_name, ==, SNAP_STORE_APP_NAME);
+  assert_notification_hint(data, "image-path",
+                           g_variant_new_string(snap_store_icon));
   g_assert_cmpint(g_strv_length(data->actions), ==, 6);
   g_assert_true(has_action(data->actions, "app.show-updates", "Show updates"));
   g_assert_true(has_action(data->actions, "default", NULL));
@@ -412,7 +445,9 @@ void test_update_available_7() {
 
   g_assert_cmpstr(data->title, ==, "Test app 7 was updated");
   g_assert_cmpstr(data->body, ==, "You can reopen it now.");
-  g_assert_true(g_str_has_suffix(data->icon_path, "/icon1.svg"));
+  g_assert_cmpstr(data->icon_path, ==, snap_store_icon);
+  g_assert_cmpstr(data->app_name, ==, SNAP_STORE_APP_NAME);
+  assert_notification_hint(data, "image-path", g_variant_new_string(icon_path));
   g_assert_cmpint(g_strv_length(data->actions), ==, 2);
   g_assert_true(has_action(data->actions, "default", NULL));
 
@@ -440,7 +475,9 @@ void test_update_available_8() {
   g_assert_cmpstr(data->title, ==, "Test app 8 will quit and update in 2 days");
   g_assert_cmpstr(data->body, ==,
                   "Save your progress and quit now to prevent data loss.");
-  g_assert_true(g_str_has_suffix(data->icon_path, "/icon1.svg"));
+  g_assert_cmpstr(data->icon_path, ==, snap_store_icon);
+  g_assert_cmpstr(data->app_name, ==, SNAP_STORE_APP_NAME);
+  assert_notification_hint(data, "image-path", g_variant_new_string(icon_path));
   g_assert_cmpint(g_strv_length(data->actions), ==, 6);
   g_assert_true(has_action(data->actions, "default", NULL));
   g_assert_true(has_action(data->actions, "app.show-updates", "Show updates"));
@@ -471,7 +508,9 @@ void test_update_available_9() {
                   "Test app 9 will quit and update in 5 hours");
   g_assert_cmpstr(data->body, ==,
                   "Save your progress and quit now to prevent data loss.");
-  g_assert_true(g_str_has_suffix(data->icon_path, "/icon1.svg"));
+  g_assert_cmpstr(data->icon_path, ==, snap_store_icon);
+  g_assert_cmpstr(data->app_name, ==, SNAP_STORE_APP_NAME);
+  assert_notification_hint(data, "image-path", g_variant_new_string(icon_path));
   g_assert_cmpint(g_strv_length(data->actions), ==, 4);
   g_assert_true(has_action(data->actions, "default", NULL));
   g_assert_true(has_action(data->actions, "app.show-updates", "Show updates"));
@@ -490,6 +529,8 @@ void test_update_available_10() {
   g_autoptr(SnapdSnap) snap1 = create_snap("test_snap10", apps1);
   sdi_notify_pending_refresh_forced(notifier, snap1, SECONDS_IN_A_MINUTE * 13,
                                     TRUE);
+  g_autofree gchar *store_updates_desktop_file = create_desktop_file(
+      "snap-store_show-updates", "Snap Store Updates", NULL);
 
   gint signal_counter = 0;
   gchar *string_list[] = {"test_snap10"};
@@ -506,7 +547,9 @@ void test_update_available_10() {
                   "Test app 10 will quit and update in 13 minutes");
   g_assert_cmpstr(data->body, ==,
                   "Save your progress and quit now to prevent data loss.");
-  g_assert_true(g_str_has_suffix(data->icon_path, "/icon1.svg"));
+  g_assert_cmpstr(data->icon_path, ==, snap_store_icon);
+  g_assert_cmpstr(data->app_name, ==, SNAP_STORE_APP_NAME);
+  assert_notification_hint(data, "image-path", g_variant_new_string(icon_path));
   g_assert_cmpint(g_strv_length(data->actions), ==, 6);
   g_assert_true(has_action(data->actions, "default", NULL));
   g_assert_true(has_action(data->actions, "app.show-updates", "Show updates"));
@@ -518,6 +561,7 @@ void test_update_available_10() {
 
   g_autofree gchar *result = wait_for_notification_close();
   unlink(desktop_file1); // delete desktop file
+  unlink(store_updates_desktop_file);
   g_signal_handler_disconnect(notifier, sid);
   g_assert_cmpstr(result, ==, "ignore-snaps");
   g_assert_cmpint(signal_counter, ==, 1);
@@ -527,7 +571,7 @@ void test_update_available_10() {
  * Notify emulator callbacks
  */
 
-void run_tests() { g_print("Listo\n"); }
+void run_tests() { g_test_message("Ready!"); }
 
 /**
  * GApplication callbacks
@@ -554,7 +598,9 @@ static void do_activate(GObject *object, gpointer data) {
   g_test_add_func("/update_forced/test10", test_update_available_10);
 
   g_test_run();
+
   g_application_release(G_APPLICATION(object));
+  g_application_quit(G_APPLICATION(object));
 }
 
 int main(int argc, char **argv) {
@@ -568,30 +614,29 @@ int main(int argc, char **argv) {
   mock_notifications = mock_fdo_notifications_new();
   mock_fdo_notifications_run(mock_notifications, argc, argv);
 
-  g_test_init(&argc, &argv, NULL);
-  // here we will create any temporary files
-  tmpdirpath = g_dir_make_tmp(NULL, NULL);
+  g_test_init(&argc, &argv, G_TEST_OPTION_ISOLATE_DIRS, NULL);
 
   // This is needed to ensure that the gtk libraries can find the .desktop files
   g_autofree gchar *applications_path =
-      g_build_filename(tmpdirpath, "applications", NULL);
-  gchar *xdg_data_dirs = getenv("XDG_DATA_DIRS");
-  g_autofree gchar *new_xdg_data_dirs =
-      g_strdup_printf("%s%s%s", tmpdirpath, xdg_data_dirs ? ":" : "",
-                      xdg_data_dirs ? xdg_data_dirs : "");
-  mkdir(applications_path, 0777);
-  setenv("XDG_DATA_DIRS", new_xdg_data_dirs, TRUE);
+      g_build_filename(g_get_tmp_dir(), "applications", NULL);
+  g_mkdir_with_parents(applications_path, 0700);
+  g_assert_no_errno(errno);
+  g_setenv("XDG_DATA_HOME", g_get_tmp_dir(), TRUE);
+  g_test_message("Using XDG_DATA_HOME: %s", g_get_tmp_dir());
 
   // and since we cannot guarantee that the snap-store is installed, we fake it
-  g_autofree gchar *icon_store_path = get_data_path("app-center.png");
+  snap_store_icon = get_data_path("app-center.png");
   g_autofree gchar *store_desktop_file = create_desktop_file(
-      "snap-store_snap-store", "Snap Store", icon_store_path);
+      "snap-store_snap-store", SNAP_STORE_APP_NAME, snap_store_icon);
 
   g_autoptr(GApplication) app = g_application_new("io.snapcraft.SdiNotifyTest",
                                                   G_APPLICATION_DEFAULT_FLAGS);
   g_signal_connect(app, "startup", (GCallback)do_startup, NULL);
   g_signal_connect(app, "activate", (GCallback)do_activate, NULL);
   g_application_run(app, argc, argv);
-  g_free(tmpdirpath);
+
+  mock_fdo_notifications_quit(mock_notifications);
+  g_clear_object(&mock_notifications);
+  g_free(snap_store_icon);
   return 0;
 }

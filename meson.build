@@ -1,8 +1,14 @@
 project('snapd-desktop-integration', 'c', version: '0.9', meson_version: '>= 0.64.0')
 
+fs = import('fs')
+
 if get_option('gnotify')
     add_global_arguments('-DUSE_GNOTIFY', language: 'c')
 endif
+
+# Prevent that we are using GLib features that are not in gnome-sdk for core22
+add_global_arguments('-DGLIB_VERSION_MIN_REQUIRED=GLIB_VERSION_2_70', language: 'c')
+add_global_arguments('-DGLIB_VERSION_MAX_ALLOWED=GLIB_VERSION_2_84', language: 'c')
 
 gio_dep = dependency('gio-2.0')
 gio_unix_dep = dependency('gio-unix-2.0')
@@ -11,7 +17,7 @@ snapd_glib_dep = dependency('snapd-glib-2', required: false, version: '>= 1.65')
 if not snapd_glib_dep.found()
     snapd_glib_dep = dependency('snapd-glib', version: '>= 1.60')
 endif
-libnotify_dep = dependency('libnotify', version: '>= 0.7.7')
+libnotify_dep = dependency('libnotify', version: '>= 0.8.4')
 libsoup_dep = dependency ('libsoup-3.0')
 json_glib_dep = dependency ('json-glib-1.0')
 

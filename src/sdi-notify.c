@@ -34,32 +34,29 @@ struct _SdiNotify {
   GObject parent_instance;
 
   GApplication *application;
+  GDesktopAppInfo *snap_store_app_info;
 };
 
 G_DEFINE_TYPE(SdiNotify, sdi_notify, G_TYPE_OBJECT)
 
-static bool launch_desktop(GApplication *app, const gchar *desktop_file) {
-  g_autofree gchar *full_desktop_path = NULL;
-  g_autofree gchar *desktop_file2 = NULL;
-  if (*desktop_file == '/') {
-    full_desktop_path = g_strdup(desktop_file);
-    desktop_file2 = g_path_get_basename(desktop_file);
-  } else {
-    full_desktop_path = g_build_path("/", "/var/lib/snapd/desktop/applications",
-                                     desktop_file, NULL);
-    desktop_file2 = g_strdup(desktop_file);
-  }
-  if (!g_file_test(full_desktop_path, G_FILE_TEST_EXISTS)) {
+static bool launch_desktop(GApplication *app, const gchar *desktop_id) {
+  g_autoptr(PrivilegedDesktopLauncher) launcher = NULL;
+  g_autoptr(GError) error = NULL;
+
+  if (!(launcher = privileged_desktop_launcher__proxy_new_sync(
+            g_application_get_dbus_connection(app), G_DBUS_PROXY_FLAGS_NONE,
+            "io.snapcraft.Launcher", "/io/snapcraft/PrivilegedDesktopLauncher",
+            NULL, &error))) {
+    g_message("Failed to launch %s: %s", desktop_id, error->message);
     return false;
   }
-  g_autoptr(PrivilegedDesktopLauncher) launcher = NULL;
 
-  launcher = privileged_desktop_launcher__proxy_new_sync(
-      g_application_get_dbus_connection(app), G_DBUS_PROXY_FLAGS_NONE,
-      "io.snapcraft.Launcher", "/io/snapcraft/PrivilegedDesktopLauncher", NULL,
-      NULL);
-  privileged_desktop_launcher__call_open_desktop_entry_sync(
-      launcher, desktop_file2, NULL, NULL);
+  if (!privileged_desktop_launcher__call_open_desktop_entry_sync(
+          launcher, desktop_id, NULL, &error)) {
+    g_message("Failed to launch %s: %s", desktop_id, error->message);
+    return false;
+  }
+
   return true;
 }
 
@@ -183,7 +180,6 @@ static void app_close_notification(NotifyNotification *notification,
 #ifdef DEBUG_TESTS
   g_signal_emit_by_name(self, "notification-closed", "close-notification");
 #endif
-  g_object_unref(notification);
 }
 
 static void app_launch_updated(NotifyNotification *notification, char *action,
@@ -194,20 +190,77 @@ static void app_launch_updated(NotifyNotification *notification, char *action,
   g_signal_emit_by_name(data->self, "notification-closed", param);
 #endif
   launch_desktop(data->self->application, (const gchar *)data->desktop);
-  g_object_unref(notification);
 }
 
 static void app_show_updates(NotifyNotification *notification, char *action,
                              SdiNotify *self) {
   show_updates(self);
-  g_object_unref(notification);
 }
 
 static void app_ignore_snaps_notification(NotifyNotification *notification,
                                           char *action,
                                           IgnoreNotifyData *data) {
   sdi_notify_action_ignore(NULL, data->snaps, data->self);
-  g_object_unref(notification);
+}
+
+static NotifyNotification *create_store_notification(SdiNotify *self,
+                                                     const char *title,
+                                                     const char *body,
+                                                     GIcon *icon) {
+  GIcon *snap_store_icon = NULL;
+
+  if (self->snap_store_app_info) {
+    snap_store_icon =
+        g_app_info_get_icon(G_APP_INFO(self->snap_store_app_info));
+  }
+  if (!icon) {
+    icon = snap_store_icon;
+  }
+
+  g_autofree gchar *icon_name = NULL;
+  if (icon)
+    icon_name = get_icon_name_from_gicon(icon);
+
+  NotifyNotification *notification =
+      notify_notification_new(title, body, icon_name);
+  if (icon_name != NULL) {
+    /* We need to force the image-path here to workaround a libnotify bug
+     * that will be fixed by
+     *   https://gitlab.gnome.org/GNOME/libnotify/-/commit/7180736110050
+     *
+     * Don't use g_autoptr with the GVariant because it is a floating reference
+     * that is consumed by set_hint.
+     */
+    notify_notification_set_hint(notification, "image-path",
+                                 g_variant_new_string(icon_name));
+  }
+
+  if (self->snap_store_app_info) {
+    /* We should actually set the snap_store_app_info ID (minus the .desktop
+     * suffix as the desktop file), but we're a snap and we are not allowed to
+     * impersonate something else.
+     */
+    notify_notification_set_app_name(
+        notification,
+        g_app_info_get_display_name(G_APP_INFO(self->snap_store_app_info)));
+
+    if (snap_store_icon) {
+      g_autofree char *app_icon = get_icon_name_from_gicon(snap_store_icon);
+      notify_notification_set_app_icon(notification, app_icon);
+    }
+  } else if (g_getenv("SNAP_NAME")) {
+    /* Libnotify was smart enough to set this for us, but snapd broke it.
+     * This can be dropped when the root issue is fixed:
+     * https://bugs.launchpad.net/ubuntu/+source/snapd/+bug/2125222
+     */
+    notify_notification_set_hint(notification, "desktop-entry",
+                                 g_variant_new_string(g_getenv("SNAP_NAME")));
+  }
+
+  g_signal_connect_object(notification, "closed", G_CALLBACK(g_object_unref),
+                          self, 0);
+
+  return g_steal_pointer(&notification);
 }
 
 static void show_pending_update_notification(SdiNotify *self,
@@ -215,27 +268,25 @@ static void show_pending_update_notification(SdiNotify *self,
                                              const gchar *body, GIcon *icon,
                                              GListModel *snaps,
                                              gboolean allow_to_ignore) {
-  g_autofree gchar *icon_name = get_icon_name_from_gicon(icon);
-  // Don't use g_autoptr because it must survive for the actions
   NotifyNotification *notification =
-      notify_notification_new(title, body, icon_name);
-  if (icon_name != NULL) {
-    // don't use g_autoptr with the GVariant because it is consumed in set_hint
-    notify_notification_set_hint(notification, "image-path",
-                                 g_variant_new_string(icon_name));
+      create_store_notification(self, title, body, icon);
+
+  /* If no snap store is installed there's no point to show update actions */
+  if (self->snap_store_app_info) {
+    notify_notification_add_action(notification, "app.show-updates",
+                                   _("Show updates"),
+                                   (NotifyActionCallback)app_show_updates,
+                                   g_object_ref(self), g_object_unref);
+    /* This is the default action, the one executed when the user clicks on the
+     * notification itself. It has no button, so the _("Show updates") text is
+     * really unnecessary. It's added just in case in a future notifications do
+     * use it for... whatever... a popup, for example.
+     */
+    notify_notification_add_action(notification, "default", _("Show updates"),
+                                   (NotifyActionCallback)app_show_updates,
+                                   g_object_ref(self), g_object_unref);
   }
-  notify_notification_add_action(notification, "app.show-updates",
-                                 _("Show updates"),
-                                 (NotifyActionCallback)app_show_updates,
-                                 g_object_ref(self), g_object_unref);
-  /* This is the default action, the one executed when the user clicks on the
-   * notification itself. It has no button, so the _("Show updates") text is
-   * really unnecesary. It's added just in case in a future notifications do
-   * use it for... whatever... a popup, for example.
-   */
-  notify_notification_add_action(notification, "default", _("Show updates"),
-                                 (NotifyActionCallback)app_show_updates,
-                                 g_object_ref(self), g_object_unref);
+
   if (allow_to_ignore) {
     g_autoptr(GVariant) snap_list = get_snap_list(snaps);
     /// TRANSLATORS: Text for a button in a notification. Pressing it
@@ -247,22 +298,16 @@ static void show_pending_update_notification(SdiNotify *self,
         ignore_notify_data_new(self, snap_list),
         (GFreeFunc)ignore_notify_data_free);
   }
-  notify_notification_show(notification, NULL);
+
+  notify_notification_show(g_steal_pointer(&notification), NULL);
 }
 
 static void update_complete_notification(SdiNotify *self, const gchar *title,
                                          const gchar *body, GIcon *icon,
                                          const gchar *id,
                                          const gchar *desktop) {
-  g_autofree gchar *icon_name = get_icon_name_from_gicon(icon);
-  // Don't use g_autoptr because it must survive for the actions
   NotifyNotification *notification =
-      notify_notification_new(title, body, icon_name);
-
-  if (icon_name != NULL) {
-    notify_notification_set_hint(notification, "image-path",
-                                 g_variant_new_string(icon_name));
-  }
+      create_store_notification(self, title, body, icon);
 
   if (desktop == NULL) {
     /// TRANSLATORS: Text for one of the buttons in the notification shown
@@ -277,7 +322,8 @@ static void update_complete_notification(SdiNotify *self, const gchar *title,
                                    (NotifyActionCallback)app_launch_updated,
                                    data, launch_updated_app_free);
   }
-  notify_notification_show(notification, NULL);
+
+  notify_notification_show(g_steal_pointer(&notification), NULL);
 }
 
 #else
@@ -467,12 +513,7 @@ void sdi_notify_pending_refresh(SdiNotify *self, GListModel *snaps) {
       break;
     }
   }
-  if (icon == NULL) {
-    app_info2 = g_desktop_app_info_new(SNAP_STORE);
-    if (app_info2 != NULL) {
-      icon = g_app_info_get_icon(G_APP_INFO(app_info2));
-    }
-  }
+
   show_pending_update_notification(self, title, body, icon, snaps, TRUE);
 }
 
@@ -567,13 +608,22 @@ static void sdi_notify_dispose(GObject *object) {
   SdiNotify *self = SDI_NOTIFY(object);
 
   g_clear_object(&self->application);
+  g_clear_object(&self->snap_store_app_info);
 
   G_OBJECT_CLASS(sdi_notify_parent_class)->dispose(object);
 }
 
+static void sdi_notify_finalize(GObject *object) {
+  notify_uninit();
+
+  G_OBJECT_CLASS(sdi_notify_parent_class)->finalize(object);
+}
+
 void sdi_notify_init(SdiNotify *self) {
 #ifndef USE_GNOTIFY
-  notify_init("Snapd Desktop Integration");
+  notify_init(NULL);
+
+  self->snap_store_app_info = g_desktop_app_info_new(SNAP_STORE);
 #endif
 }
 
@@ -583,6 +633,7 @@ void sdi_notify_class_init(SdiNotifyClass *klass) {
   gobject_class->set_property = sdi_notify_set_property;
   gobject_class->get_property = sdi_notify_get_property;
   gobject_class->dispose = sdi_notify_dispose;
+  gobject_class->finalize = sdi_notify_finalize;
 
   g_object_class_install_property(
       gobject_class, PROP_APPLICATION,
