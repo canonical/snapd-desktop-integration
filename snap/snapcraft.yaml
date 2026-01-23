@@ -1,5 +1,5 @@
 name: snapd-desktop-integration
-base: core22
+base: core24
 adopt-info: snapd-desktop-integration
 summary: Desktop Integration for snapd
 description: |
