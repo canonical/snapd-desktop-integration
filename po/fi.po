@@ -3,26 +3,126 @@
 # This file is distributed under the same license as the snapd-desktop-integration package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2023.
 #
+#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: snapd-desktop-integration\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-10-08 11:09+0200\n"
-"PO-Revision-Date: 2023-04-07 05:42+0000\n"
-"Last-Translator: Jiri Grönroos <Unknown>\n"
+"POT-Creation-Date: 2025-02-07 14:58+0100\n"
+"PO-Revision-Date: 2026-01-28 18:50+0200\n"
+"Last-Translator: Mika Haaja <mika.haaja@gmail.com>\n"
 "Language-Team: Finnish <fi@li.org>\n"
 "Language: fi\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2024-10-08 09:00+0000\n"
-"X-Generator: Launchpad (build 6341c735b243a0768c3cb66edf85737937cab327)\n"
+"X-Generator: Poedit 3.4.2\n"
+
+#: src/sdi-notify.c:228 src/sdi-notify.c:236 src/sdi-notify.c:297
+msgid "Show updates"
+msgstr "Näytä päivitykset"
+
+#: src/sdi-notify.c:245 src/sdi-notify.c:309
+msgid "Don't remind me again"
+msgstr "Älä muistuta uudelleen"
+
+#. TRANSLATORS: Text for one of the buttons in the notification shown
+#. after a snap has been refreshed. Pressing it will close the
+#. notification.
+#: src/sdi-notify.c:271 src/sdi-notify.c:276
+msgid "Close"
+msgstr "Sulje"
+
+#. TRANSLATORS: The %s is the name of a snap that is currently running,
+#. and it will be closed and updated in %ld days if the user doesn't
+#. close it before. This is shown after the user has been notified several
+#. times that there is a refresh available for a running snap, but they
+#. hasn't closed it, to inform they that there is a time limit before the
+#. snap is forced to quit to refresh it.
+#: src/sdi-notify.c:354
+#, c-format
+msgid "%s will quit and update in %ld days"
+msgstr "%s sulkeutuu ja päivittyy %ld päivän kuluttua"
+
+#. TRANSLATORS: The %s is the name of a snap that is currently running,
+#. and it will be closed and updated in %ld hours if the user doesn't
+#. close it before.
+#: src/sdi-notify.c:360
+#, c-format
+msgid "%s will quit and update in %ld hours"
+msgstr "%s sulkeutuu ja päivittyy %ld tunnin kuluttua"
+
+#. TRANSLATORS: The %s is the name of a snap that is currently running,
+#. and it will be closed and updated in %ld minutes if the user doesn't
+#. close it before.
+#: src/sdi-notify.c:366
+#, c-format
+msgid "%s will quit and update in %ld minutes"
+msgstr "%s sulkeutuu ja päivittyy %ld minuutin kuluttua"
+
+#: src/sdi-notify.c:380
+msgid "Save your progress and quit now to prevent data loss."
+msgstr "Tallenna muutokset ja lopeta nyt tietojen menettämisen välttämiseksi."
+
+#. TRANSLATORS: This message is used when there are two pending
+#. refreshes.
+#: src/sdi-notify.c:402
+#, c-format
+msgid "%s and %s will update when you quit them."
+msgstr "%s ja %s päivittyvät, kun suljet ne."
+
+#. TRANSLATORS: This message is used when there are three pending
+#. refreshes.
+#: src/sdi-notify.c:414
+#, c-format
+msgid "%s, %s and %s will update when you quit them."
+msgstr "%s, %s ja %s päivittyvät, kun suljet ne."
+
+#. TRANSLATORS: The %s is the name of a snap that has an update available.
+#: src/sdi-notify.c:434
+#, c-format
+msgid "Update available for %s"
+msgstr "Päivitys saatavilla %s"
+
+#: src/sdi-notify.c:435
+msgid "Quit the app to update it now."
+msgstr "Sulje sovellus päivittääksesi se nyt."
+
+#. TRANSLATORS: when there are several updates available, this is the
+#. message used to notify the user how many updates are.
+#: src/sdi-notify.c:447
+#, c-format
+msgid "Update available for %d app"
+msgid_plural "Updates available for %d apps"
+msgstr[0] "Päivitys saatavilla %d sovellukselle"
+msgstr[1] "Päivitys saatavilla %d sovellukselle"
+
+#. TRANSLATORS: This message is used when there are four or more pending
+#. refreshes.
+#: src/sdi-notify.c:466
+msgid "Quit the apps to update them now."
+msgstr "Sulje sovellukset päivittääksesi ne nyt."
+
+#: src/sdi-notify.c:502
+#, c-format
+msgid "%s was updated"
+msgstr "%s päivitettiin"
+
+#: src/sdi-notify.c:504
+msgid "You can reopen it now."
+msgstr "Voit avata sen uudelleen."
+
+#. TRANSLATORS: This text is shown as the title of the window that contains
+#. progress bars for each of the snaps being updated.
+#: src/sdi-progress-window.c:98
+msgid "Refreshing snaps"
+msgstr "Päivitetään snap sovelluksia"
 
 #: src/sdi-refresh-dialog.c:123
 #, c-format
 msgid "Updating %s to the latest version."
-msgstr ""
+msgstr "Päivitetään %s uusimpaan versioon."
 
 #: src/sdi-theme-monitor.c:66 src/sdi-theme-monitor.c:83
 #: src/sdi-theme-monitor.c:104
@@ -67,103 +167,3 @@ msgstr "Ei"
 #: data/resources/sdi-refresh-dialog.ui:51
 msgid "Hide"
 msgstr "Piilota"
-
-#: src/sdi-notify.c:192 src/sdi-notify.c:198 src/sdi-notify.c:259
-msgid "Show updates"
-msgstr ""
-
-#: src/sdi-notify.c:207 src/sdi-notify.c:271
-msgid "Don't remind me again"
-msgstr ""
-
-#. TRANSLATORS: Text for one of the buttons in the notification shown
-#. after a snap has been refreshed. Pressing it will close the
-#. notification.
-#: src/sdi-notify.c:233 src/sdi-notify.c:237
-msgid "Close"
-msgstr ""
-
-#. TRANSLATORS: The %s is the name of a snap that is currently running,
-#. and it will be closed and updated in %ld days if the user doesn't
-#. close it before. This is shown after the user has been notified several
-#. times that there is a refresh available for a running snap, but they
-#. hasn't closed it, to inform they that there is a time limit before the
-#. snap is forced to quit to refresh it.
-#: src/sdi-notify.c:317
-#, c-format
-msgid "%s will quit and update in %ld days"
-msgstr ""
-
-#. TRANSLATORS: The %s is the name of a snap that is currently running,
-#. and it will be closed and updated in %ld hours if the user doesn't
-#. close it before.
-#: src/sdi-notify.c:323
-#, c-format
-msgid "%s will quit and update in %ld hours"
-msgstr ""
-
-#. TRANSLATORS: The %s is the name of a snap that is currently running,
-#. and it will be closed and updated in %ld minutes if the user doesn't
-#. close it before.
-#: src/sdi-notify.c:329
-#, c-format
-msgid "%s will quit and update in %ld minutes"
-msgstr ""
-
-#: src/sdi-notify.c:341
-msgid "Save your progress and quit now to prevent data loss."
-msgstr ""
-
-#. TRANSLATORS: This message is used when there are two pending
-#. refreshes.
-#: src/sdi-notify.c:380
-#, c-format
-msgid "%s and %s will update when you quit them."
-msgstr ""
-
-#. TRANSLATORS: This message is used when there are three pending
-#. refreshes.
-#: src/sdi-notify.c:392
-#, c-format
-msgid "%s, %s and %s will update when you quit them."
-msgstr ""
-
-#. TRANSLATORS: The %s is the name of a snap that has an update available.
-#: src/sdi-notify.c:411
-#, c-format
-msgid "Update available for %s"
-msgstr ""
-
-#: src/sdi-notify.c:412
-msgid "Quit the app to update it now."
-msgstr ""
-
-#. TRANSLATORS: when there are several updates available, this is the
-#. message used to notify the user how many updates are.
-#: src/sdi-notify.c:423
-#, c-format
-msgid "Update available for %d app"
-msgid_plural "Updates available for %d apps"
-msgstr[0] ""
-msgstr[1] ""
-
-#. TRANSLATORS: This message is used when there are four or more pending
-#. refreshes.
-#: src/sdi-notify.c:439
-msgid "Quit the apps to update them now."
-msgstr ""
-
-#: src/sdi-notify.c:475
-#, c-format
-msgid "%s was updated"
-msgstr ""
-
-#: src/sdi-notify.c:477
-msgid "You can reopen it now."
-msgstr ""
-
-#. TRANSLATORS: This text is shown as the title of the window that contains
-#. progress bars for each of the snaps being updated.
-#: src/sdi-refresh-monitor.c:178
-msgid "Refreshing snaps"
-msgstr ""
