@@ -79,4 +79,4 @@ parts:
       craftctl default
       sed -i "s#Icon=#Icon=usr/share/icons/hicolor/scalable/apps/#g" usr/share/applications/io.snapcraft.SnapDesktopIntegration.desktop
       mkdir -p $CRAFT_PRIME/meta/gui
-      cp usr/share/icons/hicolor/scalable/apps/snapd-desktop-integration.svg $CRAFT_PRIME/meta/gui/
+      cp usr/share/icons/hicolor/scalable/apps/app-center.svg $CRAFT_PRIME/meta/gui/

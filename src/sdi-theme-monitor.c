@@ -64,7 +64,7 @@ static void install_themes_cb(GObject *object, GAsyncResult *result,
                                          &error)) {
     g_message("Installation complete.\n");
     notify_notification_update(
-        self->progress_notification, _("Installing missing theme snaps:"),
+        self->progress_notification, _("Installing missing themes:"),
         /// TRANSLATORS: installing a missing theme snap succeed
         _("Complete."), "dialog-information");
   } else {
@@ -81,8 +81,8 @@ static void install_themes_cb(GObject *object, GAsyncResult *result,
       break;
     }
     notify_notification_update(self->progress_notification,
-                               _("Installing missing theme snaps:"),
-                               error_message, "dialog-information");
+                               _("Installing missing themes:"), error_message,
+                               "dialog-information");
   }
 
   notify_notification_show(self->progress_notification, NULL);
@@ -117,9 +117,9 @@ static void notify_cb(NotifyNotification *notification, gchar *action,
 
   self->install_notification_answered = true;
   if ((strcmp(action, "yes") == 0) || (strcmp(action, "default") == 0)) {
-    g_message("Installing missing theme snaps...\n");
+    g_message("Installing missing themes...\n");
     self->progress_notification = notify_notification_new(
-        _("Installing missing theme snaps:"), "...", "dialog-information");
+        _("Installing missing themes:"), "...", "dialog-information");
     notify_notification_show(self->progress_notification, NULL);
 
     g_autoptr(GPtrArray) gtk_theme_names = g_ptr_array_new();
@@ -154,7 +154,7 @@ static void show_install_notification(SdiThemeMonitor *self) {
   }
 
   self->install_notification = notify_notification_new(
-      _("Some required theme snaps are missing."),
+      _("Some required themes are missing."),
       _("Would you like to install them now?"), "dialog-question");
   g_signal_connect(self->install_notification, "closed",
                    G_CALLBACK(notification_closed_cb), self);
