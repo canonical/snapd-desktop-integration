@@ -223,17 +223,6 @@ static NotifyNotification *create_store_notification(SdiNotify *self,
 
   NotifyNotification *notification =
       notify_notification_new(title, body, icon_name);
-  if (icon_name != NULL) {
-    /* We need to force the image-path here to workaround a libnotify bug
-     * that will be fixed by
-     *   https://gitlab.gnome.org/GNOME/libnotify/-/commit/7180736110050
-     *
-     * Don't use g_autoptr with the GVariant because it is a floating reference
-     * that is consumed by set_hint.
-     */
-    notify_notification_set_hint(notification, "image-path",
-                                 g_variant_new_string(icon_name));
-  }
 
   if (self->snap_store_app_info) {
     /* We should actually set the snap_store_app_info ID (minus the .desktop
@@ -248,13 +237,6 @@ static NotifyNotification *create_store_notification(SdiNotify *self,
       g_autofree char *app_icon = get_icon_name_from_gicon(snap_store_icon);
       notify_notification_set_app_icon(notification, app_icon);
     }
-  } else if (g_getenv("SNAP_NAME")) {
-    /* Libnotify was smart enough to set this for us, but snapd broke it.
-     * This can be dropped when the root issue is fixed:
-     * https://bugs.launchpad.net/ubuntu/+source/snapd/+bug/2125222
-     */
-    notify_notification_set_hint(notification, "desktop-entry",
-                                 g_variant_new_string(g_getenv("SNAP_NAME")));
   }
 
   g_signal_connect_object(notification, "closed", G_CALLBACK(g_object_unref),
