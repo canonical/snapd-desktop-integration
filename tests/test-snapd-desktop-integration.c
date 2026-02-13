@@ -295,7 +295,7 @@ static void handle_notifications_method_call(
         invocation, g_variant_new("(u)", notification_id));
 
     if (state == STATE_PROMPT_INSTALL) {
-      g_assert_cmpstr(summary, ==, "Some required theme snaps are missing.");
+      g_assert_cmpstr(summary, ==, "Some required themes are missing.");
       g_assert_cmpstr(body, ==, "Would you like to install them now?");
       g_assert_cmpint(g_strv_length(actions), ==, 6);
       g_assert_cmpstr(actions[0], ==, "yes");
@@ -345,7 +345,7 @@ static void handle_notifications_method_call(
 
       state = STATE_INSTALL_THEMES;
     } else if (state == STATE_NOTIFY_COMPLETE) {
-      g_assert_cmpstr(summary, ==, "Installing missing theme snaps:");
+      g_assert_cmpstr(summary, ==, "Installing missing themes:");
       g_assert_cmpstr(body, ==, "Complete.");
       exit_code = SNAPD_EXIT_SUCCESS;
       g_main_loop_quit(loop);
