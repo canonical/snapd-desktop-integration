@@ -215,10 +215,24 @@ static void show_pending_update_notification(SdiNotify *self,
                                              const gchar *body, GIcon *icon,
                                              GListModel *snaps,
                                              gboolean allow_to_ignore) {
-  g_autofree gchar *icon_name = get_icon_name_from_gicon(icon);
+  GIcon *sender_icon = NULL;
+  g_autofree gchar *sender_icon_name = NULL;
+  g_autoptr(GAppInfo) sender_app_info = g_desktop_app_info_new(SNAP_STORE);
+
+  if (sender_app_info)
+    sender_icon = g_app_info_get_icon(G_APP_INFO(sender_app_info));
+  if (sender_icon)
+    sender_icon_name = get_icon_name_from_gicon(sender_icon);
+
+  g_autofree gchar *icon_name = NULL;
+  if (icon)
+    icon_name = get_icon_name_from_gicon(icon);
+  else
+    icon_name = g_strdup(sender_icon_name);
+
   // Don't use g_autoptr because it must survive for the actions
   NotifyNotification *notification =
-      notify_notification_new(title, body, icon_name);
+      notify_notification_new(title, body, sender_icon_name);
   if (icon_name != NULL) {
     // don't use g_autoptr with the GVariant because it is consumed in set_hint
     notify_notification_set_hint(notification, "image-path",
@@ -422,7 +436,6 @@ void sdi_notify_pending_refresh(SdiNotify *self, GListModel *snaps) {
   g_autofree gchar *title = NULL;
   g_autofree gchar *body = NULL;
   g_autoptr(GAppInfo) app_info = NULL;
-  g_autoptr(GDesktopAppInfo) app_info2 = NULL;
 
   guint n_snaps = g_list_model_get_n_items(snaps);
 
@@ -467,12 +480,7 @@ void sdi_notify_pending_refresh(SdiNotify *self, GListModel *snaps) {
       break;
     }
   }
-  if (icon == NULL) {
-    app_info2 = g_desktop_app_info_new(SNAP_STORE);
-    if (app_info2 != NULL) {
-      icon = g_app_info_get_icon(G_APP_INFO(app_info2));
-    }
-  }
+
   show_pending_update_notification(self, title, body, icon, snaps, TRUE);
 }
 
