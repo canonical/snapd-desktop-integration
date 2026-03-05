@@ -34,6 +34,7 @@ struct _SdiNotify {
   GObject parent_instance;
 
   GApplication *application;
+  GDesktopAppInfo *sdi_app_info;
   GDesktopAppInfo *snap_store_app_info;
 };
 
@@ -207,14 +208,13 @@ static NotifyNotification *create_store_notification(SdiNotify *self,
                                                      const char *title,
                                                      const char *body,
                                                      GIcon *icon) {
-  GIcon *snap_store_icon = NULL;
+  GIcon *sdi_app_icon = NULL;
 
-  if (self->snap_store_app_info) {
-    snap_store_icon =
-        g_app_info_get_icon(G_APP_INFO(self->snap_store_app_info));
+  if (self->sdi_app_info) {
+    sdi_app_icon = g_app_info_get_icon(G_APP_INFO(self->sdi_app_info));
   }
   if (!icon) {
-    icon = snap_store_icon;
+    icon = sdi_app_icon;
   }
 
   g_autofree gchar *icon_name = NULL;
@@ -224,18 +224,17 @@ static NotifyNotification *create_store_notification(SdiNotify *self,
   NotifyNotification *notification =
       notify_notification_new(title, body, icon_name);
 
-  if (self->snap_store_app_info) {
-    /* We should actually set the snap_store_app_info ID (minus the .desktop
-     * suffix as the desktop file), but we're a snap and we are not allowed to
-     * impersonate something else.
+  if (self->sdi_app_info) {
+    /* Set fallback app name and icon, in case the notification server were
+     * unable to identify our desktop entry
      */
     notify_notification_set_app_name(
         notification,
-        g_app_info_get_display_name(G_APP_INFO(self->snap_store_app_info)));
+        g_app_info_get_display_name(G_APP_INFO(self->sdi_app_info)));
 
-    if (snap_store_icon) {
-      g_autofree char *app_icon = get_icon_name_from_gicon(snap_store_icon);
-      notify_notification_set_app_icon(notification, app_icon);
+    if (sdi_app_icon) {
+      g_autofree char *app_icon_name = get_icon_name_from_gicon(sdi_app_icon);
+      notify_notification_set_app_icon(notification, app_icon_name);
     }
   }
 
@@ -590,6 +589,7 @@ static void sdi_notify_dispose(GObject *object) {
   SdiNotify *self = SDI_NOTIFY(object);
 
   g_clear_object(&self->application);
+  g_clear_object(&self->sdi_app_info);
   g_clear_object(&self->snap_store_app_info);
 
   G_OBJECT_CLASS(sdi_notify_parent_class)->dispose(object);
@@ -605,6 +605,7 @@ void sdi_notify_init(SdiNotify *self) {
 #ifndef USE_GNOTIFY
   notify_init(NULL);
 
+  self->sdi_app_info = sdi_get_desktop_file_self();
   self->snap_store_app_info = g_desktop_app_info_new(SNAP_STORE);
 #endif
 }
