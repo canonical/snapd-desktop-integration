@@ -26,6 +26,13 @@ desktop_launcher_src = gnome.gdbus_codegen('io.snapcraft.PrivilegedDesktopLaunch
 )
 
 if (DO_INSTALL)
-  install_data('io.snapcraft.SnapDesktopIntegration.desktop', install_dir: 'share/applications')
+  i18n.merge_file(
+    type: 'desktop',
+    input: 'io.snapcraft.SnapDesktopIntegration.desktop.in',
+    output: '@BASENAME@',
+    po_dir: po_dir,
+    install: true,
+    install_dir: 'share/applications',
+  )
   install_data('app-center.svg', install_dir: 'share/icons/hicolor/scalable/apps')
 endif

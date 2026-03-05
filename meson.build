@@ -1,6 +1,7 @@
 project('snapd-desktop-integration', 'c', version: '0.9', meson_version: '>= 0.64.0')
 
 fs = import('fs')
+i18n = import('i18n')
 
 if get_option('gnotify')
     add_global_arguments('-DUSE_GNOTIFY', language: 'c')
@@ -21,6 +22,7 @@ libnotify_dep = dependency('libnotify', version: '>= 0.8.4')
 libsoup_dep = dependency ('libsoup-3.0')
 json_glib_dep = dependency ('json-glib-1.0')
 
+po_dir = join_paths(meson.project_source_root(), 'po')
 add_global_arguments('-DGETTEXT_PACKAGE="@0@"'.format (meson.project_name()), language:'c')
 
 if get_option('add-coverage')
