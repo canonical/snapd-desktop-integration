@@ -25,4 +25,6 @@ G_BEGIN_DECLS
 
 GAppInfo *sdi_get_desktop_file_from_snap(SnapdSnap *snap);
 
+GDesktopAppInfo *sdi_get_desktop_file_self();
+
 G_END_DECLS
