@@ -28,6 +28,7 @@ jobs:
         run: |
           git clone https://gitlab.gnome.org/GNOME/libnotify.git
           cd libnotify
+          git checkout 0.8.8
           meson setup _build --prefix=/usr \
             -Dgtk_doc=false \
             -Dman=false \
