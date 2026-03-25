@@ -57,7 +57,7 @@ jobs:
       - name: Coverage
         run: |
           mkdir -p coverage
-          gcovr _build --cobertura coverage/cobertura-tests.xml
+          gcovr _build --cobertura coverage/cobertura.xml
 
       - name: Upload coverage reports
         uses: actions/upload-artifact@v6
