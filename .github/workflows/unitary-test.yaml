@@ -28,6 +28,7 @@ jobs:
         run: |
           git clone https://gitlab.gnome.org/GNOME/libnotify.git
           cd libnotify
+          git checkout 0.8.8
           meson setup _build --prefix=/usr \
             -Dgtk_doc=false \
             -Dman=false \
@@ -43,4 +44,4 @@ jobs:
       - name: Test
         run: |
           # can't use XVFB because gtk_settings uses Xsettings by default, but we need to use keyfile backend
-          wlheadless-run -c weston -- meson test -C _build --print-errorlogs -t 3
+          wlheadless-run -c weston -- meson test -v -C _build --print-errorlogs -t 3
