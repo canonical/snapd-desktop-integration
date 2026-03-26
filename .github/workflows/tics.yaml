@@ -39,6 +39,7 @@ jobs:
           ninja -C _build
           sudo ninja -C _build install
           cd ..
+          rm -rf libnotify
       - name: Build
         run: |
           meson setup _build -Dadd-coverage=true
