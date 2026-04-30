@@ -11,6 +11,8 @@ endif
 add_global_arguments('-DGLIB_VERSION_MIN_REQUIRED=GLIB_VERSION_2_70', language: 'c')
 add_global_arguments('-DGLIB_VERSION_MAX_ALLOWED=GLIB_VERSION_2_84', language: 'c')
 
+glib_dep = dependency('glib-2.0')
+gobject_dep = dependency('gobject-2.0')
 gio_dep = dependency('gio-2.0')
 gio_unix_dep = dependency('gio-unix-2.0')
 gtk_dep = dependency('gtk4', version: '>= 4.0')
