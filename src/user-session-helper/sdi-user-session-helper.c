@@ -53,7 +53,7 @@ static gboolean sdi_session_is_desktop(const gchar *object_path) {
   g_autoptr(OrgFreedesktopLogin1Session) session = NULL;
   guint32 user;
   // these values belongs to the session proxy, so they must not be freed
-  g_autoptr(GVariant) user_data = NULL;
+  GVariant *user_data = NULL;
   const gchar *session_type = NULL;
 
   session = org_freedesktop_login1_session_proxy_new_for_bus_sync(
