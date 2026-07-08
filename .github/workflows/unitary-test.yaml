@@ -45,3 +45,7 @@ jobs:
         run: |
           # can't use XVFB because gtk_settings uses Xsettings by default, but we need to use keyfile backend
           wlheadless-run -c weston -- meson test -v -C _build --print-errorlogs -t 3
+      - name: Coverage
+        run: |
+          mkdir -p coverage
+          gcovr _build --cobertura coverage/cobertura.xml
