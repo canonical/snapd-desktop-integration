@@ -85,7 +85,6 @@ parts:
                           ${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
     build-packages:
       - jq
-      - libnotify-dev
     override-build: |
       craftctl default
       craftctl set version="$(meson introspect . --projectinfo | jq -r .version)"
