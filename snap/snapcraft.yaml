@@ -1,5 +1,5 @@
 name: snapd-desktop-integration
-base: core24
+base: core26
 adopt-info: snapd-desktop-integration
 summary: Desktop Integration for snapd
 description: |
@@ -71,26 +71,8 @@ parts:
     prime:
       - usr/lib/*/libsnapd-glib-2.so.*
 
-  libnotify:
-    source: https://gitlab.gnome.org/GNOME/libnotify.git
-    source-tag: 0.8.8
-    source-depth: 1
-    plugin: meson
-    meson-parameters:
-      - --prefix=/usr
-      - -Dgtk_doc=false
-      - -Dman=false
-      - -Dintrospection=disabled
-      - -Dtests=false
-    build-packages:
-      - libglibd-2.0-dev
-      - libgdk-pixbuf-2.0-dev
-    prime:
-      - usr/lib/*/libnotify.so.*
-
   snapd-desktop-integration:
     after:
-      - libnotify
       - snapd-glib
     source: .
     plugin: meson
