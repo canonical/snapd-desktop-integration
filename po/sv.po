@@ -1,0 +1,169 @@
+# Swedish translation for snapd-desktop-integration.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the snapd-desktop-integration package.
+# Daniel Nylander <po@danielnylander.se>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: snapd-desktop-integration\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-02-07 14:58+0100\n"
+"PO-Revision-Date: 2026-02-14 11:11+0100\n"
+"Last-Translator: Daniel Nylander <po@danielnylander.se>\n"
+"Language-Team: \n"
+"Language: sv\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 3.8\n"
+
+#: src/sdi-notify.c:228 src/sdi-notify.c:236 src/sdi-notify.c:297
+msgid "Show updates"
+msgstr "Visa uppdateringar"
+
+#: src/sdi-notify.c:245 src/sdi-notify.c:309
+msgid "Don't remind me again"
+msgstr "Påminn mig inte igen"
+
+#. TRANSLATORS: Text for one of the buttons in the notification shown
+#. after a snap has been refreshed. Pressing it will close the
+#. notification.
+#: src/sdi-notify.c:271 src/sdi-notify.c:276
+msgid "Close"
+msgstr "Stäng"
+
+#. TRANSLATORS: The %s is the name of a snap that is currently running,
+#. and it will be closed and updated in %ld days if the user doesn't
+#. close it before. This is shown after the user has been notified several
+#. times that there is a refresh available for a running snap, but they
+#. hasn't closed it, to inform they that there is a time limit before the
+#. snap is forced to quit to refresh it.
+#: src/sdi-notify.c:354
+#, c-format
+msgid "%s will quit and update in %ld days"
+msgstr "%s kommer att avslutas och uppdateras om %ld dagar"
+
+#. TRANSLATORS: The %s is the name of a snap that is currently running,
+#. and it will be closed and updated in %ld hours if the user doesn't
+#. close it before.
+#: src/sdi-notify.c:360
+#, c-format
+msgid "%s will quit and update in %ld hours"
+msgstr "%s kommer att avslutas och uppdateras om %ld timmar"
+
+#. TRANSLATORS: The %s is the name of a snap that is currently running,
+#. and it will be closed and updated in %ld minutes if the user doesn't
+#. close it before.
+#: src/sdi-notify.c:366
+#, c-format
+msgid "%s will quit and update in %ld minutes"
+msgstr "%s kommer att stängas och uppdateras om %ld minuter"
+
+#: src/sdi-notify.c:380
+msgid "Save your progress and quit now to prevent data loss."
+msgstr "Spara dina framsteg och avsluta nu för att förhindra dataförlust."
+
+#. TRANSLATORS: This message is used when there are two pending
+#. refreshes.
+#: src/sdi-notify.c:402
+#, c-format
+msgid "%s and %s will update when you quit them."
+msgstr "%s och %s uppdateras när du stänger dem."
+
+#. TRANSLATORS: This message is used when there are three pending
+#. refreshes.
+#: src/sdi-notify.c:414
+#, c-format
+msgid "%s, %s and %s will update when you quit them."
+msgstr "%s, %s och %s uppdateras när du stänger dem."
+
+#. TRANSLATORS: The %s is the name of a snap that has an update available.
+#: src/sdi-notify.c:434
+#, c-format
+msgid "Update available for %s"
+msgstr "Uppdatering tillgänglig för %s"
+
+#: src/sdi-notify.c:435
+msgid "Quit the app to update it now."
+msgstr "Stäng appen för att uppdatera den nu."
+
+#. TRANSLATORS: when there are several updates available, this is the
+#. message used to notify the user how many updates are.
+#: src/sdi-notify.c:447
+#, c-format
+msgid "Update available for %d app"
+msgid_plural "Updates available for %d apps"
+msgstr[0] "Uppdatering tillgänglig för %d app"
+msgstr[1] "Uppdateringar tillgängliga för %d appar"
+
+#. TRANSLATORS: This message is used when there are four or more pending
+#. refreshes.
+#: src/sdi-notify.c:466
+msgid "Quit the apps to update them now."
+msgstr "Stäng apparna för att uppdatera dem nu."
+
+#: src/sdi-notify.c:502
+#, c-format
+msgid "%s was updated"
+msgstr "%s har uppdaterats"
+
+#: src/sdi-notify.c:504
+msgid "You can reopen it now."
+msgstr "Du kan öppna den igen nu."
+
+#. TRANSLATORS: This text is shown as the title of the window that contains
+#. progress bars for each of the snaps being updated.
+#: src/sdi-progress-window.c:98
+msgid "Refreshing snaps"
+msgstr "Uppdaterar snappar"
+
+#: src/sdi-refresh-dialog.c:123
+#, c-format
+msgid "Updating %s to the latest version."
+msgstr "Uppdaterar %s till den senaste versionen."
+
+#: src/sdi-theme-monitor.c:66 src/sdi-theme-monitor.c:83
+#: src/sdi-theme-monitor.c:104
+msgid "Installing missing theme snaps:"
+msgstr "Installera saknade temasnappar:"
+
+#. TRANSLATORS: installing a missing theme snap succeed
+#: src/sdi-theme-monitor.c:68
+msgid "Complete."
+msgstr "Färdig."
+
+#. TRANSLATORS: installing a missing theme snap was cancelled by the user
+#: src/sdi-theme-monitor.c:75
+msgid "Canceled by the user."
+msgstr "Avbruten av användaren."
+
+#. TRANSLATORS: installing a missing theme snap failed
+#: src/sdi-theme-monitor.c:79
+msgid "Failed."
+msgstr "Misslyckades."
+
+#: src/sdi-theme-monitor.c:138
+msgid "Some required theme snaps are missing."
+msgstr "Vissa nödvändiga temasnappar saknas."
+
+#: src/sdi-theme-monitor.c:139
+msgid "Would you like to install them now?"
+msgstr "Vill du installera dem nu?"
+
+#. TRANSLATORS: answer to the question "Would you like to install them
+#. now?" referred to snap themes
+#: src/sdi-theme-monitor.c:148
+msgid "Yes"
+msgstr "Ja"
+
+#. TRANSLATORS: answer to the question "Would you like to install them
+#. now?" referred to snap themes
+#: src/sdi-theme-monitor.c:153
+msgid "No"
+msgstr "Nej"
+
+#: data/resources/sdi-refresh-dialog.ui:51
+msgid "Hide"
+msgstr "Dölj"
