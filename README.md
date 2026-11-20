@@ -3,8 +3,12 @@ User session helpers for snapd
 
 ## Code formatting
 
-Use "clang-format -i SOURCE_FILE_NAME" after any change to automatically
-format the code.
+Use "./format-source.sh" after any change to automatically format the code.
+
+You can also add that script to your `.git/hooks/pre-commit` script to make
+an automatic format before any commit (also add `export SOURCE_PATHS="src tests"`
+before to only format the folders with sources). Or add it with the `pre-commit`
+parameter to just check the format without modifying it.
 
 ## Tests and coverage check
 
